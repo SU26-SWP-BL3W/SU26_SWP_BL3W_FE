@@ -24,7 +24,7 @@ export function MySubmissionsView() {
     if (!teamData?.team) return alert("Bạn chưa có đội thi.");
     
     await createSubmission({
-      TeamId: teamData.team.TeamId,
+      TeamId: teamData.team.id || teamData.team.TeamId || "",
       TrackId: "track-1", // mock
       SubmissionUrl: link,
       Description: desc

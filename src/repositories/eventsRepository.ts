@@ -11,6 +11,9 @@ export interface CreateEventPayload {
   registrationStartDate?: string;
   registrationEndDate?: string;
   description?: string;
+  minTeamSize?: number;
+  maxTeamSize?: number;
+  maxTeams?: number;
 }
 
 export const eventsRepository = {
@@ -33,6 +36,9 @@ export const eventsRepository = {
         RegistrationStartDate: payload.registrationStartDate,
         RegistrationEndDate: payload.registrationEndDate,
         Description: payload.description,
+        minTeamSize: payload.minTeamSize ?? 3,
+        maxTeamSize: payload.maxTeamSize ?? 5,
+        maxTeams: payload.maxTeams ?? 50,
         status: true,
       };
       return {

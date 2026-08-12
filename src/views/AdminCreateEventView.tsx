@@ -22,6 +22,9 @@ export const AdminCreateEventView: React.FC = () => {
     registrationEndDate: "2026-07-10",
     description: "Đấu trường công nghệ quy mô lớn dành cho sinh viên toàn quốc do Ban Quản Trị SEAL phê duyệt.",
     coordinatorEmail: "ec.coordinator@seal.edu.vn",
+    minTeamSize: 3,
+    maxTeamSize: 5,
+    maxTeams: 50,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -221,6 +224,33 @@ export const AdminCreateEventView: React.FC = () => {
                     type="date"
                     value={form.registrationEndDate}
                     onChange={(e) => setForm({ ...form, registrationEndDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono tracking-widest text-[var(--accent-team)] uppercase font-bold">
+                    Số Thành Viên Tối Thiểu / Đội *
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={form.maxTeamSize}
+                    value={form.minTeamSize}
+                    onChange={(e) => setForm({ ...form, minTeamSize: Number(e.target.value) })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono tracking-widest text-[var(--accent-team)] uppercase font-bold">
+                    Số Thành Viên Tối Đa / Đội *
+                  </label>
+                  <Input
+                    type="number"
+                    min={form.minTeamSize}
+                    max={20}
+                    value={form.maxTeamSize}
+                    onChange={(e) => setForm({ ...form, maxTeamSize: Number(e.target.value) })}
+                    required
                   />
                 </div>
 

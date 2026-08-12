@@ -48,10 +48,13 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
           {(activeRole?.roleName === "Coordinator" || activeRole?.roleName === "EventCoordinator") && (
             <>
               <Link href="/coordinator/dashboard" className="text-xs font-mono text-[var(--accent-coordinator)] font-bold hover:underline">
-                [COORD] Điều Hành Sự Kiện
+                [COORD] Điều Hành
               </Link>
               <Link href="/coordinator/profiles" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
                 Duyệt Hồ Sơ
+              </Link>
+              <Link href="/coordinator/teams" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
+                Duyệt Đội Thi
               </Link>
             </>
           )}
@@ -70,6 +73,9 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
             <>
               <Link href="/my-team" className="text-xs font-mono text-[var(--accent-team)] hover:underline">
                 My Team
+              </Link>
+              <Link href="/my-invitations" className="text-xs font-mono text-[var(--accent-team)] hover:underline">
+                Lời Mời
               </Link>
               <Link href="/my-submissions" className="text-xs font-mono text-[var(--accent-team)] hover:underline">
                 Submissions

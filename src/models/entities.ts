@@ -99,6 +99,8 @@ export interface EventEntity {
   status?: boolean;
   photoEventUrl?: string | null;
   maxTeams?: number;
+  minTeamSize?: number;
+  maxTeamSize?: number;
 
   // Legacy aliases
   EventId?: string;
@@ -113,6 +115,8 @@ export interface EventEntity {
   Status?: boolean;
   PhotoEventUrl?: string | null;
   MaxTeams?: number;
+  MinTeamSize?: number;
+  MaxTeamSize?: number;
 }
 
 // ─── Round ───────────────────────────────────────────────────
@@ -293,9 +297,26 @@ export interface TeamEntity {
   teamName?: string;
   description?: string | null;
   status?: TeamStatus;
+  rejectReason?: string | null;
   createdTime?: string;
   lastUpdatedTime?: string;
   members?: TeamMemberModel[];
+  invitations?: TeamInvitation[];
+
+  // Legacy aliases
+  TeamId?: string;
+  EventId?: string;
+  TeamName?: string;
+  Status?: TeamStatus;
+}
+
+export interface TeamInvitation {
+  id?: string;
+  teamId?: string;
+  email?: string;
+  status?: 'Pending' | 'Accepted' | 'Declined' | 'Expired';
+  expiresAt?: string;
+  createdTime?: string;
 }
 
 export interface TeamMemberModel {
