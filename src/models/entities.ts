@@ -362,7 +362,53 @@ export interface ScoreDetailItem {
   id?: string;
   templateId?: string | null;
   criteriaId?: string;
+  criteriaName?: string | null;
   value?: number;
+  maxScore?: number;
+  weight?: number;
+}
+
+export interface SaveScoreRequest {
+  eventId?: string;
+  eventRoleId?: string;
+  submitResultId: string;
+  comment?: string;
+  isSubmitted: boolean;
+  details: {
+    criteriaId: string;
+    value: number;
+  }[];
+}
+
+export interface ScoreBreakdownModel {
+  teamId: string;
+  teamName?: string;
+  trackId?: string;
+  trackName?: string;
+  totalScore: number;
+  details: {
+    criteriaId: string;
+    criteriaName: string;
+    scoreValue: number;
+    maxScore: number;
+    weight: number;
+  }[];
+}
+
+export interface CalibrationItem {
+  judgeId: string;
+  judgeName: string;
+  submitResultId: string;
+  teamName: string;
+  totalScore: number;
+  isSubmitted: boolean;
+}
+
+export interface CalibrationModel {
+  trackId: string;
+  trackName: string;
+  isCompleted: boolean;
+  scores: CalibrationItem[];
 }
 
 // ─── Final Result / Prize ────────────────────────────────────

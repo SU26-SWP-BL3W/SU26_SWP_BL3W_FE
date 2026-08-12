@@ -56,14 +56,17 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
               <Link href="/coordinator/teams" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
                 Duyệt Đội Thi
               </Link>
+              <Link href="/coordinator/calibration" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
+                Hiệu Chuẩn & Xếp Hạng
+              </Link>
             </>
           )}
 
           {/* Menu dành riêng cho Giám khảo */}
           {activeRole?.roleName === "Judge" && (
             <>
-              <Link href="/judge/events" className="text-xs font-mono text-[var(--accent-judge)] font-bold hover:underline">
-                [JUDGE] Chấm Điểm
+              <Link href="/judge/scoring" className="text-xs font-mono text-[var(--accent-judge)] font-bold hover:underline">
+                [JUDGE] Chấm Bài Thi
               </Link>
             </>
           )}
