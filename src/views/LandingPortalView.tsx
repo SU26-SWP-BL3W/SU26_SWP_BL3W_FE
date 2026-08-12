@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { Link } from "@/i18n/routing";
 import { SealShield } from "@/components/domain/SealShield";
 import { useCountdown } from "@/lib/useCountdown";
@@ -83,7 +83,7 @@ export function LandingPortalView() {
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link href="/events">
               <button className="hud-clipped relative px-8 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] focus:outline-none min-w-[200px]">
-                // KHÁM PHÁ SỰ KIỆN &gt;
+                {"// "}KHÁM PHÁ SỰ KIỆN &gt;
               </button>
             </Link>
             <Link href="/register">
@@ -274,7 +274,7 @@ function LatestEventSpotlight({ event }: { event: EventCardData }) {
               <div className="flex flex-wrap items-center gap-4 pt-3 w-full sm:w-auto">
                 <Link href={`/events/${event.id}`} className="w-full sm:w-auto">
                   <button className="hud-clipped w-full sm:w-auto px-7 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_20px_rgba(255,255,255,0.5)] focus:outline-none flex items-center justify-center gap-2">
-                    <span>// XEM CHI TIẾT &amp; ĐĂNG KÝ NGAY</span>
+                    <span>{"// "}XEM CHI TIẾT &amp; ĐĂNG KÝ NGAY</span>
                     <span className="transition-transform duration-200 group-hover:translate-x-1">&gt;</span>
                   </button>
                 </Link>
