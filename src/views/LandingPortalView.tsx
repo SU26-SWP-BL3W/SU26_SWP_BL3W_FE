@@ -42,7 +42,7 @@ export function LandingPortalView() {
 
         {/* Foreground Content (High Z-Index & Symmetrical Layout) */}
         <div className="relative z-10 flex flex-col items-center gap-6 max-w-4xl w-full">
-          
+
           {/* Central Shield Logo with Symmetrical Outer Ring */}
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-[var(--accent-primary)]/10 blur-xl animate-pulse" />
@@ -75,7 +75,7 @@ export function LandingPortalView() {
 
           {/* Subtitle */}
           <p className="max-w-2xl font-sans text-base text-[var(--text-muted)] md:text-lg leading-relaxed">
-            Đấu trường hackathon dành cho sinh viên toàn quốc — tranh tài xây dựng sản phẩm thực tế, 
+            Đấu trường hackathon dành cho sinh viên toàn quốc — tranh tài xây dựng sản phẩm thực tế,
             nhận tư vấn từ Mentor và nhận đánh giá minh bạch theo chuẩn khoa học RBL.
           </p>
 
@@ -296,9 +296,8 @@ function LatestEventSpotlight({ event }: { event: EventCardData }) {
 
                 {/* Digital Clock Grid */}
                 <div
-                  className={`grid grid-cols-4 gap-2 w-full font-mono text-center ${
-                    countdown.isUrgent ? "text-[var(--color-danger)]" : "text-[var(--text-primary)]"
-                  }`}
+                  className={`grid grid-cols-4 gap-2 w-full font-mono text-center ${countdown.isUrgent ? "text-[var(--color-danger)]" : "text-[var(--text-primary)]"
+                    }`}
                   suppressHydrationWarning
                 >
                   {[
