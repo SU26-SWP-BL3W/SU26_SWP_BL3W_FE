@@ -413,13 +413,26 @@ export interface CalibrationModel {
 
 // ─── Final Result / Prize ────────────────────────────────────
 
+export interface Prize {
+  id?: string;
+  eventId?: string;
+  trackId?: string | null;
+  prizeName?: string;
+  rewardAmount?: number;
+  quantity?: number;
+  description?: string | null;
+}
+
 export interface FinalResult {
   id?: string;
   teamId?: string;
+  teamName?: string;
   roundId?: string;
   eventId?: string | null;
   trackId?: string | null;
   prizeId?: string | null;
+  prizeName?: string | null;
+  rewardAmount?: number;
   finalScore?: number;
   rank?: number;
   isAdvanced?: boolean;
@@ -435,10 +448,13 @@ export type AppealStatus = 0 | 1 | 2; // Pending=0, Approved=1, Rejected=2
 export interface Appeal {
   id?: string;
   submitResultId?: string;
+  teamId?: string;
+  teamName?: string;
   reason?: string | null;
   status?: AppealStatus;
   response?: string | null;
   assignedJudgeId?: string | null;
+  createdTime?: string;
 }
 
 // ─── Pagination ──────────────────────────────────────────────

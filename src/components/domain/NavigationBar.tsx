@@ -44,6 +44,10 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
             </>
           )}
 
+          <Link href="/leaderboard" className="text-xs font-mono text-yellow-400 font-bold hover:underline">
+            🏆 Bảng Xếp Hạng
+          </Link>
+
           {/* Menu dành riêng cho Event Coordinator */}
           {(activeRole?.roleName === "Coordinator" || activeRole?.roleName === "EventCoordinator") && (
             <>
@@ -57,7 +61,10 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
                 Duyệt Đội Thi
               </Link>
               <Link href="/coordinator/calibration" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
-                Hiệu Chuẩn & Xếp Hạng
+                Hiệu Chuẩn
+              </Link>
+              <Link href="/coordinator/publish-results" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
+                Công Bố & Giải Thưởng
               </Link>
             </>
           )}
@@ -82,6 +89,9 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
               </Link>
               <Link href="/my-submissions" className="text-xs font-mono text-[var(--accent-team)] hover:underline">
                 Submissions
+              </Link>
+              <Link href="/appeals" className="text-xs font-mono text-[var(--color-warning)] hover:underline">
+                Phúc Khảo
               </Link>
             </>
           )}
