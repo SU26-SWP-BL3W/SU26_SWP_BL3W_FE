@@ -125,6 +125,16 @@
     .hud-live-dot {
       animation: hud-live-blink 1.6s ease-in-out infinite;
     }
+
+    /* Hiệu ứng xoay tròn chậm cho vòng khiên background Hero */
+    .hud-shield-rotate {
+      animation: hud-rotate-slow 45s linear infinite;
+    }
+
+    /* Hiệu ứng hào quang phát sáng Hero */
+    .hud-hero-glow {
+      animation: hud-glow-breathe 4s ease-in-out infinite;
+    }
   }
 
   @keyframes hud-live-blink {
@@ -138,4 +148,25 @@
       transform: scale(0.8);
     }
   }
+
+  @keyframes hud-rotate-slow {
+    0% {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  @keyframes hud-glow-breathe {
+    0%, 100% {
+      opacity: 0.15;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 0.35;
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+  }
 }
+

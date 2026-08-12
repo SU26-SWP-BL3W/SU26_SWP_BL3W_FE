@@ -307,3 +307,104 @@ export const STATUS_TONE: Record<EventDisplayStatus, "success" | "judge" | "neut
   upcoming: "team",
   ended: "neutral",
 };
+
+// Data mẫu vinh danh Podium Top 3 & RBL Proof trên Landing Portal
+export interface PodiumTeam {
+  rank: 1 | 2 | 3;
+  teamName: string;
+  projectName: string;
+  track: string;
+  score: number;
+  membersCount: number;
+  school: string;
+  season: string;
+  eventName: string;
+  prizeTitle: string;
+  prizeVnd: number;
+}
+
+export const MOCK_PODIUM_EVENT_NAME = "SEAL Hackathon 2025";
+export const MOCK_PODIUM_TOTAL_PRIZE = 150_000_000;
+
+export const MOCK_PODIUM_TEAMS: PodiumTeam[] = [
+  {
+    rank: 1,
+    teamName: "CyberShield_FPT",
+    projectName: "RBL Inter-Rater Reliability Platform",
+    track: "AI & Machine Learning",
+    score: 9.85,
+    membersCount: 4,
+    school: "Đại học FPT",
+    season: "Mùa Đông 2025",
+    eventName: "SEAL Hackathon 2025",
+    prizeTitle: "GIẢI NHẤT",
+    prizeVnd: 80_000_000,
+  },
+  {
+    rank: 2,
+    teamName: "ByteKnights",
+    projectName: "Autonomous Threat Scanner",
+    track: "Bảo mật & An ninh mạng",
+    score: 9.42,
+    membersCount: 5,
+    school: "Đại học Bách Khoa",
+    season: "Mùa Đông 2025",
+    eventName: "SEAL Hackathon 2025",
+    prizeTitle: "GIẢI NHÌ",
+    prizeVnd: 45_000_000,
+  },
+  {
+    rank: 3,
+    teamName: "NexusCore",
+    projectName: "Smart Campus IoT Grid",
+    track: "IoT & Phần cứng thông minh",
+    score: 9.15,
+    membersCount: 4,
+    school: "Đại học Công nghệ - ĐHQGHN",
+    season: "Mùa Đông 2025",
+    eventName: "SEAL Hackathon 2025",
+    prizeTitle: "GIẢI BA",
+    prizeVnd: 25_000_000,
+  },
+];
+
+
+export interface LandingMetric {
+  id: string;
+  label: string;
+  value: string;
+  subtext: string;
+  toneVar: string;
+}
+
+export const MOCK_LANDING_METRICS: LandingMetric[] = [
+  {
+    id: "teams",
+    label: "ĐỘI THI ĐÃ ĐĂNG KÝ",
+    value: "140+",
+    subtext: "Từ 15+ trường đại học toàn quốc",
+    toneVar: "var(--accent-team)",
+  },
+  {
+    id: "prizes",
+    label: "TỔNG GIÁ TRỊ GIẢI THƯỞNG",
+    value: "500M+ ₫",
+    subtext: "Bao gồm tiền mặt & tài trợ Cloud",
+    toneVar: "var(--accent-judge)",
+  },
+  {
+    id: "tracks",
+    label: "HẠNG MỤC CÔNG NGHỆ",
+    value: "04 Tracks",
+    subtext: "AI, Web, Security & IoT",
+    toneVar: "var(--accent-primary)",
+  },
+  {
+    id: "rbl",
+    label: "MINH BẠCH RBL",
+    value: "100%",
+    subtext: "Chấm điểm 4 Giám khảo độc lập",
+    toneVar: "var(--accent-coordinator)",
+  },
+];
+

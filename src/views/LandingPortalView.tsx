@@ -1,162 +1,354 @@
 "use client";
 
+import { useState } from "react";
 import { Badge, Button } from "@/components/ui";
 import { Link } from "@/i18n/routing";
 import { SealShield } from "@/components/domain/SealShield";
 import { useCountdown } from "@/lib/useCountdown";
-import { STATUS_LABEL, STATUS_DOT_VAR, STATUS_TONE, type EventCardData } from "@/viewModels/mockEventsData";
+import {
+  STATUS_LABEL,
+  STATUS_DOT_VAR,
+  STATUS_TONE,
+  TRACK_META,
+  DEFAULT_TRACK_META,
+  type EventCardData,
+} from "@/viewModels/mockEventsData";
 import { useLandingPreviewViewModel } from "@/viewModels/useLandingPreviewViewModel";
+import { LandingMetricsStrip } from "@/components/domain/LandingMetricsStrip";
+import { LandingWorkflowSteps } from "@/components/domain/LandingWorkflowSteps";
+import { LandingLeaderboardPodium } from "@/components/domain/LandingLeaderboardPodium";
 
-// View — Landing Portal tại "/" (FE_Design_Spec §4.1, §7.1): hero tối giản +
-// 2 khối PREVIEW cuộn xuống (không phải danh sách đầy đủ — đó là việc của
-// "/events"): "Sự kiện mới nhất trong kỳ" rồi "Sự kiện nổi bật" kèm nút "Xem
-// tất cả" nhảy sang "/events" (bố cục mượn Devpost — hero rồi tới các dải
-// preview + Show All — nhưng màu vẫn giữ nguyên "Command Deck" tối theo spec,
-// không chuyển nền trắng).
 export function LandingPortalView() {
   const { latestEvent, featuredEvents } = useLandingPreviewViewModel();
 
   return (
-    <main className="hud-lattice flex flex-1 flex-col">
-      <section className="flex flex-col items-center gap-[var(--space-lg)] px-[var(--space-xl)] py-[calc(var(--space-xl)*2)] text-center">
-        <SealShield className="h-24 w-24 md:h-32 md:w-32" />
-        <h1 className="max-w-3xl font-display text-4xl font-bold uppercase leading-[1.1] tracking-wide text-[color:var(--text-primary)] md:text-6xl">
-          Nơi ý tưởng công nghệ
-          <br />
-          <span className="text-[color:var(--accent-primary)]">bứt phá giới hạn</span>
-        </h1>
-        <p className="max-w-xl text-[length:var(--fs-body-md)] text-[color:var(--text-muted)]">
-          Sân chơi hackathon dành cho sinh viên — tranh tài, xây dựng sản phẩm thực tế và nhận đánh giá minh bạch từ
-          hội đồng giám khảo.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-[var(--space-md)] pt-[var(--space-sm)]">
-          <Link href="/events">
-            <Button type="button">Khám phá sự kiện →</Button>
-          </Link>
-          <Link href="/register">
-            <Button type="button" variant="secondary">
-              Đăng ký tham gia
-            </Button>
-          </Link>
+    <main className="hud-lattice flex flex-1 flex-col overflow-hidden">
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 1: TACTICAL CYBER HERO & QUICK PROTOCOL BAR (SYMMETRICAL)
+         ───────────────────────────────────────────────────────────── */}
+      <section className="relative flex flex-col items-center justify-center gap-6 px-4 py-16 md:py-24 text-center overflow-hidden">
+        {/* Symmetrical Radial Glow Center Backdrop */}
+        <div className="hud-pulse pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] md:h-[650px] md:w-[650px] rounded-full bg-[radial-gradient(circle,rgba(0,217,255,0.18)_0%,rgba(7,11,20,0)_68%)] blur-3xl" aria-hidden="true" />
+
+        {/* Symmetrical Stationary Geometric Background Seal Shield */}
+        <div className="hud-pulse pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[420px] w-[420px] md:h-[560px] md:w-[560px] opacity-20 text-[var(--accent-primary)] drop-shadow-[0_0_40px_rgba(0,217,255,0.35)]">
+          <SealShield className="h-full w-full" />
+        </div>
+
+        {/* Symmetrical Hexagon Ring Frame */}
+        <svg className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[580px] w-[580px] md:h-[750px] md:w-[750px] opacity-15 text-[var(--accent-primary)]" viewBox="0 0 100 100">
+          <polygon points="50,1 95,25 95,75 50,99 5,75 5,25" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" />
+        </svg>
+
+        {/* Foreground Content (High Z-Index & Symmetrical Layout) */}
+        <div className="relative z-10 flex flex-col items-center gap-6 max-w-4xl w-full">
+          
+          {/* Central Shield Logo with Symmetrical Outer Ring */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-[var(--accent-primary)]/10 blur-xl animate-pulse" />
+            <div className="relative border border-[var(--accent-primary)]/40 bg-[var(--bg-panel)]/90 p-4 hud-clipped shadow-[0_0_30px_rgba(0,217,255,0.3)]">
+              <SealShield className="h-20 w-20 md:h-28 md:w-28 text-[var(--accent-primary)]" />
+              <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 border border-[var(--accent-primary)] bg-[var(--bg-base)] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-[var(--accent-primary)] hud-clipped shadow-md">
+                COMMAND DECK
+              </span>
+            </div>
+          </div>
+
+          {/* Symmetrical Status Tag Line with Flanking Accent Lines */}
+          <div className="flex items-center gap-3 font-mono text-xs text-[var(--accent-primary)] tracking-widest uppercase">
+            <span className="h-px w-8 md:w-16 bg-gradient-to-r from-transparent to-[var(--accent-primary)]" />
+            <div className="flex items-center gap-2 bg-[var(--bg-panel)]/90 border border-[var(--accent-primary)]/30 px-3.5 py-1 hud-clipped backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-[var(--accent-primary)] animate-ping" />
+              <span>SYSTEM OPERATIONAL // SEAL HACKATHON PLATFORM</span>
+            </div>
+            <span className="h-px w-8 md:w-16 bg-gradient-to-l from-transparent to-[var(--accent-primary)]" />
+          </div>
+
+          {/* Main Symmetrical Heading */}
+          <h1 className="font-display text-4xl font-extrabold uppercase leading-[1.1] text-[var(--text-primary)] md:text-6xl drop-shadow-md">
+            NƠI Ý TƯỞNG CÔNG NGHỆ
+            <br />
+            <span className="text-[var(--accent-primary)] drop-shadow-[0_0_20px_rgba(0,217,255,0.6)]">
+              BỨT PHÁ GIỚI HẠN
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="max-w-2xl font-sans text-base text-[var(--text-muted)] md:text-lg leading-relaxed">
+            Đấu trường hackathon dành cho sinh viên toàn quốc — tranh tài xây dựng sản phẩm thực tế, 
+            nhận tư vấn từ Mentor và nhận đánh giá minh bạch theo chuẩn khoa học RBL.
+          </p>
+
+          {/* Symmetrical Button Group */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <Link href="/events">
+              <button className="hud-clipped relative px-8 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] focus:outline-none min-w-[200px]">
+                // KHÁM PHÁ SỰ KIỆN &gt;
+              </button>
+            </Link>
+            <Link href="/register">
+              <button className="hud-clipped px-8 py-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] text-[var(--text-primary)] hover:text-white hover:border-[var(--accent-primary)] hover:bg-[rgba(0,217,255,0.12)] font-mono text-sm tracking-wider uppercase transition-all duration-200 min-w-[200px]">
+                [ ĐĂNG KÝ THAM GIA ]
+              </button>
+            </Link>
+          </div>
+
+          {/* Symmetrical Quick Access Protocol */}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs border-t border-[var(--border-muted)]/60 pt-4 w-full max-w-xl">
+            <span className="text-[var(--text-muted)]">TRUY CẬP NHANH:</span>
+            <Link href="/my-team" className="border border-[var(--accent-team)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/20 transition-colors hud-clipped">
+              [ ĐỘI THI ]
+            </Link>
+            <Link href="/judge/events" className="border border-[var(--accent-judge)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)]/20 transition-colors hud-clipped">
+              [ GIÁM KHẢO ]
+            </Link>
+            <Link href="/coordinator/dashboard" className="border border-[var(--accent-coordinator)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/20 transition-colors hud-clipped">
+              [ BAN TỔ CHỨC ]
+            </Link>
+          </div>
         </div>
       </section>
 
+
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 2: LIVE METRICS STRIP
+         ───────────────────────────────────────────────────────────── */}
+      <LandingMetricsStrip />
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 3: LATEST EVENT SPOTLIGHT (ASYMMETRIC COMMAND PANEL)
+         ───────────────────────────────────────────────────────────── */}
       {latestEvent && <LatestEventSpotlight event={latestEvent} />}
 
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 4: FEATURED EVENTS PREVIEW & TRACK EXPLORER
+         ───────────────────────────────────────────────────────────── */}
       {featuredEvents.length > 0 && (
-        <PreviewSection title="Sự kiện nổi bật" events={featuredEvents} showAllHref="/events" />
+        <PreviewSection title="SỰ KIỆN NỔI BẬT KHÁC" events={featuredEvents} showAllHref="/events" />
       )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 5: OPERATIONAL WORKFLOW STEPS
+         ───────────────────────────────────────────────────────────── */}
+      <LandingWorkflowSteps />
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 6: PODIUM HALL OF FAME & RBL PROOF
+         ───────────────────────────────────────────────────────────── */}
+      <LandingLeaderboardPodium />
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 7: FREQUENTLY ASKED QUESTIONS (FAQ HUD CONSOLE)
+         ───────────────────────────────────────────────────────────── */}
+      <LandingFaqSection />
     </main>
   );
 }
 
-// ────────────────────────────────────────────────────────────────
-// Spotlight sự kiện mới nhất — 1 khối duy nhất, bố cục bất đối xứng (nội
-// dung trái, đếm ngược phải) thay vì lưới 3 thẻ đều nhau (pattern "3 card
-// columns" — dễ nhận ra là thiết kế mặc định, đã tránh ở đây). hud-clipped +
-// hud-glow-cyan + hover lift theo đúng FE_Design_Spec §3.1/§5.4.
-// ────────────────────────────────────────────────────────────────
-
+{/* ────────────────────────────────────────────────────────────────
+    SPOTLIGHT SỰ KIỆN MỚI NHẤT — ADVANCED HIGH-IMPACT COMMAND DECK PANEL
+   ──────────────────────────────────────────────────────────────── */}
 function LatestEventSpotlight({ event }: { event: EventCardData }) {
   const countdownTarget = event.status === "ongoing" ? event.endDate : event.registrationEndDate;
   const countdown = useCountdown(event.status === "ended" ? null : countdownTarget);
-  const countdownLabel = event.status === "ongoing" ? "Hạn nộp bài" : "Hạn đăng ký";
+  const countdownLabel = event.status === "ongoing" ? "HẠN NỘP BÀI THI CÒN LẠI" : "HẠN ĐĂNG KÝ CÒN LẠI";
+  const fillPercent = Math.min(100, Math.round((event.teamCount / event.maxTeams) * 100));
 
   return (
-    <section className="border-t border-[var(--border-muted)] px-[var(--space-xl)] py-[var(--space-xl)]">
+    <section className="border-t border-[var(--border-muted)] px-[var(--space-xl)] py-[calc(var(--space-xl)*1.5)] relative">
       <div className="mx-auto w-full max-w-[var(--container-max)]">
-        <span className="mb-[var(--space-md)] flex items-center gap-[var(--space-sm)] font-mono text-[length:var(--fs-caption-sm)] tracking-[0.2em] text-[color:var(--accent-primary)]">
-          <span className="inline-block h-px w-6 bg-[var(--accent-primary)]" aria-hidden="true" />[ MỚI NHẤT TRONG KỲ ]
-        </span>
+        {/* Tactical Header Bar */}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-muted)] pb-3">
+          <div className="flex items-center gap-3">
+            <span className="hud-live-dot h-2.5 w-2.5 rounded-full bg-[var(--accent-primary)] shadow-[0_0_10px_var(--accent-primary)]" />
+            <span className="font-mono text-xs font-bold tracking-[0.2em] text-[var(--accent-primary)] uppercase">
+              [ SPOTLIGHT PROTOCOL // SỰ KIỆN HOT NHẤT ]
+            </span>
+          </div>
+          <div className="flex items-center gap-4 font-mono text-xs text-[var(--text-muted)]">
+            <span className="hidden sm:inline-block text-[var(--accent-mentor)]">● LIVE TRACKING</span>
+            <span>SEASON: <strong className="text-[var(--text-primary)]">{event.season.toUpperCase()} {event.year}</strong></span>
+          </div>
+        </div>
 
-        <Link
-          href={`/events/${event.id}`}
-          className="hud-clipped hud-glow-cyan hud-scanline-once group relative grid grid-cols-1 gap-[var(--space-xl)] overflow-hidden bg-[var(--bg-panel)] p-[var(--space-xl)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(0,217,255,0.12)] md:grid-cols-[3fr_2fr] md:items-center"
-          style={{ borderLeft: `3px solid ${STATUS_DOT_VAR[event.status]}` }}
-        >
-          {/* Khiên SEAL lớn làm hoạ tiết nền, "thở" nhẹ — chỉ trang trí, đặt
-              pointer-events-none để không cản click/hover phần nội dung. */}
-          <SealShield className="hud-pulse pointer-events-none absolute -right-10 -top-10 h-56 w-56 opacity-30 md:h-72 md:w-72" />
+        {/* Main High-Impact HUD Panel */}
+        <div className="hud-clipped hud-glow-cyan hud-scanline-once group relative overflow-hidden bg-[var(--bg-panel)] p-6 md:p-8 transition-all duration-300 hover:shadow-[0_0_35px_rgba(0,217,255,0.2)] border border-[var(--border-muted)]">
+          {/* Tactical Corner Brackets */}
+          <div className="pointer-events-none absolute top-2 left-2 font-mono text-[10px] text-[var(--accent-primary)] opacity-60">+</div>
+          <div className="pointer-events-none absolute top-2 right-2 font-mono text-[10px] text-[var(--accent-primary)] opacity-60">+</div>
+          <div className="pointer-events-none absolute bottom-2 left-2 font-mono text-[10px] text-[var(--accent-primary)] opacity-60">+</div>
+          <div className="pointer-events-none absolute bottom-2 right-2 font-mono text-[10px] text-[var(--accent-primary)] opacity-60">+</div>
 
-          <div className="relative flex flex-col items-start gap-[var(--space-sm)]">
-            <div className="flex items-center gap-[var(--space-sm)]">
-              <Badge tone={STATUS_TONE[event.status]}>{STATUS_LABEL[event.status]}</Badge>
-              {event.status === "ongoing" && (
-                <span className="flex items-center gap-[6px] font-mono text-[length:var(--fs-caption-sm)] font-bold uppercase tracking-wider text-[color:var(--accent-judge)]">
-                  <span className="hud-live-dot h-1.5 w-1.5 rounded-full bg-[var(--accent-judge)]" aria-hidden="true" />
-                  Trực tiếp
-                </span>
-              )}
-            </div>
-            <h3 className="font-display text-3xl font-bold leading-[1.1] text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-primary)] md:text-4xl">
-              {event.eventName}
-            </h3>
-            <p className="max-w-[55ch] text-[length:var(--fs-body-md)] text-[color:var(--text-muted)]">
-              {event.tagline}
-            </p>
+          {/* Background Watermark Shield */}
+          <SealShield className="hud-pulse pointer-events-none absolute -right-10 -bottom-10 h-72 w-72 opacity-15 md:h-96 md:w-96 text-[var(--accent-primary)]" />
 
-            {event.tracks.length > 0 && (
-              <div className="flex flex-wrap gap-[var(--space-xs)]">
-                {event.tracks.slice(0, 3).map((track) => (
-                  <span
-                    key={track}
-                    className="border border-[var(--border-muted)] bg-[var(--bg-input)]/60 px-[var(--space-sm)] py-[2px] font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]"
-                  >
-                    {track}
+          <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
+            {/* LEFT COLUMN: Event Content & High-Impact Info */}
+            <div className="flex flex-col items-start gap-4">
+              {/* Badges & Status */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge tone={STATUS_TONE[event.status]}>{STATUS_LABEL[event.status]}</Badge>
+                {event.status === "ongoing" && (
+                  <span className="inline-flex items-center gap-2 border border-[var(--accent-judge)]/40 bg-[var(--accent-judge)]/10 px-3 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-[var(--accent-judge)] hud-clipped">
+                    <span className="hud-live-dot h-2 w-2 rounded-full bg-[var(--accent-judge)] shadow-[0_0_8px_var(--accent-judge)]" />
+                    ĐANG TRỰC TIẾP CHẤM BÀI
                   </span>
-                ))}
-                {event.tracks.length > 3 && (
-                  <span className="border border-[var(--border-muted)] bg-[var(--bg-input)]/60 px-[var(--space-sm)] py-[2px] font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]">
-                    +{event.tracks.length - 3}
+                )}
+                <span className="font-mono text-xs text-[var(--text-muted)] border border-[var(--border-muted)] px-2 py-0.5">
+                  ID: #{event.id.toUpperCase()}
+                </span>
+              </div>
+
+              {/* Event Title & Tagline */}
+              <div>
+                <h3 className="font-display text-3xl font-extrabold uppercase leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] md:text-5xl transition-colors">
+                  {event.eventName}
+                </h3>
+                <p className="mt-2 text-base text-[var(--text-muted)] max-w-2xl font-sans leading-relaxed">
+                  {event.tagline}
+                </p>
+              </div>
+
+              {/* Track Modules */}
+              {event.tracks.length > 0 && (
+                <div className="flex flex-col gap-2 w-full pt-1">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                    HẠNG MỤC CÔNG NGHỆ (TRACKS):
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {event.tracks.map((track) => {
+                      const meta = TRACK_META[track] || DEFAULT_TRACK_META;
+                      return (
+                        <div
+                          key={track}
+                          className="flex items-center gap-2 border border-[var(--border-muted)] bg-[var(--bg-input)] px-3 py-1.5 font-mono text-xs text-[var(--text-primary)] hover:border-[var(--accent-primary)] hover:scale-[1.02] transition-all cursor-default hud-clipped"
+                        >
+                          <span className="h-2 w-2 rounded-full shadow-[0_0_6px_currentColor]" style={{ backgroundColor: meta.accent, color: meta.accent }} />
+                          <span className="font-semibold">{track}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Key Metrics: Capacity Bar & Prize Highlight Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-2">
+                {/* Capacity Progress Bar */}
+                <div className="border border-[var(--border-muted)] bg-[var(--bg-input)]/70 p-3.5 hud-clipped flex flex-col justify-between">
+                  <div className="flex items-center justify-between font-mono text-xs mb-1.5">
+                    <span className="text-[var(--text-muted)]">CỔNG ĐĂNG KÝ ĐỘI THI</span>
+                    <span className="font-bold text-[var(--accent-team)]">{event.teamCount} / {event.maxTeams} Đội ({fillPercent}%)</span>
+                  </div>
+                  {/* Outer Bar */}
+                  <div className="h-2.5 w-full bg-[var(--bg-base)] border border-[var(--border-muted)] overflow-hidden p-0.5">
+                    <div
+                      className="h-full bg-gradient-to-r from-[var(--accent-team)] via-[var(--accent-primary)] to-[var(--accent-judge)] transition-all duration-500 shadow-[0_0_10px_rgba(0,217,255,0.5)]"
+                      style={{ width: `${fillPercent}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-[10px] text-[var(--text-muted)] mt-1">
+                    Còn {event.maxTeams - event.teamCount} suất thi đấu cuối cùng
+                  </span>
+                </div>
+
+                {/* Prize Pool Highlight Box */}
+                <div className="border border-[var(--accent-judge)]/50 bg-[var(--accent-judge)]/10 p-3.5 hud-clipped flex items-center gap-3">
+                  <div className="flex px-2 py-1 shrink-0 items-center justify-center border border-[var(--accent-judge)] bg-[var(--bg-input)] font-mono text-xs font-bold text-[var(--accent-judge)] shadow-[0_0_10px_rgba(251,191,36,0.3)]">
+                    [PRIZE]
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--accent-judge)]">
+                      TỔNG GIÁ TRỊ GIẢI THƯỞNG
+                    </span>
+                    <span className="font-mono text-xl font-extrabold text-[var(--accent-judge)] tracking-tight">
+                      {formatVnd(event.totalPrizeVnd)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button Protocol */}
+              <div className="flex flex-wrap items-center gap-4 pt-3 w-full sm:w-auto">
+                <Link href={`/events/${event.id}`} className="w-full sm:w-auto">
+                  <button className="hud-clipped w-full sm:w-auto px-7 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_20px_rgba(255,255,255,0.5)] focus:outline-none flex items-center justify-center gap-2">
+                    <span>// XEM CHI TIẾT &amp; ĐĂNG KÝ NGAY</span>
+                    <span className="transition-transform duration-200 group-hover:translate-x-1">&gt;</span>
+                  </button>
+                </Link>
+                <Link href="/events" className="w-full sm:w-auto">
+                  <button className="hud-clipped w-full sm:w-auto px-5 py-3.5 bg-transparent border border-[var(--border-muted)] text-[var(--text-primary)] hover:text-white hover:border-[var(--accent-primary)] hover:bg-[rgba(0,217,255,0.08)] font-mono text-xs tracking-wider uppercase transition-all duration-200">
+                    [ XEM THỂ LỆ SỰ KIỆN ]
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: High-Tech Digital Countdown HUD Clock */}
+            {!countdown.isPast && (
+              <div className="hud-clipped border border-[var(--accent-primary)]/40 bg-[var(--bg-base)]/90 p-6 flex flex-col items-center justify-center gap-4 shadow-[0_0_20px_rgba(0,217,255,0.1)] relative">
+                <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-[var(--accent-primary)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--accent-primary)] animate-ping" />
+                  [ {countdownLabel} ]
+                </div>
+
+                {/* Digital Clock Grid */}
+                <div
+                  className={`grid grid-cols-4 gap-2 w-full font-mono text-center ${
+                    countdown.isUrgent ? "text-[var(--color-danger)]" : "text-[var(--text-primary)]"
+                  }`}
+                  suppressHydrationWarning
+                >
+                  {[
+                    { value: countdown.days, label: "NGÀY" },
+                    { value: countdown.hours, label: "GIỜ" },
+                    { value: countdown.minutes, label: "PHÚT" },
+                    { value: countdown.seconds, label: "GIÂY" },
+                  ].map((u) => (
+                    <div
+                      key={u.label}
+                      className="border border-[var(--border-muted)] bg-[var(--bg-panel)] py-3 px-1 hud-clipped flex flex-col items-center justify-center shadow-inner"
+                      suppressHydrationWarning
+                    >
+                      <span
+                        className="font-mono text-2xl font-extrabold tabular-nums md:text-3xl tracking-tight text-[var(--accent-primary)]"
+                        suppressHydrationWarning
+                      >
+                        {String(u.value).padStart(2, "0")}
+                      </span>
+                      <span className="text-[9px] font-bold tracking-wider text-[var(--text-muted)] mt-1">
+                        {u.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Event Schedule Rounds Summary */}
+                {event.rounds && event.rounds.length > 0 && (
+                  <div className="w-full border-t border-[var(--border-muted)] pt-3 mt-1 flex flex-col gap-1.5 font-mono text-xs">
+                    <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                      LỊCH TRÌNH VÒNG THI (ROUNDS):
+                    </span>
+                    {event.rounds.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between text-[11px] bg-[var(--bg-panel)]/60 px-2.5 py-1 border border-[var(--border-muted)]">
+                        <span className="font-bold text-[var(--accent-team)]">VÒNG {r.roundNumber}: {r.roundName.toUpperCase()}</span>
+                        <span className="text-[var(--text-muted)]">{formatShortDate(r.startDate)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {countdown.isUrgent && (
+                  <span className="font-mono text-[11px] font-bold text-[var(--color-danger)] uppercase tracking-wider animate-pulse text-center">
+                    ⚠ SẮP ĐÓNG CỔNG - HÃY NỘP BÀI NGAY!
                   </span>
                 )}
               </div>
             )}
-
-            <div className="mt-[var(--space-xs)] flex flex-wrap items-center gap-x-[var(--space-lg)] gap-y-[var(--space-xs)] font-mono text-sm text-[color:var(--text-muted)]">
-              <span>
-                {event.season} {event.year}
-              </span>
-              <span>
-                {event.teamCount}/{event.maxTeams} đội
-              </span>
-              <span className="font-bold text-[color:var(--text-primary)]">{formatVnd(event.totalPrizeVnd)}</span>
-            </div>
-            <span className="mt-[var(--space-sm)] inline-flex items-center gap-[var(--space-xs)] font-mono text-sm font-medium text-[color:var(--accent-primary)]">
-              Xem chi tiết
-              <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-            </span>
           </div>
-
-          {!countdown.isPast && (
-            <div className="relative flex flex-col items-center gap-[var(--space-sm)] border-t border-[var(--border-muted)] pt-[var(--space-lg)] md:border-t-0 md:border-l md:items-start md:pt-0 md:pl-[var(--space-xl)]">
-              <p className="font-mono text-[length:var(--fs-caption-sm)] uppercase tracking-wider text-[color:var(--text-muted)]">
-                {countdownLabel}
-              </p>
-              <div
-                className={`flex items-end gap-[var(--space-md)] font-mono ${
-                  countdown.isUrgent ? "animate-pulse text-[color:var(--color-danger)]" : "text-[color:var(--text-primary)]"
-                }`}
-                suppressHydrationWarning
-              >
-                {[
-                  { value: countdown.days, label: "ngày" },
-                  { value: countdown.hours, label: "giờ" },
-                  { value: countdown.minutes, label: "phút" },
-                ].map((u) => (
-                  <div key={u.label} className="flex flex-col items-center" suppressHydrationWarning>
-                    <span className="text-3xl font-bold tabular-nums md:text-4xl" suppressHydrationWarning>
-                      {String(u.value).padStart(2, "0")}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wider text-[color:var(--text-muted)]">
-                      {u.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </Link>
+        </div>
       </div>
     </section>
   );
@@ -165,6 +357,12 @@ function LatestEventSpotlight({ event }: { event: EventCardData }) {
 function formatVnd(value: number): string {
   return `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
 }
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+
 
 function PreviewSection({
   title,
@@ -176,16 +374,16 @@ function PreviewSection({
   showAllHref?: string;
 }) {
   return (
-    <section className="border-t border-[var(--border-muted)] px-[var(--space-xl)] py-[var(--space-xl)]">
+    <section className="border-t border-[var(--border-muted)] px-[var(--space-xl)] py-[calc(var(--space-xl)*1.2)]">
       <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-[var(--space-lg)]">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-[color:var(--text-primary)] md:text-2xl">{title}</h2>
+          <h2 className="font-display text-xl font-bold uppercase text-[color:var(--text-primary)] md:text-2xl">{title}</h2>
           {showAllHref && (
             <Link
               href={showAllHref}
               className="font-mono text-sm text-[color:var(--accent-primary)] hover:text-white hover:underline"
             >
-              Xem tất cả →
+              Xem tất cả sự kiện →
             </Link>
           )}
         </div>
@@ -204,21 +402,91 @@ function PreviewCard({ event }: { event: EventCardData }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="group flex flex-col border border-[var(--border-muted)] bg-[var(--bg-panel)] p-[var(--space-lg)] transition-colors hover:border-[var(--accent-primary)]/50"
-      style={{ borderTop: `2px solid ${STATUS_DOT_VAR[event.status]}` }}
+      className="hud-clipped group flex flex-col justify-between border border-[var(--border-muted)] bg-[var(--bg-panel)] p-[var(--space-lg)] transition-all hover:-translate-y-1 hover:border-[var(--accent-primary)]/50"
+      style={{ borderTop: `3px solid ${STATUS_DOT_VAR[event.status]}` }}
     >
-      <Badge tone={STATUS_TONE[event.status]}>{STATUS_LABEL[event.status]}</Badge>
-      <h3 className="mt-[var(--space-sm)] font-display text-base font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-primary)]">
-        {event.eventName}
-      </h3>
-      <p className="mt-[2px] line-clamp-2 text-sm text-[color:var(--text-muted)]">{event.tagline}</p>
-      <span className="mt-[var(--space-md)] font-mono text-xs text-[color:var(--text-muted)]">
-        {formatShortDate(event.startDate)} – {formatShortDate(event.endDate)}
-      </span>
+      <div>
+        <div className="flex items-center justify-between">
+          <Badge tone={STATUS_TONE[event.status]}>{STATUS_LABEL[event.status]}</Badge>
+          <span className="font-mono text-[10px] text-[var(--text-muted)]">{event.season} {event.year}</span>
+        </div>
+
+        <h3 className="mt-[var(--space-sm)] font-display text-lg font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-primary)] transition-colors">
+          {event.eventName}
+        </h3>
+        <p className="mt-1 line-clamp-2 text-xs text-[color:var(--text-muted)]">{event.tagline}</p>
+      </div>
+
+      <div className="mt-4 border-t border-[var(--border-muted)] pt-3 flex items-center justify-between font-mono text-xs text-[color:var(--text-muted)]">
+        <span>{event.teamCount} Đội thi</span>
+        <span className="font-bold text-[var(--accent-judge)]">{formatVnd(event.totalPrizeVnd)}</span>
+      </div>
     </Link>
   );
 }
 
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+{/* ────────────────────────────────────────────────────────────────
+    SECTION 7: FAQ HUD ACCORDION COMPONENT
+   ──────────────────────────────────────────────────────────────── */}
+function LandingFaqSection() {
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
+
+  const FAQS = [
+    {
+      q: "Sinh viên ngoài Đại học FPT có được tham gia SEAL Hackathon không?",
+      a: "Có! Sinh viên tất cả các trường đại học toàn quốc đều được chào đón. Sinh viên ngoài FPT chỉ cần tải ảnh thẻ sinh viên lên mục Profile để được duyệt xác thực tài khoản.",
+    },
+    {
+      q: "Quy định về quy mô đội thi như thế nào?",
+      a: "Mỗi đội thi bắt buộc có từ 3 đến 5 thành viên. Trưởng nhóm có thể gửi lời mời trực tiếp hoặc tìm kiếm thành viên chưa có đội qua hệ thống ghép đội.",
+    },
+    {
+      q: "Điểm số RBL được tính toán và đảm bảo tính minh bạch ra sao?",
+      a: "Mỗi bài nộp được chấm độc lập bởi 4 Giám khảo. Hệ thống tự động tính tổng điểm theo trọng số tiêu chí và tính hệ số độ lệch Inter-rater Delta. Nếu độ lệch vượt ngưỡng 2.0, bài nộp sẽ được chuyển tới giám khảo trưởng soát xét lại.",
+    },
+    {
+      q: "Tôi có thể đăng ký thi cùng lúc nhiều Track trong 1 sự kiện không?",
+      a: "Mỗi đội thi chỉ được chọn duy nhất 1 Track công nghệ chính cho mỗi sự kiện để tập trung nguồn lực phát triển sản phẩm chất lượng nhất.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-[var(--border-muted)] px-[var(--space-xl)] py-[calc(var(--space-xl)*1.5)] mb-12">
+      <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-[var(--space-xl)]">
+        <div className="flex flex-col items-center text-center gap-2">
+          <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
+            KNOWLEDGE BASE // FAQ
+          </span>
+          <h2 className="font-display text-2xl font-bold uppercase text-[var(--text-primary)] md:text-4xl">
+            CÂU HỎI THƯỜNG GẶP
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
+          {FAQS.map((faq, idx) => {
+            const isOpen = openIdx === idx;
+            return (
+              <div
+                key={idx}
+                className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] overflow-hidden transition-all"
+              >
+                <button
+                  onClick={() => setOpenIdx(isOpen ? null : idx)}
+                  className="w-full p-4 text-left font-display text-sm font-bold text-[var(--text-primary)] flex items-center justify-between hover:text-[var(--accent-primary)] transition-colors"
+                >
+                  <span>{faq.q}</span>
+                  <span className="font-mono text-lg text-[var(--accent-primary)]">{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 font-sans text-xs leading-relaxed text-[var(--text-muted)] border-t border-[var(--border-muted)] pt-3">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
 }
