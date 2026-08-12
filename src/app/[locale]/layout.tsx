@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { NavigationBar } from "@/components/domain/NavigationBar";
+import { Footer } from "@/components/domain/Footer";
 import "@/styles/tokens.css";
 import "../globals.css";
 
@@ -60,7 +61,10 @@ export default async function RootLayout({
             <AuthProvider>
               <NavigationBar />
               <div className="flex-1 overflow-auto">
-                {children}
+                <div className="flex min-h-full flex-col">
+                  {children}
+                  <Footer />
+                </div>
               </div>
             </AuthProvider>
           </QueryProvider>
