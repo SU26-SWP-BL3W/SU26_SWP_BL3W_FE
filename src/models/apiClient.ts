@@ -77,6 +77,7 @@ function forceLogout(): void {
   localStorage.removeItem("mustChangePassword");
 
   if (window.location.pathname !== "/") {
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/auth";
   } else {
     window.location.reload();

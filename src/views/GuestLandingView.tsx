@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge, Button } from "@/components/ui";
+import { Link } from "@/i18n/routing";
 import { useGuestLandingViewModel } from "@/viewModels/useGuestLandingViewModel";
 import { useCountdown } from "@/lib/useCountdown";
 import type { RoundStatus } from "@/viewModels/useGuestLandingViewModel";
@@ -59,9 +60,11 @@ function HeroSection({
         </p>
 
         <div className="flex flex-col items-start gap-[var(--space-sm)] pt-[var(--space-md)]">
-          <Button disabled>Đăng ký ngay →</Button>
+          <Link href="/login">
+            <Button>Đăng nhập / Đăng ký →</Button>
+          </Link>
           <span className="font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]">
-            🔒 Sắp mở đăng ký — chờ Luồng Auth hoàn thành
+            Cổng đăng ký đang mở
           </span>
         </div>
 
@@ -110,10 +113,11 @@ function CountdownClock({
       className={`flex items-end gap-[var(--space-md)] font-mono ${
         isUrgent ? "animate-pulse text-[color:var(--color-danger)]" : "text-[color:var(--text-primary)]"
       }`}
+      suppressHydrationWarning
     >
       {units.map((u) => (
-        <div key={u.label} className="flex flex-col items-center">
-          <span className="text-3xl font-bold tabular-nums md:text-4xl">
+        <div key={u.label} className="flex flex-col items-center" suppressHydrationWarning>
+          <span className="text-3xl font-bold tabular-nums md:text-4xl" suppressHydrationWarning>
             {String(u.value).padStart(2, "0")}
           </span>
           <span className="text-[length:var(--fs-caption-sm)] uppercase tracking-wider text-[color:var(--text-muted)]">

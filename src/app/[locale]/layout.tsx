@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { NavigationBar } from "@/components/domain/NavigationBar";
 import "@/styles/tokens.css";
-import "./globals.css";
+import "../globals.css";
 
 // Cả 3 font đều có subset "vietnamese" (đã kiểm chứng qua Google Fonts metadata
 // API trước khi chọn) — bắt buộc vì toàn bộ UI là tiếng Việt có dấu.
@@ -29,14 +35,36 @@ export const metadata: Metadata = {
   description: "SEAL — SU26 SWP391 BL3W",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+  params
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  if (!routing.locales.includes(locale as typeof routing.locales[number])) {
+    notFound();
+  }
+
+  const messages = await getMessages();
+
   return (
     <html
-      lang="vi"
+      lang={locale}
       className={`${chakraPetch.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <QueryProvider>{children}</QueryProvider>
+        <NextIntlClientProvider messages={messages}>
+          <QueryProvider>
+            <AuthProvider>
+              <NavigationBar />
+              <div className="flex-1 overflow-auto">
+                {children}
+              </div>
+            </AuthProvider>
+          </QueryProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
