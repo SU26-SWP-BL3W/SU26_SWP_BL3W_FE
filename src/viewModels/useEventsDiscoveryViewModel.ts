@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MOCK_EVENTS, type MockEvent } from "./mockEventsData";
+import {
+  MOCK_EVENTS,
+  computeEventStatus,
+  STATUS_PRIORITY,
+  type EventDisplayStatus,
+  type EventCardData,
+} from "./mockEventsData";
 
-export type EventDisplayStatus = "registration_open" | "ongoing" | "upcoming" | "ended";
-
-export interface EventCardData extends MockEvent {
-  status: EventDisplayStatus;
-}
+export type { EventDisplayStatus, EventCardData };
 
 export type EventStatusFilter = "all" | EventDisplayStatus;
 export type EventSortOption = "relevant" | "soonest" | "newest" | "most_teams";
@@ -16,25 +18,6 @@ export interface TrackSummary {
   track: string;
   eventCount: number;
   totalPrizeVnd: number;
-}
-
-// Thứ tự ưu tiên dùng chung cho sort "relevant" lẫn chọn sự kiện nổi bật.
-const STATUS_PRIORITY: Record<EventDisplayStatus, number> = {
-  ongoing: 0,
-  registration_open: 1,
-  upcoming: 2,
-  ended: 3,
-};
-
-function computeEventStatus(ev: MockEvent, now: number): EventDisplayStatus {
-  const start = new Date(ev.startDate).getTime();
-  const end = new Date(ev.endDate).getTime();
-  const regEnd = new Date(ev.registrationEndDate).getTime();
-
-  if (now > end) return "ended";
-  if (now >= start) return "ongoing";
-  if (now <= regEnd) return "registration_open";
-  return "upcoming";
 }
 
 export function useEventsDiscoveryViewModel() {
@@ -109,33 +92,8 @@ export function useEventsDiscoveryViewModel() {
     return sorted;
   }, [allEvents, search, statusFilter, sort, trackFilter]);
 
-  // Sự kiện nổi bật: ưu tiên đang diễn ra, kế đến đang mở đăng ký, sớm nhất trước.
-  const featuredEvent = useMemo(() => {
-    const ongoing = allEvents.filter((e) => e.status === "ongoing");
-    if (ongoing.length > 0) return ongoing[0];
-    const open = allEvents
-      .filter((e) => e.status === "registration_open")
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    return open[0] ?? null;
-  }, [allEvents]);
-
-  // Lưới "Sự kiện nổi bật" (kiểu Devpost "Featured hackathons"): top 4 sự kiện
-  // chưa kết thúc theo cùng thứ tự ưu tiên với sort "relevant", bỏ sự kiện đã
-  // lên khối hero (featuredEvent) ở trên để tránh lặp lại.
-  const featuredEvents: EventCardData[] = useMemo(() => {
-    return [...allEvents]
-      .filter((e) => e.status !== "ended" && e.id !== featuredEvent?.id)
-      .sort(
-        (a, b) =>
-          STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] ||
-          new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
-      )
-      .slice(0, 4);
-  }, [allEvents, featuredEvent]);
-
-  // Bảng "Hạng mục nổi bật" (kiểu Devpost "Top hackathon themes"): gộp theo
-  // track trên TOÀN BỘ sự kiện (không theo bộ lọc hiện tại) — 1 sự kiện thuộc
-  // nhiều track thì cộng dồn vào từng track đó (giống cách Devpost đếm theme).
+  // Hạng mục + số sự kiện/tổng giải thưởng thuộc từng hạng mục — gộp trên
+  // TOÀN BỘ sự kiện (không theo bộ lọc hiện tại), dùng cho dải pill lọc nhanh.
   const topTracks: TrackSummary[] = useMemo(() => {
     const byTrack = new Map<string, TrackSummary>();
     for (const ev of allEvents) {
@@ -157,8 +115,6 @@ export function useEventsDiscoveryViewModel() {
   return {
     events: filteredEvents,
     totalCount: allEvents.length,
-    featuredEvent,
-    featuredEvents,
     topTracks,
     search,
     setSearch,

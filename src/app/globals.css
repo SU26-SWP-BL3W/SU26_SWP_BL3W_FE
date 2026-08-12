@@ -69,4 +69,73 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 0L60 17.3V51.9L30 69.2L0 51.9V17.3Z' fill='none' stroke='rgba(0,217,255,0.05)' stroke-width='1'/%3E%3Cpath d='M30 69.2L60 86.5V104M30 69.2L0 86.5V104M30 -17.3V0' fill='none' stroke='rgba(0,217,255,0.05)' stroke-width='1'/%3E%3C/svg%3E");
     background-repeat: repeat;
   }
+
+  /* Hiệu ứng "thở" cho hoạ tiết trang trí (khiên/glow lớn) — chỉ transform +
+     opacity (đúng quy tắc chỉ animate GPU-composited property, FE_Design_Spec
+     §19.1), tự tắt khi prefers-reduced-motion (§19.2 bắt buộc). */
+  @media (prefers-reduced-motion: no-preference) {
+    .hud-pulse {
+      animation: hud-pulse-breathe 3.2s ease-in-out infinite;
+    }
+
+    /* Quét sáng 1 lần khi khối vừa xuất hiện — bản rút gọn của "Scanline
+       Reveal" (FE_Design_Spec §18.4), chỉ chạy 1 lần (forwards), không lặp. */
+    .hud-scanline-once::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent, rgba(0, 217, 255, 0.14), transparent);
+      transform: scaleY(0);
+      transform-origin: top;
+      opacity: 1;
+      pointer-events: none;
+      animation: hud-scanline-sweep 0.9s ease-out forwards;
+    }
+  }
+
+  @keyframes hud-pulse-breathe {
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.55;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes hud-scanline-sweep {
+    0% {
+      transform: scaleY(0);
+      opacity: 1;
+    }
+    60% {
+      transform: scaleY(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scaleY(1);
+      opacity: 0;
+    }
+  }
+
+  /* Chấm nhấp nháy báo "đang diễn ra trực tiếp" — cạnh badge trạng thái. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hud-live-dot {
+      animation: hud-live-blink 1.6s ease-in-out infinite;
+    }
+  }
+
+  @keyframes hud-live-blink {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
+  }
 }

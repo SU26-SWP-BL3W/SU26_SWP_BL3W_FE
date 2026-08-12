@@ -29,7 +29,7 @@ export function Footer() {
           <h3 className="mb-[var(--space-sm)] text-sm font-semibold text-[color:var(--text-primary)]">Sự kiện</h3>
           <ul className="flex flex-col gap-[var(--space-xs)] text-sm text-[color:var(--text-muted)]">
             <li>
-              <Link href="/" className="hover:text-[color:var(--accent-primary)]">
+              <Link href="/events" className="hover:text-[color:var(--accent-primary)]">
                 Khám phá sự kiện
               </Link>
             </li>

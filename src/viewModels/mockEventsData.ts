@@ -255,3 +255,55 @@ export const DEFAULT_TRACK_META: TrackMeta = {
   accent: "var(--accent-primary)",
   description: "Hạng mục thi đấu công nghệ trong khuôn khổ sự kiện.",
 };
+
+// Trạng thái hiển thị của 1 sự kiện tại thời điểm "now" — dùng chung giữa
+// trang "/events" (danh sách đầy đủ) và Landing Portal (preview). Đặt ở đây
+// (cạnh MOCK_EVENTS) thay vì trong 1 viewModel cụ thể để cả 2 nơi cùng import
+// được, tránh viết trùng logic tính trạng thái ở 2 chỗ.
+export type EventDisplayStatus = "registration_open" | "ongoing" | "upcoming" | "ended";
+
+export interface EventCardData extends MockEvent {
+  status: EventDisplayStatus;
+}
+
+export const STATUS_PRIORITY: Record<EventDisplayStatus, number> = {
+  ongoing: 0,
+  registration_open: 1,
+  upcoming: 2,
+  ended: 3,
+};
+
+export function computeEventStatus(ev: MockEvent, now: number): EventDisplayStatus {
+  const start = new Date(ev.startDate).getTime();
+  const end = new Date(ev.endDate).getTime();
+  const regEnd = new Date(ev.registrationEndDate).getTime();
+
+  if (now > end) return "ended";
+  if (now >= start) return "ongoing";
+  if (now <= regEnd) return "registration_open";
+  return "upcoming";
+}
+
+// Nhãn/màu hiển thị theo trạng thái — dùng chung giữa "/events" và Landing
+// Portal preview để 2 nơi luôn khớp nhau (đúng nguyên tắc "1 khái niệm, 1
+// component/nguồn dữ liệu, dùng lại khắp nơi" trong FE_Design_Spec §20.8).
+export const STATUS_LABEL: Record<EventDisplayStatus, string> = {
+  registration_open: "Đang mở đăng ký",
+  ongoing: "Đang diễn ra",
+  upcoming: "Sắp diễn ra",
+  ended: "Đã kết thúc",
+};
+
+export const STATUS_DOT_VAR: Record<EventDisplayStatus, string> = {
+  registration_open: "var(--color-success)",
+  ongoing: "var(--accent-judge)",
+  upcoming: "var(--accent-team)",
+  ended: "var(--text-muted)",
+};
+
+export const STATUS_TONE: Record<EventDisplayStatus, "success" | "judge" | "neutral" | "team"> = {
+  registration_open: "success",
+  ongoing: "judge",
+  upcoming: "team",
+  ended: "neutral",
+};

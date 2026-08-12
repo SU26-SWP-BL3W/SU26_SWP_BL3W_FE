@@ -2,6 +2,7 @@
 
 import { Badge, Button } from "@/components/ui";
 import { Link } from "@/i18n/routing";
+import { SealShield } from "@/components/domain/SealShield";
 import { useEventDetailViewModel } from "@/viewModels/useEventDetailViewModel";
 import type { RoundStatus } from "@/viewModels/useEventDetailViewModel";
 import { useCountdown } from "@/lib/useCountdown";
@@ -31,7 +32,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-[var(--space-md)] p-[var(--space-xl)]">
         <p className="font-mono text-[color:var(--text-muted)]">Không tìm thấy sự kiện này.</p>
-        <Link href="/" className="font-mono text-sm text-[color:var(--accent-primary)] hover:text-white">
+        <Link href="/events" className="font-mono text-sm text-[color:var(--accent-primary)] hover:text-white">
           ← Quay lại danh sách sự kiện
         </Link>
       </main>
@@ -41,7 +42,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
   return (
     <main className="hud-lattice flex flex-1 flex-col">
       <Link
-        href="/"
+        href="/events"
         className="mx-auto mt-[var(--space-lg)] w-full max-w-[var(--container-max)] px-[var(--space-xl)] font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)] hover:text-[color:var(--accent-primary)]"
       >
         ← Tất cả sự kiện
@@ -132,17 +133,6 @@ function CountdownClock({
         </div>
       ))}
     </div>
-  );
-}
-
-// Khiên hexagon SEAL — vector SVG tự vẽ, 2 lớp hexagon lồng nhau.
-function SealShield({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <polygon points="50,2 95,26 95,74 50,98 5,74 5,26" fill="none" stroke="var(--accent-primary)" strokeWidth="1.5" opacity="0.6" />
-      <polygon points="50,16 82,33 82,67 50,84 18,67 18,33" fill="rgba(0,217,255,0.06)" stroke="var(--accent-primary)" strokeWidth="1" />
-      <polygon points="50,32 68,42 68,62 50,72 32,62 32,42" fill="rgba(0,217,255,0.12)" />
-    </svg>
   );
 }
 
