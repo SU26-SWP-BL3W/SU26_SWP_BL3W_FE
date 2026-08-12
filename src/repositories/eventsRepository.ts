@@ -33,7 +33,7 @@ export const eventsRepository = {
         RegistrationStartDate: payload.registrationStartDate,
         RegistrationEndDate: payload.registrationEndDate,
         Description: payload.description,
-        Status: "Active",
+        status: true,
       };
       return {
         data: mockCreated,

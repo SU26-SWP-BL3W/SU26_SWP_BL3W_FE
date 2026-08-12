@@ -53,17 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [activeRole, setActiveRole] = useState<EventRole | null>(null);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  // Khôi phục phiên làm việc từ localStorage khi load/reload trang (F5)
+  // Khôi phục phiên từ localStorage (F5 safe)
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("currentUser");
       const storedRole = localStorage.getItem("activeRole");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-      if (storedRole) {
-        setActiveRole(JSON.parse(storedRole));
-      }
+      if (storedUser) setUser(JSON.parse(storedUser));
+      if (storedRole) setActiveRole(JSON.parse(storedRole));
     } catch (e) {
       console.error("Lỗi khôi phục phiên từ localStorage:", e);
     } finally {
@@ -76,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveRole(newRole);
     if (typeof window !== "undefined") {
       localStorage.setItem("currentUser", JSON.stringify(newUser));
-      localStorage.setItem("accessToken", `mock-jwt-token-${newUser.UserID}`);
+      localStorage.setItem("accessToken", `mock-jwt-token-${newUser.id}`);
       if (newRole) {
         localStorage.setItem("activeRole", JSON.stringify(newRole));
       } else {
@@ -92,61 +88,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (roleName === "Admin") {
       newUser = {
-        UserID: "usr-admin-01",
-        Email: "admin.system@seal.edu.vn",
-        FullName: "Quản Trị Viên Hệ Thống (System Admin)",
-        IsAdmin: true,
-        IsApproved: true,
-        IsFpt: true,
+        id: "usr-admin-01",
+        email: "admin.system@seal.edu.vn",
+        fullName: "Quản Trị Viên Hệ Thống (System Admin)",
+        isAdmin: true,
+        isApproved: true,
+        isFpt: true,
+        isStudent: false,
       };
       newRole = null;
       targetPath = "/admin/dashboard";
     } else if (roleName === "Coordinator") {
       newUser = {
-        UserID: "usr-ec-01",
-        Email: "ec.coordinator@seal.edu.vn",
-        FullName: "Điều Phối Viên Sự Kiện (Event Coordinator)",
-        IsAdmin: false,
-        IsApproved: true,
-        IsFpt: true,
+        id: "usr-ec-01",
+        email: "ec.coordinator@seal.edu.vn",
+        fullName: "Điều Phối Viên Sự Kiện (Event Coordinator)",
+        isAdmin: false,
+        isApproved: true,
+        isFpt: true,
+        isStudent: false,
       };
       newRole = {
-        EventRoleId: "er-ec-100",
-        UserId: "usr-ec-01",
-        EventId: "seal-2026-mua-he",
-        RoleName: "Coordinator",
+        id: "er-ec-100",
+        userId: "usr-ec-01",
+        eventId: "seal-2026-mua-he",
+        roleName: "EventCoordinator",
       };
       targetPath = "/coordinator/dashboard";
     } else if (roleName === "Judge") {
       newUser = {
-        UserID: "usr-judge-01",
-        Email: "judge.ai@seal.edu.vn",
-        FullName: "Giám Khảo Chuyên Chấm (Judge)",
-        IsAdmin: false,
-        IsApproved: true,
-        IsFpt: true,
+        id: "usr-judge-01",
+        email: "judge.ai@seal.edu.vn",
+        fullName: "Giám Khảo Chuyên Chấm (Judge)",
+        isAdmin: false,
+        isApproved: true,
+        isFpt: true,
+        isStudent: false,
       };
       newRole = {
-        EventRoleId: "er-judge-100",
-        UserId: "usr-judge-01",
-        EventId: "seal-2026-mua-he",
-        RoleName: "Judge",
+        id: "er-judge-100",
+        userId: "usr-judge-01",
+        eventId: "seal-2026-mua-he",
+        roleName: "Judge",
       };
       targetPath = "/judge/events";
     } else {
       newUser = {
-        UserID: "usr-team-01",
-        Email: "leader.cybershield@fpt.edu.vn",
-        FullName: "Trưởng Nhóm CyberShield (Team Leader)",
-        IsAdmin: false,
-        IsApproved: true,
-        IsFpt: true,
+        id: "usr-team-01",
+        email: "leader.cybershield@fpt.edu.vn",
+        fullName: "Trưởng Nhóm CyberShield (Team Leader)",
+        isAdmin: false,
+        isApproved: true,
+        isFpt: true,
+        isStudent: true,
+        studentCode: "SE182704",
       };
       newRole = {
-        EventRoleId: "er-tl-100",
-        UserId: "usr-team-01",
-        EventId: "seal-2026-mua-he",
-        RoleName: "TeamLeader",
+        id: "er-tl-100",
+        userId: "usr-team-01",
+        eventId: "seal-2026-mua-he",
+        roleName: "TeamLeader",
       };
       targetPath = "/my-team";
     }
@@ -159,10 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const matchedPreset = PRESET_ACCOUNTS.find(
       (acc) => acc.email.toLowerCase() === email.trim().toLowerCase()
     );
-    if (matchedPreset) {
-      return loginWithRole(matchedPreset.roleName);
-    }
-    // Fallback: Nếu gõ email ngẫu nhiên có chữ admin -> Admin, ec/coord -> EC, judge -> Judge, khác -> Team
+    if (matchedPreset) return loginWithRole(matchedPreset.roleName);
     const lower = email.toLowerCase();
     if (lower.includes("admin")) return loginWithRole("Admin");
     if (lower.includes("coord") || lower.includes("ec")) return loginWithRole("Coordinator");
@@ -177,19 +175,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("currentUser");
       localStorage.removeItem("activeRole");
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        activeRole,
-        isInitialized,
-        loginWithRole,
-        loginWithEmail,
-        logout,
-      }}
+      value={{ user, activeRole, isInitialized, loginWithRole, loginWithEmail, logout }}
     >
       {children}
     </AuthContext.Provider>

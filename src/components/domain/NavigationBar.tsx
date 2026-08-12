@@ -12,7 +12,7 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
   const { user, activeRole, logout } = useAuth();
   const router = useRouter();
 
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const roleName = activeRole?.roleName === "EventCoordinator" ? "Coordinator" : activeRole?.roleName || (user?.isAdmin ? "Admin" : "Guest");
 
   const handleLogout = () => {
     logout();
@@ -33,7 +33,7 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
           </Link>
 
           {/* Menu dành riêng cho Role System Admin */}
-          {user?.IsAdmin && (
+          {user?.isAdmin && (
             <>
               <Link href="/admin/dashboard" className="text-xs font-mono text-[var(--color-danger)] font-bold hover:underline">
                 [ADM] Quản trị Hệ thống
@@ -45,16 +45,19 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
           )}
 
           {/* Menu dành riêng cho Event Coordinator */}
-          {activeRole?.RoleName === "Coordinator" && (
+          {(activeRole?.roleName === "Coordinator" || activeRole?.roleName === "EventCoordinator") && (
             <>
               <Link href="/coordinator/dashboard" className="text-xs font-mono text-[var(--accent-coordinator)] font-bold hover:underline">
                 [COORD] Điều Hành Sự Kiện
+              </Link>
+              <Link href="/coordinator/profiles" className="text-xs font-mono text-[var(--accent-coordinator)] hover:underline">
+                Duyệt Hồ Sơ
               </Link>
             </>
           )}
 
           {/* Menu dành riêng cho Giám khảo */}
-          {activeRole?.RoleName === "Judge" && (
+          {activeRole?.roleName === "Judge" && (
             <>
               <Link href="/judge/events" className="text-xs font-mono text-[var(--accent-judge)] font-bold hover:underline">
                 [JUDGE] Chấm Điểm
@@ -63,7 +66,7 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
           )}
 
           {/* Menu dành riêng cho Sinh viên / Đội thi */}
-          {(activeRole?.RoleName === "TeamLeader" || activeRole?.RoleName === "TeamMember") && (
+          {(activeRole?.roleName === "TeamLeader" || activeRole?.roleName === "TeamMember") && (
             <>
               <Link href="/my-team" className="text-xs font-mono text-[var(--accent-team)] hover:underline">
                 My Team
@@ -82,15 +85,15 @@ export function NavigationBar({ activePath }: NavigationBarProps) {
             <div className="flex items-center gap-2 bg-[var(--bg-input)] px-3 py-1 border border-[var(--border-muted)] hud-clipped">
               <User className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
               <span className="text-xs font-mono text-[var(--text-primary)] font-bold truncate max-w-[160px]">
-                {user.FullName}
+                {user.fullName}
               </span>
               <span
                 className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border uppercase ${
-                  user.IsAdmin
+                  user.isAdmin
                     ? "bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border-[var(--color-danger)]"
-                    : activeRole?.RoleName === "Coordinator"
+                    : (activeRole?.roleName === "Coordinator" || activeRole?.roleName === "EventCoordinator")
                     ? "bg-[rgba(167,139,250,0.1)] text-[var(--accent-coordinator)] border-[var(--accent-coordinator)]"
-                    : activeRole?.RoleName === "Judge"
+                    : activeRole?.roleName === "Judge"
                     ? "bg-[rgba(251,191,36,0.1)] text-[var(--accent-judge)] border-[var(--accent-judge)]"
                     : "bg-[rgba(56,189,248,0.1)] text-[var(--accent-team)] border-[var(--accent-team)]"
                 }`}

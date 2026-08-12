@@ -42,7 +42,7 @@ export const AdminCreateEventView: React.FC = () => {
     const res = await eventsRepository.createEvent(form);
 
     if (res.success && res.data) {
-      const eventId = res.data.EventId;
+      const eventId = res.data.id || res.data.EventId || "";
       // 2. Nếu có email EC chỉ định -> Gán EventRole EventCoordinator
       if (form.coordinatorEmail.trim()) {
         await staffRepository.assignRoleDirectly({

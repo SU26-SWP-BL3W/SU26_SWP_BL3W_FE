@@ -3,18 +3,27 @@
 import React, { ReactNode } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { HexagonLoader, Button, Card } from "@/components/ui";
-import { ShieldAlert, Lock, ArrowLeft } from "lucide-react";
+import { ShieldAlert, Lock } from "lucide-react";
 import Link from "next/link";
+
+type AllowedRole =
+  | "Admin"
+  | "Coordinator"
+  | "Judge"
+  | "Mentor"
+  | "TeamLeader"
+  | "TeamMember"
+  | "Student"
+  | "any-authenticated";
 
 interface RoleGuardProps {
   children: ReactNode;
-  allowedRoles: Array<"Admin" | "Coordinator" | "Judge" | "TeamLeader" | "TeamMember">;
+  allowedRoles: AllowedRole[];
 }
 
 export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) => {
   const { user, activeRole, isInitialized } = useAuth();
 
-  // Đang tải phiên làm việc từ localStorage
   if (!isInitialized) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
@@ -26,7 +35,6 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
     );
   }
 
-  // Chưa đăng nhập
   if (!user) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 hud-lattice">
@@ -38,7 +46,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
             YÊU CẦU ĐĂNG NHẬP
           </h3>
           <p className="font-mono text-xs text-[var(--text-muted)]">
-            Trang này yêu cầu bạn phải đăng nhập hệ thống với tài khoản có quyền truy cập phù hợp.
+            Trang này yêu cầu đăng nhập với tài khoản có quyền phù hợp.
           </p>
           <div className="pt-4 flex justify-center">
             <Link href="/login">
@@ -52,13 +60,22 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
     );
   }
 
-  // Kiểm tra quyền hạn
-  const isUserAdmin = user.IsAdmin;
-  const userRole = activeRole?.RoleName as "Coordinator" | "Judge" | "TeamLeader" | "TeamMember" | undefined;
+  // "any-authenticated": chỉ cần đăng nhập là đủ
+  if (allowedRoles.includes("any-authenticated")) {
+    return <>{children}</>;
+  }
+
+  const isUserAdmin = user.isAdmin;
+  const userRoleName = activeRole?.roleName;
+
+  // Map API roleName to display role
+  const userRoleDisplay = userRoleName === "EventCoordinator" ? "Coordinator" : userRoleName;
 
   const hasAccess =
     (allowedRoles.includes("Admin") && isUserAdmin) ||
-    (userRole && allowedRoles.includes(userRole));
+    (userRoleDisplay && allowedRoles.includes(userRoleDisplay as AllowedRole)) ||
+    // Student = user logged in but isStudent
+    (allowedRoles.includes("Student") && user.isStudent);
 
   if (!hasAccess) {
     return (
@@ -69,23 +86,23 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
           </div>
           <div className="space-y-1">
             <h3 className="font-display font-bold text-2xl text-[var(--color-danger)] uppercase tracking-wider">
-              403 // TỪ CHÍNH TRUY CẬP (ACCESS DENIED)
+              403 // TRUY CẬP BỊ TỪ CHỐI
             </h3>
             <p className="font-mono text-xs text-[var(--text-muted)]">
-              Tài khoản hiện tại của bạn là{" "}
+              Tài khoản hiện tại{" "}
               <span className="text-[var(--text-primary)] font-bold">
-                [{isUserAdmin ? "System Admin" : userRole || "Guest"}]
+                [{isUserAdmin ? "System Admin" : userRoleDisplay || "Guest"}]
               </span>{" "}
-              không có quyền truy cập trang này. Trang này chỉ dành cho vai trò:{" "}
+              không có quyền. Trang này chỉ dành cho:{" "}
               <span className="text-[var(--accent-primary)] font-bold">
                 [{allowedRoles.join(", ")}]
-              </span>.
+              </span>
             </p>
           </div>
           <div className="pt-4 flex justify-center gap-3">
             <Link href="/login">
               <Button variant="ghost" className="font-mono text-xs">
-                Đổi Tài Khoản / Đăng Nhập Lại
+                Đăng Nhập Lại
               </Button>
             </Link>
             <Link href="/">
@@ -99,6 +116,5 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
     );
   }
 
-  // Đủ quyền hạn -> Render trang con
   return <>{children}</>;
 };
