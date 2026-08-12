@@ -1,32 +1,42 @@
 /* ============================================================
-   DESIGN TOKENS — placeholder
-   Khung này CHƯA có bảng màu/typography chính thức — UI thật sẽ
-   được thiết kế lại từ đầu (không dùng lại giao diện cũ). Đây chỉ
-   là các nhóm token cần có để mọi component tra cứu 1 chỗ duy nhất,
-   thay giá trị bên dưới khi có design thật.
+   DESIGN TOKENS — "Command Deck" (HUD)
+   Nguồn: SEAL UI/UX Design Proposal (bản chi tiết). Đây là single
+   source of truth cho màu/font/spacing — mọi component đọc qua biến
+   ở đây, KHÔNG hardcode giá trị riêng hay tự định nghĩa token khác.
    ============================================================ */
 
 :root {
-  /* ---------- Color: Brand & Accent ---------- */
-  --color-primary: #2563eb;
-  --color-on-primary: #ffffff;
+  /* ---------- Color: Base surfaces ---------- */
+  --bg-base: #070b14;
+  --bg-panel: #0f1826;
+  --bg-input: #152238;
 
-  /* ---------- Color: Surface ---------- */
-  --color-canvas: #ffffff;
-  --color-surface-soft: #f5f5f5;
-  --color-hairline: #e2e2e2;
+  /* ---------- Color: Brand accents ---------- */
+  --accent-primary: #00d9ff;
+  --accent-secondary: #3b82f6;
+
+  /* ---------- Color: Role accents (Functional wayfinding — Team/Mentor/Judge/Coordinator) ---------- */
+  --accent-team: #38bdf8;
+  --accent-mentor: #2dd4bf;
+  --accent-judge: #fbbf24;
+  --accent-coordinator: #a78bfa;
+
+  /* ---------- Color: Semantic feedback ---------- */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
 
   /* ---------- Color: Text ---------- */
-  --color-ink: #111111;
-  --color-mute: #6b6b6b;
+  --text-primary: #e6edf7;
+  --text-muted: #8a97ac;
 
-  /* ---------- Color: Semantic ---------- */
-  --color-error: #dc2626;
-  --color-warning: #d97706;
-  --color-success: #16a34a;
+  /* ---------- Color: Borders ---------- */
+  --border-muted: #1e2e4a;
 
   /* ---------- Typography ---------- */
-  --font-sans: var(--font-geist-sans, "Segoe UI"), Arial, Helvetica, sans-serif;
+  --font-display-face: var(--font-chakra-petch), sans-serif;
+  --font-body-face: var(--font-ibm-plex-sans), sans-serif;
+  --font-mono-face: var(--font-jetbrains-mono), monospace;
   --fs-heading-lg: 24px;
   --fs-heading-md: 18px;
   --fs-body-md: 16px;
@@ -39,9 +49,11 @@
   --space-lg: 16px;
   --space-xl: 24px;
 
-  /* ---------- Radius ---------- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  /* ---------- Shape ---------- */
+  /* Góc vát (clip-path) thay border-radius — xem .hud-clipped trong globals.css.
+     Không dùng border-radius ở component chính (Button/Card/Input) theo đúng
+     "Geometric Discipline" của proposal. */
+  --clip-size: 12px;
 
   /* ---------- Layout ---------- */
   --container-max: 1280px;

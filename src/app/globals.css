@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-body-face);
+  --font-mono: var(--font-mono-face);
+  --font-display: var(--font-display-face);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Tailwind v4 dùng CSS Cascade Layers (@layer theme/base/components/utilities) —
+   rule KHÔNG nằm trong layer nào ("unlayered") luôn thắng MỌI rule có layer,
+   bất kể specificity. Nếu viết "body {...}" trần như code cũ, nó sẽ đè lên
+   toàn bộ utility class màu chữ (text-[...]) của Tailwind một cách vô hình.
+   Bắt buộc bọc trong @layer base để tham gia đúng thứ tự cascade. */
+@layer base {
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body-face);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================================
+   HUD utility classes — góc vát + glow theo vai trò (Command Deck)
+   ============================================================ */
+@layer utilities {
+  /* Góc vát trên-phải/dưới-trái, mượn hình khiên SEAL — dùng cho Button/Card/Input
+     thay vì border-radius tròn thông thường. */
+  .hud-clipped {
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--clip-size)) 0,
+      100% var(--clip-size),
+      100% 100%,
+      var(--clip-size) 100%,
+      0 calc(100% - var(--clip-size))
+    );
+  }
+
+  .hud-glow-cyan {
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.15);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+  }
+  .hud-glow-amber {
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+  .hud-glow-team {
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+  }
+  .hud-glow-mentor {
+    box-shadow: 0 0 10px rgba(45, 212, 191, 0.15);
+    border: 1px solid rgba(45, 212, 191, 0.3);
+  }
+  .hud-glow-coordinator {
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.15);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+  }
+
+  /* Lưới hexagon nền rất mờ (~5% opacity, baked thẳng vào màu SVG) — chất
+     "giáp công nghệ" theo mục 4.1 proposal, gần như 0kb vì chỉ 1 SVG lặp lại
+     làm background-image, không dùng ảnh/3D nặng. Chưa verify bằng ảnh chụp
+     (Browser pane không hiển thị được trong môi trường này) — mở thử trên
+     trình duyệt thật để xem lưới có đều/khớp mắt lưới hay không. */
+  .hud-lattice {
+    background-color: var(--bg-base);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 0L60 17.3V51.9L30 69.2L0 51.9V17.3Z' fill='none' stroke='rgba(0,217,255,0.05)' stroke-width='1'/%3E%3Cpath d='M30 69.2L60 86.5V104M30 69.2L0 86.5V104M30 -17.3V0' fill='none' stroke='rgba(0,217,255,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
 }
