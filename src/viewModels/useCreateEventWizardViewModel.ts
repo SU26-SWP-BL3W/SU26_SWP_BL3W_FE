@@ -290,19 +290,75 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Sự kiện cần ít nhất 1 Vòng thi (Round)!");
         return;
       }
-      setCurrentStep(3);
+      // Call API create rounds
+      setIsSubmitting(true);
+      try {
+        const eventId = createdEvent?.EventId || "ev-mock-1";
+        for (const rnd of rounds) {
+          await roundsRepository.createRound({
+            eventId,
+            roundName: rnd.roundName,
+            roundNumber: rnd.roundNumber,
+            startDate: rnd.startDate,
+            endDate: rnd.endDate,
+            advancementRule: rnd.advancementRule,
+          });
+        }
+        setCurrentStep(3);
+      } catch {
+        setErrorMessage("Lỗi khi khởi tạo danh sách Vòng thi!");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else if (currentStep === 3) {
       if (tracks.length === 0) {
         setErrorMessage("Vui lòng cấu hình ít nhất 1 Hạng mục thi (Track)!");
         return;
       }
-      setCurrentStep(4);
+      // Call API create tracks
+      setIsSubmitting(true);
+      try {
+        const roundId = rounds[0]?.id || "rnd-mock-1";
+        for (const trk of tracks) {
+          await tracksRepository.createTrack({
+            roundId,
+            trackName: trk.trackName,
+            description: trk.description,
+          });
+        }
+        setCurrentStep(4);
+      } catch {
+        setErrorMessage("Lỗi khi khởi tạo Hạng mục thi (Track)!");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else if (currentStep === 4) {
       if (!isValidWeight100) {
         setErrorMessage(`Tổng trọng số tiêu chí phải đạt ĐÚNG 100%! Hiện tại là ${totalWeight}%.`);
         return;
       }
-      setCurrentStep(5);
+      // Call API create template & criteria
+      setIsSubmitting(true);
+      try {
+        const resTpl = await templatesRepository.createTemplate({
+          templateName: templateName || "Mẫu Tiêu Chí Đánh Giá RBL Standard",
+          description: "Mẫu tiêu chí tổng hợp 100% trọng số",
+        });
+        const templateId = resTpl.data?.TemplateId || "tpl-mock-1";
+        for (const crit of criterias) {
+          await templatesRepository.addCriteriaToTemplate({
+            templateId,
+            criteriaId: crit.criteriaId,
+            weight: crit.weight,
+            maxScore: crit.maxScore,
+          });
+        }
+        setCurrentStep(5);
+      } catch {
+        setErrorMessage("Lỗi khi lưu Mẫu tiêu chí đánh giá RBL!");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else if (currentStep === 5) {
       // Final Finish Step
       setIsSubmitting(true);

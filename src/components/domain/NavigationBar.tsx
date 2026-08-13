@@ -91,7 +91,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🎯</span> Control Center BTC
+              <span>Control Center BTC</span>
             </Link>
 
             <Link
@@ -102,7 +102,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
+              <span>Tạo Sự Kiện Mới (Wizard)</span>
             </Link>
 
             <Link
@@ -113,7 +113,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🪪</span> Duyệt Thẻ Sinh Viên
+              <span>Duyệt Thẻ Sinh Viên</span>
             </Link>
 
             <Link
@@ -124,7 +124,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>📐</span> Kho Tiêu Chí RBL
+              <span>Kho Tiêu Chí RBL</span>
             </Link>
 
             <Link
@@ -135,7 +135,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🏆</span> Bảng Xếp Hạng Giải
+              <span>Bảng Xếp Hạng Giải</span>
             </Link>
           </nav>
         </div>
@@ -685,7 +685,7 @@ export function NavigationBar() {
               href="/mentor/tracks"
               className="text-[#2dd4bf] font-bold hover:underline flex items-center gap-1 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1 hud-clipped"
             >
-              <span>💼 Bàn Làm Việc Mentor</span>
+              <span>Bàn Làm Việc Mentor</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
@@ -695,7 +695,7 @@ export function NavigationBar() {
               href="/judge/scoring"
               className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped"
             >
-              <span>⚖ Bàn Chấm Giám Khảo</span>
+              <span>Bàn Chấm Giám Khảo</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
@@ -705,7 +705,7 @@ export function NavigationBar() {
               href="/admin/dashboard"
               className="text-[var(--color-danger)] font-bold hover:underline flex items-center gap-1 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-1 hud-clipped"
             >
-              <span>👑 Bảng Điều Hành Admin</span>
+              <span>Bảng Điều Hành Admin</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
@@ -715,7 +715,7 @@ export function NavigationBar() {
               href="/my-team"
               className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-3 py-1 hud-clipped"
             >
-              <span>👥 Đội Thi Của Tôi</span>
+              <span>Đội Thi Của Tôi</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
