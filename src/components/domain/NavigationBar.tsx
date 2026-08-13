@@ -489,7 +489,7 @@ export function NavigationBar() {
                 : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
-            Bảng Xếp Hạng
+            Bảng Vinh Danh
           </Link>
 
           {/* Quick Access Link based on Active Role */}

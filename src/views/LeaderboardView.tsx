@@ -29,7 +29,9 @@ const MOCK_TABLE_RESULTS: TableTeam[] = [
 ];
 
 export function LeaderboardView({ eventId }: { eventId: string }) {
-  const event = MOCK_EVENTS.find((e) => e.id === eventId) || MOCK_EVENTS[0];
+  const [selectedEventId, setSelectedEventId] = useState<string>(eventId || "all");
+  const event = MOCK_EVENTS.find((e) => e.id === selectedEventId) || MOCK_EVENTS[0];
+
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
   const [selectedRound, setSelectedRound] = useState<string>("all");
 
@@ -42,45 +44,58 @@ export function LeaderboardView({ eventId }: { eventId: string }) {
   return (
     <main className="hud-lattice flex flex-1 flex-col pb-16">
       
-      {/* ── Header ── */}
+      {/* ── Header Bảng Vinh Danh ── */}
       <section className="border-b border-[var(--border-muted)] bg-[var(--bg-panel)]/70">
         <div className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8">
           <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-judge)] tracking-[0.25em] uppercase mb-2">
-            <Link href="/events" className="hover:underline">SỰ KIỆN</Link>
+            <Link href="/" className="hover:underline">TRANG CHỦ</Link>
             <span>›</span>
-            <Link href={`/events/${event.id}`} className="hover:underline">{event.eventName}</Link>
-            <span>›</span>
-            <span className="text-[var(--accent-judge)]">BẢNG XẾP HẠNG</span>
+            <span className="text-[var(--accent-judge)]">BẢNG VINH DANH HỆ THỐNG (HALL OF FAME)</span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-[var(--text-primary)]">
-                Bảng Xếp Hạng Kết Quả Thi Đấu
+              <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-[var(--text-primary)] flex items-center gap-3">
+                <span>🏆</span> BẢNG VINH DANH CÁC MÙA GIẢI (HALL OF FAME)
               </h1>
               <p className="font-mono text-xs text-[var(--text-muted)] mt-1">
-                Sự kiện: <strong className="text-[var(--text-primary)]">{event.eventName}</strong> · Quỹ giải thưởng: <strong className="text-[var(--accent-judge)]">200.000.000 ₫</strong>
+                Vinh danh Top Đội Thi Xuất Sắc Nhất đạt giải cao tại các Cuộc thi Hackathon toàn quốc.
               </p>
             </div>
 
-            <Link href={`/events/${event.id}`}>
-              <button className="hud-clipped px-5 py-2.5 border border-[var(--border-muted)] font-mono text-xs text-[var(--text-muted)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors">
-                ← XEM THỂ LỆ & SỰ KIỆN
-              </button>
-            </Link>
+            {/* Dropdown Chọn Sự Kiện Để Xem Vinh Danh */}
+            <div className="flex items-center gap-2 bg-[var(--bg-input)] p-2 border border-[var(--accent-judge)]/50 hud-clipped">
+              <span className="font-mono text-xs text-[var(--accent-judge)] font-bold">🎯 CHỌN SỰ KIỆN:</span>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="bg-[var(--bg-panel)] text-[var(--text-primary)] font-mono text-xs font-bold px-3 py-1.5 border border-[var(--border-muted)] focus:outline-none focus:border-[var(--accent-judge)]"
+              >
+                <option value="all">🏆 Tất Cả Mùa Giải (Hall of Fame)</option>
+                {MOCK_EVENTS.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.eventName}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Top 3 E-Sports Podium Section ── */}
-      <LandingLeaderboardPodium eventName={event.eventName} season="MÙA HÈ 2026" totalPrizeVnd={200_000_000} />
+      <LandingLeaderboardPodium
+        eventName={selectedEventId === "all" ? "HỆ THỐNG XẾP HẠNG TOÀN QUỐC" : event.eventName}
+        season="MÙA HÈ 2026"
+        totalPrizeVnd={selectedEventId === "all" ? 500_000_000 : (event.totalPrizeVnd || 200_000_000)}
+      />
 
       {/* ── Full Score Table Section ── */}
       <section className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8">
         
         {/* Filters */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="font-mono text-xs font-bold text-[var(--accent-judge)] uppercase">
               BỘ LỌC ĐIỂM SỐ:
             </span>
