@@ -12,6 +12,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
 
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
+  const isJudgeRoute = pathname.includes("/judge");
   const isAdminRoute = pathname.includes("/admin");
   const isEventDetailRoute = pathname.includes("/events/") && (pathname.split("/events/")[1] || "").length > 0;
   const isEventInnerRoute =
@@ -24,6 +25,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const hasVerticalSidebar =
     isCoordinatorRoute ||
     isMentorRoute ||
+    isJudgeRoute ||
     isAdminRoute ||
     (isEventInnerRoute && roleName !== "Guest");
 

@@ -387,93 +387,130 @@ export function MySubmissionsView() {
             </div>
           ) : (
             visibleSubs.map(sub => (
-              <div
-                key={sub.id}
-                className="grid grid-cols-12 gap-4 px-5 py-4 border-b border-[var(--border-muted)] last:border-0 hover:bg-[rgba(56,189,248,0.02)] transition-colors items-center"
-              >
-                {/* Vòng */}
-                <div className="col-span-2 font-mono text-xs text-[var(--text-primary)] font-semibold">
-                  {sub.roundName}
-                </div>
+              <div key={sub.id} className="border-b border-[var(--border-muted)] last:border-0">
+                <div className="grid grid-cols-12 gap-4 px-5 py-4 hover:bg-[rgba(56,189,248,0.02)] transition-colors items-center">
+                  {/* Vòng */}
+                  <div className="col-span-2 font-mono text-xs text-[var(--text-primary)] font-semibold">
+                    {sub.roundName}
+                  </div>
 
-                {/* Track */}
-                <div className="col-span-2 font-mono text-xs text-[var(--text-muted)]">
-                  {sub.trackName}
-                </div>
+                  {/* Track */}
+                  <div className="col-span-2 font-mono text-xs text-[var(--text-muted)]">
+                    {sub.trackName}
+                  </div>
 
-                {/* URL */}
-                <div className="col-span-4 min-w-0">
-                  <a
-                    href={sub.submissionUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-mono text-xs text-[var(--accent-primary)] hover:underline truncate block"
-                    title={sub.submissionUrl}
-                  >
-                    {sub.submissionUrl}
-                  </a>
-                  {sub.description && (() => {
-                    try {
-                      const parsed = JSON.parse(sub.description);
-                      const extras = parsed.links?.filter((l: { url: string }) => l.url).length ?? 0;
-                      if (extras > 1) return (
-                        <p className="font-mono text-[9px] text-[var(--text-muted)]/60 mt-0.5">
-                          +{extras - 1} link khác
+                  {/* URL */}
+                  <div className="col-span-4 min-w-0">
+                    <a
+                      href={sub.submissionUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-xs text-[var(--accent-primary)] hover:underline truncate block"
+                      title={sub.submissionUrl}
+                    >
+                      {sub.submissionUrl}
+                    </a>
+                    {sub.description && (() => {
+                      try {
+                        const parsed = JSON.parse(sub.description);
+                        const extras = parsed.links?.filter((l: { url: string }) => l.url).length ?? 0;
+                        if (extras > 1) return (
+                          <p className="font-mono text-[9px] text-[var(--text-muted)]/60 mt-0.5">
+                            +{extras - 1} link khác
+                          </p>
+                        );
+                      } catch { /* plain text */ }
+                      return sub.description ? (
+                        <p className="font-mono text-[10px] text-[var(--text-muted)]/70 mt-0.5 truncate">
+                          {sub.description}
                         </p>
-                      );
-                    } catch { /* plain text */ }
-                    return sub.description ? (
-                      <p className="font-mono text-[10px] text-[var(--text-muted)]/70 mt-0.5 truncate">
-                        {sub.description}
+                      ) : null;
+                    })()}
+                  </div>
+
+                  {/* Status */}
+                  <div className="col-span-2">
+                    <StatusBadge sub={sub} />
+                    {sub.isEliminated && sub.eliminatedReason && (
+                      <p className="font-mono text-[9px] text-[var(--color-danger)]/70 mt-1">{sub.eliminatedReason}</p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-2 flex flex-wrap gap-1.5 items-center">
+                    {sub.isActive && !sub.isEliminated && (
+                      <button
+                        id={`edit-sub-${sub.id}`}
+                        onClick={() => setEditingSub(sub)}
+                        disabled={!isRegistered || !isLeader}
+                        title={
+                          !isRegistered
+                            ? "Đội thi cần được BTC duyệt đăng ký mới được phép sửa bài"
+                            : !isLeader
+                            ? "Chỉ Trưởng đội thi mới có quyền chỉnh sửa bài nộp"
+                            : "Chỉnh sửa nội dung bài nộp"
+                        }
+                        className={`font-mono text-[10px] px-2 py-1 border transition-colors uppercase flex items-center gap-1 ${
+                          isRegistered && isLeader
+                            ? "border-[var(--accent-team)]/40 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/10 cursor-pointer"
+                            : "border-[var(--border-muted)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
+                        }`}
+                      >
+                        ✏ SỬA BÀI
+                      </button>
+                    )}
+                    <Link href={`/appeals?subId=${sub.id}`}>
+                      <button
+                        className="font-mono text-[10px] px-2 py-1 border border-[var(--accent-coordinator)]/40 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 transition-colors uppercase flex items-center gap-1"
+                        title="Nộp đơn phúc khảo/khiếu nại kết quả cho bài nộp này"
+                      >
+                        ⚖ PHÚC KHẢO
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* ── Evaluation Transparency: Public Judge Scores & Comments ── */}
+                <div className="px-5 py-4 bg-[var(--bg-base)] border-t border-[var(--border-muted)] flex flex-col gap-3 font-mono">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[var(--accent-judge)] uppercase flex items-center gap-2">
+                      <span>⚖ BẢNG ĐIỂM & NHẬN XÉT CỦA GIÁM KHẢO</span>
+                    </span>
+                    <span className="text-[10px] text-[var(--text-muted)]">
+                      // MINH BẠCH DÀNH CHO ĐỘI THI
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/30 hud-clipped space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-[var(--text-primary)]">
+                          👨‍⚖️ TS. Nguyễn Văn A
+                        </span>
+                        <span className="font-bold text-[var(--accent-judge)]">9.2 / 10</span>
+                      </div>
+                      <p className="text-[11px] text-[var(--text-muted)] italic">
+                        "Kiến trúc microservices xuất sắc, mã nguồn sạch sẽ và có tính ứng dụng thực tế cao."
                       </p>
-                    ) : null;
-                  })()}
-                </div>
+                    </div>
 
-                {/* Status */}
-                <div className="col-span-2">
-                  <StatusBadge sub={sub} />
-                  {sub.isEliminated && sub.eliminatedReason && (
-                    <p className="font-mono text-[9px] text-[var(--color-danger)]/70 mt-1">{sub.eliminatedReason}</p>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-2 flex flex-wrap gap-1.5 items-center">
-                  {sub.isActive && !sub.isEliminated && (
-                    <button
-                      id={`edit-sub-${sub.id}`}
-                      onClick={() => setEditingSub(sub)}
-                      disabled={!isRegistered || !isLeader}
-                      title={
-                        !isRegistered
-                          ? "Đội thi cần được BTC duyệt đăng ký mới được phép sửa bài"
-                          : !isLeader
-                          ? "Chỉ Trưởng đội thi mới có quyền chỉnh sửa bài nộp"
-                          : "Chỉnh sửa nội dung bài nộp"
-                      }
-                      className={`font-mono text-[10px] px-2 py-1 border transition-colors uppercase flex items-center gap-1 ${
-                        isRegistered && isLeader
-                          ? "border-[var(--accent-team)]/40 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/10 cursor-pointer"
-                          : "border-[var(--border-muted)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
-                      }`}
-                    >
-                      ✏ SỬA BÀI
-                    </button>
-                  )}
-                  <Link href={`/appeals?subId=${sub.id}`}>
-                    <button
-                      className="font-mono text-[10px] px-2 py-1 border border-[var(--accent-coordinator)]/40 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 transition-colors uppercase flex items-center gap-1"
-                      title="Nộp đơn phúc khảo/khiếu nại kết quả cho bài nộp này"
-                    >
-                      ⚖ PHÚC KHẢO
-                    </button>
-                  </Link>
+                    <div className="p-3 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/30 hud-clipped space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-[var(--text-primary)]">
+                          👨‍⚖️ ThS. Trần Thị B
+                        </span>
+                        <span className="font-bold text-[var(--accent-judge)]">9.5 / 10</span>
+                      </div>
+                      <p className="text-[11px] text-[var(--text-muted)] italic">
+                        "Giải pháp an ninh mạng ấn tượng, tiêu chí kỹ thuật đáp ứng đầy đủ yêu cầu RBL."
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))
           )}
-        </div>
+      </div>
 
         {/* Footer */}
         {visibleSubs.length > 0 && (
