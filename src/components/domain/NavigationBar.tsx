@@ -18,8 +18,9 @@ export function NavigationBar() {
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
   const isAdminRoute = pathname.includes("/admin");
+  const isEventDetailRoute = pathname.includes("/events/") && (pathname.split("/events/")[1] || "").length > 0;
   const isEventInnerRoute =
-    pathname.includes("/events/") ||
+    isEventDetailRoute ||
     pathname.includes("/my-team") ||
     pathname.includes("/my-submissions") ||
     pathname.includes("/appeals") ||
@@ -241,12 +242,7 @@ export function NavigationBar() {
   // ─────────────────────────────────────────────────────────────
   // CHẾ ĐỘ 1C: NAVBAR DỌC KHI THÍ SINH VÀO DÀNH RIÊNG CHO WORKSPACE ĐỘI THI
   // ─────────────────────────────────────────────────────────────
-  const isParticipantWorkspaceRoute =
-    pathname.includes("/my-team") ||
-    pathname.includes("/my-submissions") ||
-    pathname.includes("/appeals");
-
-  if (isParticipantWorkspaceRoute && roleName !== "Guest") {
+  if (showParticipantSidebar) {
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[var(--border-muted)] flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
         <div className="flex flex-col gap-6">

@@ -13,8 +13,9 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
   const isAdminRoute = pathname.includes("/admin");
+  const isEventDetailRoute = pathname.includes("/events/") && (pathname.split("/events/")[1] || "").length > 0;
   const isEventInnerRoute =
-    pathname.includes("/events/") ||
+    isEventDetailRoute ||
     pathname.includes("/my-team") ||
     pathname.includes("/my-submissions") ||
     pathname.includes("/appeals") ||
