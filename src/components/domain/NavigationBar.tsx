@@ -74,12 +74,23 @@ export function NavigationBar() {
             <Link
               href="/coordinator/dashboard"
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/coordinator")
+                pathname === "/coordinator/dashboard"
                   ? "bg-[#a855f7] text-white shadow-sm"
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
               <span>🎯</span> Control Center BTC
+            </Link>
+
+            <Link
+              href="/coordinator/events/new"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/events/new")
+                  ? "bg-[var(--accent-primary)] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
             </Link>
 
             <Link

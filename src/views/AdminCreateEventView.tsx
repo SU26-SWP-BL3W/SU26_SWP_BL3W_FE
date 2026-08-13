@@ -80,7 +80,7 @@ export const AdminCreateEventView: React.FC = () => {
                 Admin Khởi Tạo Sự Kiện Mới (POST /api/Events)
               </h2>
               <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-                Chỉ System Admin (`User.IsAdmin = true`) được tạo khung Event chính và chỉ định Event Coordinator phụ trách điều phối.
+                Tạo Khung Sự Kiện Chính và chỉ định Event Coordinator (Trưởng Ban Tổ Chức) phụ trách điều phối sự kiện.
               </p>
             </div>
             <span className="px-3 py-1 font-mono text-xs bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30 hud-clipped font-bold">
