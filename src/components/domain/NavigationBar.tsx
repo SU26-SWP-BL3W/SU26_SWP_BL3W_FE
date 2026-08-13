@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 import { getMockTeam } from "@/viewModels/mockTeamData";
 import { SealShield } from "./SealShield";
 import { NotificationBell } from "./NotificationBell";
+import { hasEventPermission } from "@/lib/permissions";
 
 export function NavigationBar() {
   const pathname = usePathname() || "";
@@ -34,6 +35,12 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
   // ─────────────────────────────────────────────────────────────
   if (showCoordinatorSidebar) {
+    const urlEventId = pathname.includes("/events/")
+      ? pathname.split("/events/")[1]?.split("/")[0]
+      : null;
+    const activeViewEventId = urlEventId || currentEventId;
+    const isAuthorizedCoord = hasEventPermission(user, activeRole, activeViewEventId);
+
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[#a855f7]/40 flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
         <div className="flex flex-col gap-6">
@@ -55,15 +62,19 @@ export function NavigationBar() {
           </div>
 
           {/* Coordinator Profile Card */}
-          <div className="p-3 bg-[var(--bg-input)] border border-[#a855f7]/40 hud-clipped flex flex-col gap-1">
-            <span className="font-mono text-[9px] text-[#a855f7] font-bold uppercase tracking-widest">
-              EVENT COORDINATOR
+          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
+            isAuthorizedCoord ? "border-[#a855f7]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
+          }`}>
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
+              isAuthorizedCoord ? "text-[#a855f7]" : "text-[var(--color-warning)]"
+            }`}>
+              {isAuthorizedCoord ? "EVENT COORDINATOR" : "SỰ KIỆN CHƯA PHÂN CÔNG"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Trần Văn Điều Phối"}
             </span>
             <span className="font-mono text-[10px] text-[var(--text-muted)]">
-              Sự kiện: SEAL Hackathon 2026
+              {isAuthorizedCoord ? "BTC Sự kiện chính thức" : "Quyền hạn: Read-Only (Chỉ Xem)"}
             </span>
           </div>
 
@@ -73,38 +84,66 @@ export function NavigationBar() {
               MENU BAN TỔ CHỨC
             </span>
 
-            <Link
-              href="/coordinator/dashboard"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname === "/coordinator/dashboard"
-                  ? "bg-[#a855f7] text-white shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>🎯</span> Control Center BTC
-            </Link>
+            {isAuthorizedCoord ? (
+              <>
+                <Link
+                  href="/coordinator/dashboard"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname === "/coordinator/dashboard"
+                      ? "bg-[#a855f7] text-white shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🎯</span> Control Center BTC
+                </Link>
 
-            <Link
-              href="/coordinator/events/new"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/events/new")
-                  ? "bg-[var(--accent-primary)] text-white shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
-            </Link>
+                <Link
+                  href="/coordinator/events/new"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/events/new")
+                      ? "bg-[var(--accent-primary)] text-white shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
+                </Link>
 
-            <Link
-              href={`/events/${currentEventId}/leaderboard`}
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/leaderboard")
-                  ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>🏆</span> Bảng Xếp Hạng Giải
-            </Link>
+                <Link
+                  href={`/events/${activeViewEventId}/leaderboard`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/leaderboard")
+                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🏆</span> Bảng Xếp Hạng Giải
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={`/events/${activeViewEventId}`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
+                      ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
+                </Link>
+
+                <Link
+                  href={`/events/${activeViewEventId}/leaderboard`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/leaderboard")
+                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🏆</span> Bảng Xếp Hạng
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -112,7 +151,9 @@ export function NavigationBar() {
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
           <div className="flex items-center justify-between font-mono text-xs">
             <span className="text-[var(--text-muted)]">Vai trò:</span>
-            <span className="text-[#a855f7] font-bold">Coordinator</span>
+            <span className="text-[#a855f7] font-bold">
+              {isAuthorizedCoord ? "Coordinator" : "User (Chưa Cấp Quyền Event)"}
+            </span>
           </div>
 
           {/* Role Switcher Bar */}
@@ -144,6 +185,12 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1B: NAVBAR DỌC DÀNH RIÊNG CHO MENTOR CỐ VẤN
   // ─────────────────────────────────────────────────────────────
   if (showMentorSidebar) {
+    const urlEventId = pathname.includes("/events/")
+      ? pathname.split("/events/")[1]?.split("/")[0]
+      : null;
+    const activeViewEventId = urlEventId || currentEventId;
+    const isAuthorizedMentor = hasEventPermission(user, activeRole, activeViewEventId);
+
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[#2dd4bf]/30 flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
         <div className="flex flex-col gap-6">
@@ -165,15 +212,19 @@ export function NavigationBar() {
           </div>
 
           {/* Mentor Profile Card */}
-          <div className="p-3 bg-[var(--bg-input)] border border-[#2dd4bf]/40 hud-clipped flex flex-col gap-1">
-            <span className="font-mono text-[9px] text-[#2dd4bf] font-bold uppercase tracking-widest">
-              MENTOR CỐ VẤN
+          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
+            isAuthorizedMentor ? "border-[#2dd4bf]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
+          }`}>
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
+              isAuthorizedMentor ? "text-[#2dd4bf]" : "text-[var(--color-warning)]"
+            }`}>
+              {isAuthorizedMentor ? "MENTOR CỐ VẤN" : "CHƯA PHÂN CÔNG CỐ VẤN"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Cố Vấn Chuyên Môn"}
             </span>
             <span className="font-mono text-[10px] text-[var(--text-muted)]">
-              Phân công: AI & Machine Learning
+              {isAuthorizedMentor ? "Phân công: AI & Machine Learning" : "Quyền hạn: Read-Only (Chỉ Xem)"}
             </span>
           </div>
 
@@ -183,27 +234,55 @@ export function NavigationBar() {
               MENU CỐ VẤN
             </span>
 
-            <Link
-              href="/mentor/tracks"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/mentor")
-                  ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>🎯</span> Bàn Làm Việc Cố Vấn
-            </Link>
+            {isAuthorizedMentor ? (
+              <>
+                <Link
+                  href="/mentor/tracks"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/mentor")
+                      ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🎯</span> Bàn Làm Việc Cố Vấn
+                </Link>
 
-            <Link
-              href={`/events/${currentEventId}/leaderboard`}
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/leaderboard")
-                  ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>🏆</span> Bảng Xếp Hạng Track
-            </Link>
+                <Link
+                  href={`/events/${activeViewEventId}/leaderboard`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/leaderboard")
+                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🏆</span> Bảng Xếp Hạng Track
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={`/events/${activeViewEventId}`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
+                      ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
+                </Link>
+
+                <Link
+                  href={`/events/${activeViewEventId}/leaderboard`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/leaderboard")
+                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🏆</span> Bảng Xếp Hạng
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -211,7 +290,9 @@ export function NavigationBar() {
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
           <div className="flex items-center justify-between font-mono text-xs">
             <span className="text-[var(--text-muted)]">Vai trò:</span>
-            <span className="text-[#2dd4bf] font-bold">Mentor</span>
+            <span className="text-[#2dd4bf] font-bold">
+              {isAuthorizedMentor ? "Mentor" : "User (Chưa Phân Công Cố Vấn)"}
+            </span>
           </div>
 
           {/* Role Switcher Bar */}
