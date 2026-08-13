@@ -7,52 +7,50 @@
 
 :root {
   /* ---------- Color: Base surfaces ---------- */
-  --bg-base: #070b14;
-  --bg-panel: #0f1826;
-  --bg-input: #152238;
+  /* Nền navy sẫm kết hợp dải gradient đa màu sống động */
+  --bg-base:  #0a0f1d;        /* Deep Space Navy */
+  --bg-panel: #111a2e;        /* Panel bề mặt tương phản sắc nét */
+  --bg-input: #17243e;        /* Input field vừa vặn */
 
-  /* ---------- Color: Brand accents ---------- */
-  --accent-primary: #00d9ff;
-  --accent-secondary: #3b82f6;
+  /* ---------- Color: Brand accents (Phối đa sắc Mint Teal + Cyber Violet) ---------- */
+  --accent-primary:   #2dd4bf;  /* Electric Mint tươi mát */
+  --accent-secondary: #a78bfa;  /* Cyber Violet quyến rũ */
 
-  /* ---------- Color: Role accents (Functional wayfinding — Team/Mentor/Judge/Coordinator) ---------- */
-  --accent-team: #38bdf8;
-  --accent-mentor: #2dd4bf;
-  --accent-judge: #fbbf24;
-  --accent-coordinator: #a78bfa;
+  /* ---------- Color: Role accents (Đa sắc phân vai sống động) ---------- */
+  --accent-team:        #38bdf8;  /* Sky Blue sinh động cho Team */
+  --accent-mentor:      #34d399;  /* Mint Emerald cho Mentor */
+  --accent-judge:       #fbbf24;  /* Amber Gold rực rỡ cho Giám khảo & Vinh danh */
+  --accent-coordinator: #c084fc;  /* Electric Purple cho BTC */
 
   /* ---------- Color: Semantic feedback ---------- */
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
+  --color-success: #10b981;   /* Vibrant Emerald */
+  --color-danger:  #f87171;   /* Soft Coral Red */
+  --color-warning: #f59e0b;   /* Warm Amber */
 
   /* ---------- Color: Text ---------- */
-  --text-primary: #e6edf7;
-  --text-muted: #8a97ac;
+  --text-primary: #f1f5f9;    /* Clean Off-white */
+  --text-muted:   #94a3b8;    /* Slate Gray rõ ràng */
 
   /* ---------- Color: Borders ---------- */
-  --border-muted: #1e2e4a;
+  --border-muted: #24344d;    /* Viền sắc nét phân khối */
 
   /* ---------- Typography ---------- */
   --font-display-face: var(--font-chakra-petch), sans-serif;
-  --font-body-face: var(--font-ibm-plex-sans), sans-serif;
-  --font-mono-face: var(--font-jetbrains-mono), monospace;
-  --fs-heading-lg: 24px;
-  --fs-heading-md: 18px;
-  --fs-body-md: 16px;
-  --fs-caption-sm: 12px;
+  --font-body-face:    var(--font-ibm-plex-sans), sans-serif;
+  --font-mono-face:    var(--font-jetbrains-mono), monospace;
+  --fs-heading-lg: 26px;
+  --fs-heading-md: 20px;
+  --fs-body-md:    16px;
+  --fs-caption-sm: 13px;
 
-  /* ---------- Spacing (8px base) ---------- */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
+  /* ---------- Spacing (Thoáng đãng) ---------- */
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 36px;
 
   /* ---------- Shape ---------- */
-  /* Góc vát (clip-path) thay border-radius — xem .hud-clipped trong globals.css.
-     Không dùng border-radius ở component chính (Button/Card/Input) theo đúng
-     "Geometric Discipline" của proposal. */
   --clip-size: 12px;
 
   /* ---------- Layout ---------- */

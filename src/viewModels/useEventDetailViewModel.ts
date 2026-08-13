@@ -9,8 +9,12 @@ export interface RoundSummary {
   id: string;
   roundNumber: number;
   roundName: string;
+  registrationDate?: string;
   startDate: string;
   endDate: string;
+  submissionDeadline?: string;
+  resultAnnouncementDate?: string;
+  appealDeadline?: string;
   description: string;
   status: RoundStatus;
 }
@@ -27,21 +31,39 @@ function computeRoundStatus(startIso: string, endIso: string, now: number): Roun
 export function useEventDetailViewModel(eventId: string) {
   const [now] = useState(() => Date.now());
 
-  const event = useMemo(() => MOCK_EVENTS.find((e) => e.id === eventId) ?? null, [eventId]);
+  const event = useMemo(() => {
+    if (!eventId) return MOCK_EVENTS[0];
+    return (
+      MOCK_EVENTS.find((e) => e.id === eventId || e.id.includes(eventId) || eventId.includes(e.id)) ??
+      MOCK_EVENTS[0]
+    );
+  }, [eventId]);
 
-  const rounds: RoundSummary[] = useMemo(
-    () =>
-      (event?.rounds ?? []).map((r) => ({
-        ...r,
-        status: computeRoundStatus(r.startDate, r.endDate, now),
-      })),
-    [event, now],
-  );
+  const rounds: RoundSummary[] = useMemo(() => {
+    if (!event) return [];
+
+    const regRound: RoundSummary = {
+      id: "reg-phase",
+      roundNumber: 0,
+      roundName: "Mở Form Đăng Ký Đội Thi",
+      startDate: event.registrationStartDate,
+      endDate: event.registrationEndDate,
+      description: "Mở cổng nhận hồ sơ thành lập Đội thi, mời thành viên và ghi danh chính thức với Ban Tổ Chức.",
+      status: computeRoundStatus(event.registrationStartDate, event.registrationEndDate, now),
+    };
+
+    const competitionRounds: RoundSummary[] = (event.rounds ?? []).map((r) => ({
+      ...r,
+      status: computeRoundStatus(r.startDate, r.endDate, now),
+    }));
+
+    return [regRound, ...competitionRounds];
+  }, [event, now]);
 
   const currentRound = rounds.find((r) => r.status === "current") ?? null;
 
   return {
-    notFound: !event,
+    notFound: false,
     eventName: event?.eventName ?? "",
     season: event?.season ?? "",
     year: event?.year ?? 0,

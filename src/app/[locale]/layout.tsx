@@ -6,13 +6,10 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
-import { NavigationBar } from "@/components/domain/NavigationBar";
-import { Footer } from "@/components/domain/Footer";
+import { AppLayoutWrapper } from "@/components/domain/AppLayoutWrapper";
 import "@/styles/tokens.css";
 import "../globals.css";
 
-// Cả 3 font đều có subset "vietnamese" (đã kiểm chứng qua Google Fonts metadata
-// API trước khi chọn) — bắt buộc vì toàn bộ UI là tiếng Việt có dấu.
 const chakraPetch = Chakra_Petch({
   variable: "--font-chakra-petch",
   subsets: ["latin", "vietnamese"],
@@ -55,17 +52,11 @@ export default async function RootLayout({
       lang={locale}
       className={`${chakraPetch.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
-              <NavigationBar />
-              <div className="flex-1 overflow-auto">
-                <div className="flex min-h-full flex-col">
-                  {children}
-                  <Footer />
-                </div>
-              </div>
+              <AppLayoutWrapper>{children}</AppLayoutWrapper>
             </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>

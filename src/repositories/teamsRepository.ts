@@ -6,7 +6,7 @@ export interface Team {
   EventId: string;
   TeamName: string;
   Description?: string;
-  Status: string; // Forming, PendingApproval, Registered, Disqualified
+  Status: "Forming" | "PendingApproval" | "Registered" | "Disqualified";
 }
 
 export interface TeamMember {
@@ -14,16 +14,30 @@ export interface TeamMember {
   UserId: string;
   FullName: string;
   Email: string;
-  RoleName: string; // TeamLeader, TeamMember
-  IsApproved: boolean; // Dùng để check warning nếu chưa duyệt profile
+  RoleName: "TeamLeader" | "TeamMember";
+  IsApproved: boolean;
+  School?: string;
+}
+
+export interface TeamInvitation {
+  InvitationId: string;
+  TeamId: string;
+  Email: string;
+  Status: "Pending" | "Accepted" | "Declined" | "Expired";
+  SentAt: string;
+  ExpiresAt: string;
 }
 
 export function useMyTeam() {
   return useQuery({
     queryKey: ["my-team"],
     queryFn: async () => {
-      const res = await apiClient.get<{ team: Team | null; members: TeamMember[] }>("/Teams/my-team");
-      return res.data;
+      try {
+        const res = await apiClient.get<{ team: Team | null; members: TeamMember[]; invitations?: TeamInvitation[] }>("/Teams/my-team");
+        return res.data;
+      } catch {
+        return null;
+      }
     },
   });
 }
@@ -46,6 +60,113 @@ export function useInviteMember() {
   return useMutation({
     mutationFn: async ({ teamId, email }: { teamId: string; email: string }) => {
       const res = await apiClient.post(`/Teams/${teamId}/invitations`, { email });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export function useCancelInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, invitationId }: { teamId: string; invitationId: string }) => {
+      await apiClient.delete(`/Teams/${teamId}/invitations/${invitationId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export const useRespondInvitation = useCancelInvitation;
+
+export function useAcceptOrDeclineInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invitationId, isAccepted }: { invitationId: string; isAccepted: boolean }) => {
+      const res = await apiClient.post(`/Teams/invitations/${invitationId}/respond`, { isAccepted });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-invitations"] });
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export function useConfirmRegistration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      const res = await apiClient.post(`/Teams/${teamId}/confirm-registration`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export function useGetPendingTeams() {
+  return useQuery({
+    queryKey: ["pending-teams"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<Team[]>("/Teams/pending");
+        return res.data;
+      } catch {
+        return [];
+      }
+    },
+  });
+}
+
+export function useApproveTeamRegistration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      const res = await apiClient.post(`/Teams/${teamId}/approve-registration`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-teams"] });
+    },
+  });
+}
+
+export function useRejectTeamRegistration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, reason }: { teamId: string; reason?: string }) => {
+      const res = await apiClient.post(`/Teams/${teamId}/reject-registration`, { reason });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-teams"] });
+    },
+  });
+}
+
+export function useTransferLeadership() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, targetUserId }: { teamId: string; targetUserId: string }) => {
+      const res = await apiClient.post(`/Teams/${teamId}/transfer-leadership`, { targetUserId });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export function useLeaveTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      const res = await apiClient.post(`/Teams/${teamId}/leave`);
       return res.data;
     },
     onSuccess: () => {

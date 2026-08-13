@@ -5,6 +5,7 @@ type Tone =
   | "success"
   | "warning"
   | "danger"
+  | "info"
   | "team"
   | "mentor"
   | "judge"
@@ -15,6 +16,7 @@ const TONE_VALUE: Record<Tone, string> = {
   success: "var(--color-success)",
   warning: "var(--color-warning)",
   danger: "var(--color-danger)",
+  info: "var(--accent-primary)",
   team: "var(--accent-team)",
   mentor: "var(--accent-mentor)",
   judge: "var(--accent-judge)",
