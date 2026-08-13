@@ -21,17 +21,50 @@ import type { SubmitResult, TemplateCriteriaEntity, CriteriaEntity } from "@/mod
 import { hasEventPermission } from "@/lib/permissions";
 import { Link } from "@/i18n/routing";
 
+const MOCK_JUDGE_SUBMISSIONS: SubmitResult[] = [
+  {
+    id: "sub-1",
+    teamId: "CyberShield_FPT",
+    submissionUrl: "https://github.com/cybershield/rbl-platform",
+    description: "CyberShield_FPT - Nền tảng Đội thi tự động hóa đánh giá độ tin cậy RBL và kiến trúc vi dịch vụ.",
+    submittedAt: "12/08/2026",
+  },
+  {
+    id: "sub-2",
+    teamId: "ByteKnights",
+    submissionUrl: "https://github.com/byteknights/threat-scanner",
+    description: "ByteKnights - Ứng dụng Quét lỗ hổng an ninh mạng tự động dựa trên AI Agent.",
+    submittedAt: "12/08/2026",
+  },
+  {
+    id: "sub-3",
+    teamId: "NexusCore",
+    submissionUrl: "https://github.com/nexuscore/smart-campus",
+    description: "NexusCore - Giải pháp IoT quản lý năng lượng thông minh cho khuôn viên Đại học.",
+    submittedAt: "12/08/2026",
+  },
+  {
+    id: "sub-4",
+    teamId: "DevPulse_HQ",
+    submissionUrl: "https://github.com/devpulse/review-bot",
+    description: "DevPulse_HQ - Bot hỗ trợ Review Code tự động và đánh giá tiêu chí bảo mật CI/CD.",
+    submittedAt: "12/08/2026",
+  },
+];
+
 export function JudgeScoringView() {
   const { user, activeRole } = useAuth();
   const [selectedTrackId, setSelectedTrackId] = useState("track-1");
-  const [selectedSubmission, setSelectedSubmission] = useState<SubmitResult | null>(null);
 
   const activeEventId = activeRole?.eventId || "event-seal-2026";
   const isAuthorizedJudge = hasEventPermission(user, activeRole, activeEventId);
 
   // Lấy danh sách bài nộp thuộc Track
-  const { data: submissions = [], isLoading: loadingSubmissions, refetch } =
+  const { data: apiSubmissions = [], isLoading: loadingSubmissions, refetch } =
     useGetJudgeSubmissions(selectedTrackId);
+
+  const displaySubmissions: any[] = (apiSubmissions.length > 0 ? apiSubmissions : MOCK_JUDGE_SUBMISSIONS) as any[];
+  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(MOCK_JUDGE_SUBMISSIONS[0]);
 
   // Lấy danh sách Tiêu chí (Template Criteria)
   const { data: criterias = [] } = useGetCriterias();
@@ -170,20 +203,20 @@ export function JudgeScoringView() {
         {/* Left Column: Submissions List */}
         <div className="flex flex-col gap-4">
           <h2 className="font-display text-lg font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2 flex items-center justify-between">
-            <span>BÀI NỘP ({submissions.length})</span>
+            <span>BÀI NỘP ({displaySubmissions.length})</span>
           </h2>
 
           {loadingSubmissions ? (
             <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
               Đang tải danh sách bài nộp...
             </div>
-          ) : submissions.length === 0 ? (
+          ) : displaySubmissions.length === 0 ? (
             <Card className="p-8 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
               Chưa có bài nộp nào trong Hạng mục này.
             </Card>
           ) : (
             <div className="space-y-3">
-              {submissions.map((sub) => {
+              {displaySubmissions.map((sub) => {
                 const isSelected = selectedSubmission?.id === sub.id;
                 return (
                   <button
@@ -202,8 +235,8 @@ export function JudgeScoringView() {
                       <span className="font-mono text-sm font-bold text-[var(--text-primary)]">
                         Đội: #{sub.teamId || "TEAM-MOCK"}
                       </span>
-                      <Badge tone={sub.isActive ? "success" : "neutral"}>
-                        {sub.isActive ? "ĐÃ NỘP" : "DRAFT"}
+                      <Badge tone={sub.submittedAt ? "success" : "neutral"}>
+                        {sub.submittedAt ? "ĐÃ NỘP" : "DRAFT"}
                       </Badge>
                     </div>
                     <p className="text-xs font-mono text-[var(--text-muted)] truncate">
