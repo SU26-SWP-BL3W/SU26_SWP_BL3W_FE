@@ -24,7 +24,7 @@ export function useMyAssignedJudgeTracks() {
 
   eventsList.forEach((ev) => {
     const tracks = ev.tracks || ["AI & Machine Learning", "Bảo mật & An ninh mạng", "Phát triển Web", "IoT & Phần cứng thông minh"];
-    tracks.forEach((track, idx) => {
+    tracks.forEach((track: string, idx: number) => {
       assignedTracks.push({
         eventId: ev.id,
         eventName: ev.eventName,

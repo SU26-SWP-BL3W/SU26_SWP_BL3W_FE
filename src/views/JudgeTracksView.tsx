@@ -3,7 +3,7 @@
 import React from "react";
 import { Button, Card, Badge } from "@/components/ui";
 import { useMyAssignedJudgeTracks } from "@/viewModels/useMyAssignedJudgeTracks";
-import { Award, CheckCircle2, Clock, ArrowRight, ShieldCheck, FileCheck2, Filter } from "lucide-react";
+import { Award, CheckCircle2, Clock, ArrowRight, ShieldCheck, FileCheck2 } from "lucide-react";
 import Link from "next/link";
 
 export const JudgeTracksView: React.FC = () => {
@@ -108,9 +108,9 @@ export const JudgeTracksView: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs text-[var(--accent-judge)] font-bold uppercase">
-                      {item.season} // {item.roundName}
+                      {item.season} {"//"} {item.roundName}
                     </span>
-                    <Badge variant="status" status="ONGOING">
+                    <Badge tone={item.status === "IN_PROGRESS" ? "judge" : "warning"}>
                       {item.status === "IN_PROGRESS" ? "ĐANG CHẤM" : "CHỜ CHẤM"}
                     </Badge>
                   </div>
