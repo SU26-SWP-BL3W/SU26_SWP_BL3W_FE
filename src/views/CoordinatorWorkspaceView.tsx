@@ -220,6 +220,131 @@ export function CoordinatorWorkspaceView({ eventId = "event-seal-2026" }: { even
           </div>
         </div>
 
+        {/* ── Realtime Metrics Overview ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono">
+          <div className="p-4 bg-[var(--bg-panel)] border border-[#a855f7]/30 hud-clipped flex flex-col gap-1">
+            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">SỰ KIỆN ĐƯỢC GÁN</span>
+            <span className="font-display text-2xl font-bold text-[#a855f7]">02 CUỘC THI</span>
+            <span className="text-[9px] text-[var(--color-success)]">✓ Admin đã bàn giao</span>
+          </div>
+
+          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--accent-team)]/30 hud-clipped flex flex-col gap-1">
+            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">THẺ SV CHỜ DUYỆT</span>
+            <span className="font-display text-2xl font-bold text-[var(--accent-team)]">{pendingProfiles.length} HỒ SƠ</span>
+            <span className="text-[9px] text-[var(--accent-team)]">🪪 Cần xác thực MSSV</span>
+          </div>
+
+          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/30 hud-clipped flex flex-col gap-1">
+            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">ĐỘI THI ĐÃ NỘP HỒ SƠ</span>
+            <span className="font-display text-2xl font-bold text-[var(--accent-judge)]">{pendingTeams.length} ĐỘI THI</span>
+            <span className="text-[9px] text-[var(--color-warning)]">⏱ Đang chờ BTC duyệt</span>
+          </div>
+
+          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--color-success)]/30 hud-clipped flex flex-col gap-1">
+            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">ĐƠN PHÚC KHẢO</span>
+            <span className="font-display text-2xl font-bold text-[var(--color-success)]">{pendingAppeals.length} KHIẾU NẠI</span>
+            <span className="text-[9px] text-[var(--text-muted)]">⚖ Cần xử lý điểm số</span>
+          </div>
+        </div>
+
+        {/* ── Quick Operational Tool Shortcuts ── */}
+        <div className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-3 font-mono">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+              <span>⚡ TRUNG TÂM THAO TÁC NHANH BAN TỔ CHỨC (COORDINATOR TOOLKIT)</span>
+            </span>
+            <span className="text-[10px] text-[var(--text-muted)]">// OPERATIONAL SHORTCUTS</span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <Link
+              href="/coordinator/events/new"
+              className="p-3 bg-[var(--bg-input)] border border-[var(--accent-primary)]/40 hover:border-[var(--accent-primary)] text-[var(--text-primary)] font-bold hud-clipped flex items-center justify-between transition-all"
+            >
+              <span>➕ Tạo Sự Kiện Wizard</span>
+              <span className="text-[var(--accent-primary)]">➔</span>
+            </Link>
+
+            <Link
+              href="/coordinator/profiles"
+              className="p-3 bg-[var(--bg-input)] border border-[var(--accent-team)]/40 hover:border-[var(--accent-team)] text-[var(--text-primary)] font-bold hud-clipped flex items-center justify-between transition-all"
+            >
+              <span>🪪 Duyệt Thẻ Sinh Viên</span>
+              <span className="text-[var(--accent-team)]">➔</span>
+            </Link>
+
+            <Link
+              href="/coordinator/calibration"
+              className="p-3 bg-[var(--bg-input)] border border-[var(--accent-judge)]/40 hover:border-[var(--accent-judge)] text-[var(--text-primary)] font-bold hud-clipped flex items-center justify-between transition-all"
+            >
+              <span>📐 Kho Tiêu Chí RBL</span>
+              <span className="text-[var(--accent-judge)]">➔</span>
+            </Link>
+
+            <Link
+              href="/coordinator/appeals"
+              className="p-3 bg-[var(--bg-input)] border border-[#a855f7]/40 hover:border-[#a855f7] text-[var(--text-primary)] font-bold hud-clipped flex items-center justify-between transition-all"
+            >
+              <span>⚖ Giải Quyết Phúc Khảo</span>
+              <span className="text-[#a855f7]">➔</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Assigned Events Board (Sự Kiện Admin Giao Khung) ── */}
+        <div className="space-y-3 font-mono">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[#a855f7] uppercase tracking-wider flex items-center gap-2">
+              <span>🏆 CUỘC THI ADMIN ĐÃ BÀN GIAO CHO BẠN BẢN QUẢN LÝ</span>
+            </span>
+            <span className="text-[10px] text-[var(--text-muted)]">// ASSIGNED EVENTS</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 bg-[var(--bg-panel)] border border-[#a855f7]/40 hud-clipped space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge tone="success">ĐANG VẬN HÀNH</Badge>
+                <span className="text-[10px] text-[var(--text-muted)]">Quỹ thưởng: 200 Triệu</span>
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-white uppercase">SEAL Hackathon Mùa Hè 2026</h3>
+                <p className="text-xs text-[var(--text-muted)]">3 Hạng mục thi đấu · 4 Rounds · 32 Đội thi đã phê duyệt</p>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
+                <Link href="/coordinator/calibration">
+                  <button className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] font-bold text-xs hud-clipped hover:bg-[var(--accent-judge)] hover:text-black">
+                    📐 Gán Tiêu Chí RBL
+                  </button>
+                </Link>
+                <button
+                  onClick={() => setActiveTab("teams")}
+                  className="px-3 py-1.5 bg-[#a855f7] text-white font-bold text-xs hud-clipped hover:bg-purple-600"
+                >
+                  🎯 Quản Lý Tác Vụ BTC ➔
+                </button>
+              </div>
+            </div>
+
+            <div className="p-5 bg-[var(--bg-panel)] border border-[var(--color-warning)]/40 hud-clipped space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge tone="warning">MỚI NHẬN TỪ ADMIN - CHƯA CẤU HÌNH WIZARD</Badge>
+                <span className="text-[10px] text-[var(--text-muted)]">Quỹ thưởng: 150 Triệu</span>
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-white uppercase">RBL Blockchain Innovation Cup 2026</h3>
+                <p className="text-xs text-[var(--text-muted)]">Cần hoàn thiện Vòng thi, Hạng mục Tracks & Mời Giám khảo</p>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
+                <Link href="/coordinator/events/new">
+                  <button className="px-4 py-1.5 bg-[var(--accent-primary)] text-black font-bold text-xs hud-clipped hover:bg-teal-300">
+                    ⚡ TIẾP TỤC CẤU HÌNH (WIZARD) ➔
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ── Event Permission Authorization Status Banner ── */}
         {!hasPermission && (
           <div className="p-4 bg-[var(--color-warning)]/10 border border-[var(--color-warning)] text-[var(--color-warning)] hud-clipped font-mono text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
