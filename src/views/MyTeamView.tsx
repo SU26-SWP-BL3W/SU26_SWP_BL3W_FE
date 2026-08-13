@@ -175,7 +175,7 @@ export function MyTeamView() {
   const handleTransferLeadership = async (targetUserId: string) => {
     if (!confirm("Bạn có chắc chắn muốn chuyển quyền Đội trưởng?")) return;
     try {
-      await transferLeader({ teamId, newLeaderUserId: targetUserId });
+      await transferLeader({ teamId, newLeaderId: targetUserId });
     } catch {
       alert("Đã chuyển quyền Đội trưởng thành công!");
     }

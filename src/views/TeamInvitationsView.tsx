@@ -1,20 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import apiClient from "@/models/apiClient";
-import { useRespondInvitation } from "@/repositories/teamsRepository";
+import { useGetMyInvitations, useRespondInvitation } from "@/repositories/teamsRepository";
 import { Button, Card, Badge } from "@/components/ui";
 import { Mail, CheckCircle2, XCircle, RefreshCw, Shield } from "lucide-react";
-import type { TeamInvitation, BaseResponse } from "@/models/entities";
+import type { TeamInvitation } from "@/models/entities";
 
 export function TeamInvitationsView() {
-  const { data: invitations = [], isLoading, refetch } = useQuery({
-    queryKey: ["my-invitations"],
-    queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<TeamInvitation[]>>("/Teams/to-me/my-invitation");
-      return res.data.data ?? [];
-    },
-  });
+  const { data: invitations = [], isLoading, refetch } = useGetMyInvitations();
 
   const { mutateAsync: respond, isPending } = useRespondInvitation();
 

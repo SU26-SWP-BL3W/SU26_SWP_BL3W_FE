@@ -13,11 +13,11 @@ export interface CreateRoundPayload {
 
 export const roundsRepository = {
   /**
-   * Cấu hình Vòng thi mới (Event Coordinator - POST /api/Rounds)
+   * Cấu hình Vòng thi mới (Event Coordinator - POST /Rounds)
    */
   async createRound(payload: CreateRoundPayload): Promise<BaseResponse<RoundEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<RoundEntity>>("/api/Rounds", payload);
+      const res = await apiClient.post<BaseResponse<RoundEntity>>("/Rounds", payload);
       return res.data;
     } catch (err: any) {
       const mockCreated: RoundEntity = {
@@ -39,11 +39,11 @@ export const roundsRepository = {
   },
 
   /**
-   * Lấy danh sách Vòng thi theo EventId (GET /api/Rounds/{eventId})
+   * Lấy danh sách Vòng thi theo EventId (GET /Rounds/{eventId})
    */
   async getRoundsByEventId(eventId: string): Promise<BaseResponse<RoundEntity[]>> {
     try {
-      const res = await apiClient.get<BaseResponse<RoundEntity[]>>(`/api/Rounds/event/${eventId}`);
+      const res = await apiClient.get<BaseResponse<RoundEntity[]>>(`/Rounds/event/${eventId}`);
       return res.data;
     } catch (err: any) {
       return {

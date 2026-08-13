@@ -5,7 +5,17 @@ import { NavigationBar } from "@/components/domain/NavigationBar";
 import { Footer } from "@/components/domain/Footer";
 import { Button, Card, Badge, Table } from "@/components/ui";
 import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
-import { Shield, Plus, Calendar, Layers, Users, Award, Settings, ArrowRight, Activity } from "lucide-react";
+import {
+  Shield,
+  Plus,
+  Calendar,
+  Layers,
+  Users,
+  Award,
+  Settings,
+  ArrowRight,
+  Activity,
+} from "lucide-react";
 import Link from "next/link";
 
 export const CoordinatorDashboardView: React.FC = () => {
@@ -115,7 +125,7 @@ export const CoordinatorDashboardView: React.FC = () => {
                   <th>MÙA GIẢI</th>
                   <th>SỐ VÒNG THI</th>
                   <th>HẠNG MỤC (TRACKS)</th>
-                  <th>THỜI GIAN diễn ra</th>
+                  <th>THỜI GIAN DIỄN RA</th>
                   <th className="text-center">THAO TÁC</th>
                 </tr>
               </thead>
@@ -139,27 +149,27 @@ export const CoordinatorDashboardView: React.FC = () => {
                         {ev.tracks.slice(0, 2).map((t, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 bg-[var(--bg-input)] text-[10px] font-mono text-[var(--text-muted)] border border-[var(--border-muted)]"
+                            className="inline-block px-1.5 py-0.5 text-[10px] font-mono bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-muted)]"
                           >
                             {t}
                           </span>
                         ))}
                         {ev.tracks.length > 2 && (
-                          <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                          <span className="text-[10px] font-mono text-[var(--accent-primary)]">
                             +{ev.tracks.length - 2}
                           </span>
                         )}
                       </div>
                     </td>
                     <td>
-                      <div className="font-mono text-xs text-[var(--text-muted)]">
-                        {new Date(ev.startDate).toLocaleDateString("vi-VN")} - {new Date(ev.endDate).toLocaleDateString("vi-VN")}
-                      </div>
+                      <span className="font-mono text-xs text-[var(--text-muted)]">
+                        15/07 — 20/09/2026
+                      </span>
                     </td>
                     <td className="text-center">
-                      <Link href="/coordinator/events/new">
-                        <Button variant="ghost" className="text-xs font-mono">
-                          <Settings className="w-3.5 h-3.5" /> Quản Lý
+                      <Link href={`/coordinator/events/new`}>
+                        <Button variant="ghost" className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)]">
+                          <Settings className="w-3.5 h-3.5" /> Quản lý
                         </Button>
                       </Link>
                     </td>

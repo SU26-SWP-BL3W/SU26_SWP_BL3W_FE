@@ -12,11 +12,11 @@ export interface CreateTrackPayload {
 
 export const tracksRepository = {
   /**
-   * Tạo Hạng mục (Track) mới trong vòng thi (Event Coordinator - POST /api/Tracks)
+   * Tạo Hạng mục (Track) mới trong vòng thi (Event Coordinator - POST /Tracks)
    */
   async createTrack(payload: CreateTrackPayload): Promise<BaseResponse<TrackEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<TrackEntity>>("/api/Tracks", payload);
+      const res = await apiClient.post<BaseResponse<TrackEntity>>("/Tracks", payload);
       return res.data;
     } catch (err: any) {
       const mockCreated: TrackEntity = {
@@ -37,12 +37,12 @@ export const tracksRepository = {
   },
 
   /**
-   * Gắn Template tiêu chí vào Track (PATCH /api/Tracks/{id}/assign-template)
+   * Gắn Template tiêu chí vào Track (PATCH /Tracks/{id}/assign-template)
    * Yêu cầu Backend validate tổng weight trong Template phải = 100%.
    */
   async assignTemplateToTrack(trackId: string, templateId: string): Promise<BaseResponse<boolean>> {
     try {
-      const res = await apiClient.patch<BaseResponse<boolean>>(`/api/Tracks/${trackId}/assign-template`, {
+      const res = await apiClient.patch<BaseResponse<boolean>>(`/Tracks/${trackId}/assign-template`, {
         templateId,
       });
       return res.data;

@@ -60,7 +60,7 @@ export const AdminDashboardView: React.FC = () => {
 
           <Link href="/admin/events/new">
             <Button variant="primary" className="hud-glow-cyan flex items-center gap-2 bg-[var(--color-danger)] hover:bg-white text-[var(--bg-base)]">
-              <Plus className="w-4 h-4" /> // TẠO SỰ KIỆN MỚI (POST /api/Events) &gt;
+              <Plus className="w-4 h-4" /> // TẠO SỰ KIỆN MỚI &gt;
             </Button>
           </Link>
         </div>

@@ -103,16 +103,20 @@ export function LoginView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {PRESET_ACCOUNTS.map((acc) => {
                 const getRoleBadge = (role: string) => {
-                  if (role === "Admin") return { tone: "danger" as const, label: "[ADM-SYSTEM]", color: "border-[var(--color-danger)] text-[var(--color-danger)]" };
-                  if (role === "Coordinator") return { tone: "coordinator" as const, label: "[EVENT-COORD]", color: "border-[var(--accent-coordinator)] text-[var(--accent-coordinator)]" };
-                  if (role === "Judge") return { tone: "judge" as const, label: "[JUDGE-STAFF]", color: "border-[var(--accent-judge)] text-[var(--accent-judge)]" };
-                  return { tone: "team" as const, label: "[TEAM-LEAD]", color: "border-[var(--accent-team)] text-[var(--accent-team)]" };
+                  if (role === "Admin") return { label: "[ADMIN]", color: "border-[var(--color-danger)] text-[var(--color-danger)]" };
+                  if (role === "Coordinator") return { label: "[COORD]", color: "border-[var(--accent-coordinator)] text-[var(--accent-coordinator)]" };
+                  if (role === "Judge") return { label: "[JUDGE]", color: "border-[var(--accent-judge)] text-[var(--accent-judge)]" };
+                  if (role === "Mentor") return { label: "[MENTOR]", color: "border-[var(--accent-mentor)] text-[var(--accent-mentor)]" };
+                  if (role === "TeamLeader") return { label: "[LEADER]", color: "border-[var(--accent-team)] text-[var(--accent-team)]" };
+                  if (role === "TeamMember") return { label: "[MEMBER]", color: "border-cyan-400 text-cyan-400" };
+                  if (role === "InvitedStudent") return { label: "[INVITED]", color: "border-yellow-400 text-yellow-400" };
+                  return { label: "[LOCKED 2G]", color: "border-red-500 text-red-500" };
                 };
                 const badge = getRoleBadge(acc.roleName);
 
                 return (
                   <button
-                    key={acc.roleName}
+                    key={acc.id}
                     type="button"
                     onClick={() => handlePresetSelect(acc)}
                     className="p-3 bg-[var(--bg-input)] hover:bg-[var(--bg-base)] border border-[var(--border-muted)] hover:border-[var(--accent-primary)] text-left transition-all duration-200 hud-clipped group space-y-1"

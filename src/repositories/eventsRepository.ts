@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import { EventEntity } from "@/models/entities";
 import { BaseResponse } from "@/models/types";
@@ -16,16 +17,25 @@ export interface CreateEventPayload {
   maxTeams?: number;
 }
 
+export function useGetEvents() {
+  return useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const res = await eventsRepository.getEvents();
+      return res.data ?? [];
+    },
+  });
+}
+
 export const eventsRepository = {
   /**
-   * Tạo Event mới (Dành cho Admin - POST /api/Events)
+   * Tạo Event mới (Dành cho Admin - POST /Events)
    */
   async createEvent(payload: CreateEventPayload): Promise<BaseResponse<EventEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<EventEntity>>("/api/Events", payload);
+      const res = await apiClient.post<BaseResponse<EventEntity>>("/Events", payload);
       return res.data;
     } catch (err: any) {
-      // Fallback mock khi BE chưa chạy API
       const mockCreated: EventEntity = {
         EventId: `ev-${Date.now()}`,
         EventName: payload.eventName,
@@ -51,12 +61,26 @@ export const eventsRepository = {
   },
 
   /**
-   * Lấy danh sách sự kiện (GET /api/Events)
+   * Lấy danh sách sự kiện (GET /Events)
    */
   async getEvents(): Promise<BaseResponse<EventEntity[]>> {
     try {
-      const res = await apiClient.get<BaseResponse<EventEntity[]>>("/api/Events");
-      return res.data;
+      const res = await apiClient.get<any>("/Events");
+      const rawData = res.data?.data;
+      let eventsList: EventEntity[] = [];
+
+      if (Array.isArray(rawData)) {
+        eventsList = rawData;
+      } else if (rawData && Array.isArray(rawData.data)) {
+        eventsList = rawData.data;
+      }
+
+      return {
+        data: eventsList,
+        message: res.data?.message || "Thành công",
+        statusCode: res.data?.statusCode || 200,
+        success: res.data?.success ?? true,
+      };
     } catch (err: any) {
       return {
         data: [],
@@ -68,12 +92,18 @@ export const eventsRepository = {
   },
 
   /**
-   * Lấy chi tiết 1 sự kiện theo ID (GET /api/Events/{id})
+   * Lấy chi tiết 1 sự kiện theo ID (GET /Events/{id})
    */
   async getEventById(eventId: string): Promise<BaseResponse<EventEntity | null>> {
     try {
-      const res = await apiClient.get<BaseResponse<EventEntity>>(`/api/Events/${eventId}`);
-      return res.data;
+      const res = await apiClient.get<any>(`/Events/${eventId}`);
+      const rawData = res.data?.data;
+      return {
+        data: rawData || null,
+        message: res.data?.message,
+        statusCode: res.data?.statusCode || 200,
+        success: res.data?.success ?? true,
+      };
     } catch (err: any) {
       return {
         data: null,

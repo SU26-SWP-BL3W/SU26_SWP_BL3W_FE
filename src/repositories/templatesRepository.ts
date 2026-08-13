@@ -62,11 +62,11 @@ export const MOCK_DEFAULT_CRITERIAS: CriteriaEntity[] = [
 
 export const templatesRepository = {
   /**
-   * Lấy danh sách tất cả tiêu chí khả dụng trong hệ thống (GET /api/Criterias)
+   * Lấy danh sách tất cả tiêu chí khả dụng trong hệ thống (GET /Criterias)
    */
   async getAllCriterias(): Promise<BaseResponse<CriteriaEntity[]>> {
     try {
-      const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/api/Criterias");
+      const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
       return res.data;
     } catch (err: any) {
       return {
@@ -79,11 +79,11 @@ export const templatesRepository = {
   },
 
   /**
-   * Tạo Mẫu tiêu chí (Template) mới (POST /api/Templates)
+   * Tạo Mẫu tiêu chí (Template) mới (POST /Templates)
    */
   async createTemplate(payload: CreateTemplatePayload): Promise<BaseResponse<TemplateEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<TemplateEntity>>("/api/Templates", payload);
+      const res = await apiClient.post<BaseResponse<TemplateEntity>>("/Templates", payload);
       return res.data;
     } catch (err: any) {
       const mockCreated: TemplateEntity = {
@@ -101,12 +101,12 @@ export const templatesRepository = {
   },
 
   /**
-   * Thêm tiêu chí vào Template kèm Trọng số & MaxScore (POST /api/Templates/{id}/criteria)
+   * Thêm tiêu chí vào Template kèm Trọng số & MaxScore (POST /Templates/{id}/criteria)
    */
   async addCriteriaToTemplate(payload: AddCriteriaToTemplatePayload): Promise<BaseResponse<TemplateCriteriaEntity>> {
     try {
       const res = await apiClient.post<BaseResponse<TemplateCriteriaEntity>>(
-        `/api/Templates/${payload.templateId}/criteria`,
+        `/Templates/${payload.templateId}/criteria`,
         payload
       );
       return res.data;

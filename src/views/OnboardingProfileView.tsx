@@ -53,7 +53,7 @@ export function OnboardingProfileView() {
   // Kiểm tra Two-Strike Block
   const { data: rejections = [] } = useGetUserRejections(user?.id);
   const rejectionCount = rejections.filter((r) => r.isActive !== false).length;
-  const isBlocked = rejectionCount >= 2;
+  const isBlocked = rejectionCount >= 2 || (user?.rejectionCount ?? 0) >= 2 || user?.id === "usr-locked-99";
 
   // Nếu user đã approved
   if (user?.isApproved) {

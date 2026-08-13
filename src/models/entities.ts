@@ -11,6 +11,7 @@
 export interface User {
   id?: string;
   schoolId?: string | null;
+  schoolName?: string | null;
   studentCode?: string | null;
   email?: string;
   fullName?: string;
@@ -21,6 +22,9 @@ export interface User {
   isRejected?: boolean;
   isTemporary?: boolean;
   photoStudentCardUrl?: string | null;
+  studentCardPhotoUrl?: string | null;
+  rejectionCount?: number;
+  createdTime?: string;
 
   // Legacy aliases
   UserID?: string;
@@ -245,8 +249,10 @@ export interface EventRole {
   userId?: string;
   eventId?: string;
   teamId?: string | null;
+  teamName?: string | null;
   trackId?: string | null;
   roleName?: string;
+  roleNameDetail?: string;
   expiredAt?: string | null;
 
   // Legacy aliases
@@ -294,6 +300,7 @@ export type TeamStatus = 'Forming' | 'PendingApproval' | 'Registered' | 'Disqual
 export interface TeamEntity {
   id?: string;
   eventId?: string;
+  leaderId?: string;
   teamName?: string;
   description?: string | null;
   status?: TeamStatus;
@@ -313,19 +320,27 @@ export interface TeamEntity {
 export interface TeamInvitation {
   id?: string;
   teamId?: string;
+  teamName?: string;
   email?: string;
+  invitedEmail?: string;
+  invitedByName?: string;
   status?: 'Pending' | 'Accepted' | 'Declined' | 'Expired';
   expiresAt?: string;
   createdTime?: string;
 }
 
 export interface TeamMemberModel {
+  id?: string;
+  teamId?: string;
   userId?: string;
   fullName?: string | null;
   email?: string | null;
   studentCode?: string | null;
   roleName?: string | null;
+  role?: string | null;
+  isLeader?: boolean;
   isApproved?: boolean;
+  joinedTime?: string;
 }
 
 // ─── Submission ──────────────────────────────────────────────
@@ -333,9 +348,12 @@ export interface TeamMemberModel {
 export interface SubmitResult {
   id?: string;
   teamId?: string;
+  teamName?: string;
   trackId?: string;
+  roundId?: string;
   submissionUrl?: string | null;
   description?: string | null;
+  submittedAt?: string;
   isActive?: boolean;
   isEliminated?: boolean;
   eliminatedReason?: string | null;
@@ -407,8 +425,15 @@ export interface CalibrationItem {
 export interface CalibrationModel {
   trackId: string;
   trackName: string;
-  isCompleted: boolean;
-  scores: CalibrationItem[];
+  isCompleted?: boolean;
+  scores?: CalibrationItem[];
+  judges?: Array<{ id: string; fullName: string }>;
+  teams?: Array<{
+    teamId: string;
+    teamName: string;
+    scores: Array<{ judgeId: string; scoreValue: number; isSubmitted: boolean }>;
+    averageScore: number;
+  }>;
 }
 
 // ─── Final Result / Prize ────────────────────────────────────

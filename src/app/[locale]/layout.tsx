@@ -8,6 +8,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { NavigationBar } from "@/components/domain/NavigationBar";
 import { Footer } from "@/components/domain/Footer";
+import { QuickRoleSwitcherBar } from "@/components/domain/QuickRoleSwitcherBar";
 import "@/styles/tokens.css";
 import "../globals.css";
 
@@ -66,6 +67,7 @@ export default async function RootLayout({
                   <Footer />
                 </div>
               </div>
+              <QuickRoleSwitcherBar />
             </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>
