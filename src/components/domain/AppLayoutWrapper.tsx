@@ -10,9 +10,17 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, activeRole } = useAuth();
   const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
 
-  const isMentor = roleName === "Mentor" || pathname.includes("/mentor");
-  const isCoordinator = roleName === "Coordinator" || pathname.includes("/coordinator");
-  const hasVerticalSidebar = isMentor || isCoordinator;
+  const isCoordinatorRoute = pathname.includes("/coordinator");
+  const isMentorRoute = pathname.includes("/mentor");
+  const isAdminRoute = pathname.includes("/admin");
+  const isParticipantWorkspaceRoute =
+    (pathname.includes("/my-team") ||
+      pathname.includes("/my-submissions") ||
+      pathname.includes("/appeals")) &&
+    roleName !== "Guest";
+
+  const hasVerticalSidebar =
+    isCoordinatorRoute || isMentorRoute || isAdminRoute || isParticipantWorkspaceRoute;
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-base)] text-[var(--text-primary)] relative">
