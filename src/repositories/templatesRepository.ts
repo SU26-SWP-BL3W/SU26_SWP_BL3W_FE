@@ -1,6 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import { CriteriaEntity, TemplateCriteriaEntity, TemplateEntity } from "@/models/entities";
 import { BaseResponse } from "@/models/types";
+
+export function useGetCriterias() {
+  return useQuery({
+    queryKey: ["criterias"],
+    queryFn: async () => {
+      const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
+      return res.data?.data ?? MOCK_DEFAULT_CRITERIAS;
+    },
+  });
+}
 
 export interface CreateTemplatePayload {
   templateName: string;
