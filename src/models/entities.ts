@@ -40,12 +40,14 @@ export interface EventRole {
   teamId?: string;
   trackId?: string;
   roleName?: string;
+  assignedEventIds?: string[];
   EventRoleId?: string;
   UserId?: string;
   RoleName?: string;
   EventId?: string;
   TeamId?: string;
   TrackId?: string;
+  AssignedEventIds?: string[];
 }
 
 export type EventEntity = Event;

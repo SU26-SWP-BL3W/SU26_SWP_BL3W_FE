@@ -2,9 +2,14 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
+import { useAuth } from "@/providers/AuthProvider";
+import { hasEventPermission } from "@/lib/permissions";
 import { Badge } from "@/components/ui";
 
-export function CoordinatorWorkspaceView() {
+export function CoordinatorWorkspaceView({ eventId = "event-seal-2026" }: { eventId?: string }) {
+  const { user, activeRole } = useAuth();
+  const hasPermission = hasEventPermission(user, activeRole, eventId);
+
   const [activeTab, setActiveTab] = useState<"teams" | "profiles" | "staff" | "results" | "appeals">("teams");
   
   // State duyệt Đội thi
@@ -214,6 +219,24 @@ export function CoordinatorWorkspaceView() {
             </span>
           </div>
         </div>
+
+        {/* ── Event Permission Authorization Status Banner ── */}
+        {!hasPermission && (
+          <div className="p-4 bg-[var(--color-warning)]/10 border border-[var(--color-warning)] text-[var(--color-warning)] hud-clipped font-mono text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-lg">🔒</span>
+              <div>
+                <strong className="font-bold uppercase tracking-wider block">CHẾ ĐỘ XEM THÔNG TIN (READ-ONLY) — BẠN KHÔNG PHẢI BAN TỔ CHỨC ĐƯỢC PHÂN CÔNG</strong>
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  Tài khoản của bạn chưa được Admin phân công làm Ban Tổ Chức cho Sự kiện này. Các thao tác Phê duyệt & Chỉnh sửa bị khóa.
+                </span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-[var(--color-warning)]/20 px-2.5 py-1 border border-[var(--color-warning)]/40 font-bold uppercase shrink-0">
+              CHỈ CHO XEM (READ ONLY)
+            </span>
+          </div>
+        )}
 
         {/* ── TAB CONTAINER (CHUYỂN TAB TỨC THÌ 0MS) ── */}
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-muted)] pb-3 font-mono text-xs">
