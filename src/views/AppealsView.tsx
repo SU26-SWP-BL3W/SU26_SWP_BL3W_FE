@@ -107,7 +107,7 @@ export function AppealsView() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Form Tạo Đơn (Cho Team Leader) */}
+        {/* Left Column: Form Tạo Đơn (Chỉ dành riêng cho Team Leader) */}
         <div className="flex flex-col gap-4">
           <h2 className="font-display text-lg font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2 flex items-center gap-2">
             <Send className="w-4 h-4 text-[var(--color-warning)]" />
@@ -119,41 +119,53 @@ export function AppealsView() {
               * Lưu ý: Đơn phúc khảo chỉ được tạo bởi <strong>Team Leader</strong> và phải nộp <strong>TRƯỚC KHI</strong> kết quả chính thức được công bố.
             </p>
 
-            <form onSubmit={handleCreateAppeal} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                  Mã Bài Nộp (SubmitResultId) *
-                </label>
-                <Input
-                  type="text"
-                  value={submitResultId}
-                  onChange={(e) => setSubmitResultId(e.target.value)}
-                  required
-                  className="font-mono text-xs"
-                />
-              </div>
+            {activeRole?.RoleName === "TeamLeader" ? (
+              <form onSubmit={handleCreateAppeal} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                    Mã Bài Nộp (SubmitResultId) *
+                  </label>
+                  <Input
+                    type="text"
+                    value={submitResultId}
+                    onChange={(e) => setSubmitResultId(e.target.value)}
+                    required
+                    className="font-mono text-xs"
+                  />
+                </div>
 
-              <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                  Lý Do Phúc Khảo *
-                </label>
-                <textarea
-                  className="w-full border border-[var(--border-muted)] bg-[var(--bg-input)] p-3 font-mono text-xs text-[color:var(--text-primary)] outline-none transition-all duration-150 placeholder:text-[color:var(--text-muted)]/50 focus:border-[var(--color-warning)] min-h-[120px] hud-clipped"
-                  placeholder="Ghi rõ lý do khiếu nại (VD: Tiêu chí Kỹ thuật bị tính nhầm trọng số, minh chứng liên kết bài nộp bị trôi)..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  required
-                />
-              </div>
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                    Lý Do Phúc Khảo *
+                  </label>
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    required
+                    rows={4}
+                    placeholder="Ghi rõ lý do khiếu nại (VD: Tiêu chí Kỹ thuật bị tính nhầm trọng số, minh chứng liên kết bài nộp bị trôi)..."
+                    className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-xs font-mono focus:border-[var(--color-warning)] focus:outline-none text-[var(--text-primary)] resize-none"
+                  />
+                </div>
 
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full justify-center text-[var(--color-warning)] border-[var(--color-warning)]/40 bg-[rgba(245,158,11,0.1)] hover:bg-[var(--color-warning)] hover:text-black font-mono text-xs font-bold"
-              >
-                {isSubmitting ? "// ĐANG GỬI..." : "[ GỬI ĐƠN PHÚC KHẢO ]"}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !reason.trim()}
+                  className="w-full justify-center text-[var(--color-warning)] border-[var(--color-warning)]/40 bg-[rgba(245,158,11,0.1)] hover:bg-[var(--color-warning)] hover:text-black font-mono text-xs font-bold"
+                >
+                  {isSubmitting ? "// ĐANG GỬI..." : "[ GỬI ĐƠN PHÚC KHẢO ]"}
+                </Button>
+              </form>
+            ) : (
+              <div className="p-4 border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 text-[var(--color-warning)] font-mono text-xs rounded-none space-y-2">
+                <div className="font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  🔒 BẠN KHÔNG CÓ QUYỀN GỬI ĐƠN
+                </div>
+                <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
+                  Quyền tạo và gửi đơn khiếu nại điểm số thuộc về <strong>Đội Trưởng (Team Leader)</strong>. Bạn đang xem ở chế độ Thành Viên (Read-Only).
+                </p>
+              </div>
+            )}
           </Card>
         </div>
 

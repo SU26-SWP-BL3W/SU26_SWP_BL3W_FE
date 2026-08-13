@@ -10,9 +10,18 @@ import { useCountdown } from "@/lib/useCountdown";
 import { useAuth } from "@/providers/AuthProvider";
 import { TRACK_META, DEFAULT_TRACK_META, type TrackIconKey } from "@/viewModels/mockEventsData";
 
+import { hasEventPermission } from "@/lib/permissions";
+import { getMockTeam } from "@/viewModels/mockTeamData";
+
 export function EventDetailView({ eventId }: { eventId: string }) {
   const { user, activeRole } = useAuth();
   const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const team = getMockTeam();
+
+  // Kiểm tra user/đội thi có thuộc sự kiện này không
+  const isJoinedParticipant =
+    (roleName === "TeamLeader" || roleName === "TeamMember") && team?.eventId === eventId;
+  const isAuthorizedActor = hasEventPermission(user, activeRole, eventId);
 
   const {
     notFound,
@@ -87,7 +96,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
             {/* ── Sub-Navbar Ngang Chức Năng Role ── */}
             <div className="mt-6 pt-4 border-t border-[var(--border-muted)]">
               <div className="font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest mb-2 flex items-center gap-2">
-                <span>⚡ WORKSPACE THI ĐẤU & CHỨC NĂNG VAI TRÒ ({roleName}):</span>
+                <span>⚡ CHỨC NĂNG THAM GIA ({roleName}):</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
                 {/* Active tab hiện tại */}
@@ -95,7 +104,8 @@ export function EventDetailView({ eventId }: { eventId: string }) {
                   <span>📍</span> 1. THỂ LỆ & CHI TIẾT
                 </span>
 
-                {(roleName === "TeamLeader" || roleName === "TeamMember") && (
+                {/* THI ĐẤU: CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG KÝ SỰ KIỆN NÀY */}
+                {(roleName === "TeamLeader" || roleName === "TeamMember") && isJoinedParticipant && (
                   <>
                     <Link href="/my-team">
                       <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-team)]/50 text-[var(--accent-team)] font-bold hover:bg-[var(--accent-team)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
@@ -118,6 +128,22 @@ export function EventDetailView({ eventId }: { eventId: string }) {
                     <Link href="/appeals">
                       <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)]/50 text-[var(--accent-coordinator)] font-bold hover:bg-[var(--accent-coordinator)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
                         <span>⚖</span> 5. PHÚC KHẢO & KHIẾU NẠI
+                      </button>
+                    </Link>
+                  </>
+                )}
+
+                {/* THÍ SINH CHƯA ĐĂNG KÝ SỰ KIỆN NÀY */}
+                {(roleName === "TeamLeader" || roleName === "TeamMember") && !isJoinedParticipant && (
+                  <>
+                    <Link href="/register">
+                      <button className="px-5 py-2 bg-[var(--accent-team)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
+                        <span>🚀</span> 2. ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
+                      </button>
+                    </Link>
+                    <Link href={`/events/${eventId}/leaderboard`}>
+                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
+                        <span>🏆</span> 3. XEM BẢNG XẾP HẠNG
                       </button>
                     </Link>
                   </>
