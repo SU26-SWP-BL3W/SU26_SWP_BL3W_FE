@@ -1,5 +1,5 @@
 import { MentorWorkspaceView } from "@/views/MentorWorkspaceView";
 
 export default function MentorSubmissionsPage() {
-  return <MentorWorkspaceView />;
+  return <MentorWorkspaceView activeTab="submissions" />;
 }
