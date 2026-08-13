@@ -474,7 +474,7 @@ export function MySubmissionsView() {
                 <div className="px-5 py-4 bg-[var(--bg-base)] border-t border-[var(--border-muted)] flex flex-col gap-3 font-mono">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[var(--accent-judge)] uppercase flex items-center gap-2">
-                      <span>⚖ BẢNG ĐIỂM & NHẬN XÉT CỦA GIÁM KHẢO</span>
+                      <span>⚖ BẢNG ĐIỂM &amp; NHẬN XÉT CỦA GIÁM KHẢO</span>
                     </span>
                     <span className="text-[10px] text-[var(--text-muted)]">
                       // MINH BẠCH DÀNH CHO ĐỘI THI
@@ -490,7 +490,7 @@ export function MySubmissionsView() {
                         <span className="font-bold text-[var(--accent-judge)]">9.2 / 10</span>
                       </div>
                       <p className="text-[11px] text-[var(--text-muted)] italic">
-                        "Kiến trúc microservices xuất sắc, mã nguồn sạch sẽ và có tính ứng dụng thực tế cao."
+                        &quot;Kiến trúc microservices xuất sắc, mã nguồn sạch sẽ và có tính ứng dụng thực tế cao.&quot;
                       </p>
                     </div>
 
