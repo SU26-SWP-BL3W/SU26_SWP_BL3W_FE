@@ -619,23 +619,12 @@ export function NavigationBar() {
           <Link
             href="/events"
             className={`transition-colors ${
-              pathname.includes("/events") && !pathname.includes("/leaderboard")
+              pathname.includes("/events")
                 ? "text-[var(--accent-primary)] font-bold"
                 : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Khám phá Sự kiện
-          </Link>
-
-          <Link
-            href="/leaderboard"
-            className={`transition-colors ${
-              pathname.includes("/leaderboard")
-                ? "text-[var(--accent-judge)] font-bold"
-                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
-          >
-            Bảng Vinh Danh
           </Link>
 
           {/* Quick Access Link based on Active Role */}
