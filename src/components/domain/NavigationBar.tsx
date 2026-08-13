@@ -15,10 +15,12 @@ export function NavigationBar() {
   const currentEventId = team?.eventId || "event-seal-2026";
 
   const isMentor = roleName === "Mentor" || pathname.includes("/mentor");
+  const isCoordinator = roleName === "Coordinator" || pathname.includes("/coordinator");
 
   // Kiểm tra xem người dùng có đang trong Event Workspace không
   const isEventWorkspace =
     isMentor ||
+    isCoordinator ||
     pathname.includes("/events/event-") ||
     pathname.includes("/events/seal-") ||
     pathname.includes("/my-team") ||
@@ -27,7 +29,105 @@ export function NavigationBar() {
     pathname.includes("/appeals");
 
   // ─────────────────────────────────────────────────────────────
-  // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO MENTOR (CỐ VẤN)
+  // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
+  // ─────────────────────────────────────────────────────────────
+  if (isCoordinator) {
+    return (
+      <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[#a855f7]/40 flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
+        <div className="flex flex-col gap-6">
+          {/* Brand Logo & Notification Bell */}
+          <div className="flex flex-col gap-3 pb-4 border-b border-[var(--border-muted)]">
+            <div className="flex items-center justify-between">
+              <Link href="/" className="font-display font-bold text-lg text-[#a855f7] tracking-widest uppercase flex items-center gap-2">
+                <SealShield className="h-6 w-6 text-[#a855f7]" />
+                <span>COORD PANEL</span>
+              </Link>
+              <NotificationBell />
+            </div>
+            <Link
+              href="/"
+              className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[#a855f7] flex items-center gap-1.5 transition-colors"
+            >
+              <span>←</span> Quay lại trang chủ
+            </Link>
+          </div>
+
+          {/* Coordinator Profile Card */}
+          <div className="p-3 bg-[var(--bg-input)] border border-[#a855f7]/40 hud-clipped flex flex-col gap-1">
+            <span className="font-mono text-[9px] text-[#a855f7] font-bold uppercase tracking-widest">
+              EVENT COORDINATOR
+            </span>
+            <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
+              {user?.FullName || "Trần Văn Điều Phối"}
+            </span>
+            <span className="font-mono text-[10px] text-[var(--text-muted)]">
+              Sự kiện: SEAL Hackathon 2026
+            </span>
+          </div>
+
+          {/* Vertical Coordinator Menu Section */}
+          <nav className="flex flex-col gap-1.5 font-mono text-xs">
+            <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
+              MENU BAN TỔ CHỨC
+            </span>
+
+            <Link
+              href="/coordinator/dashboard"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/coordinator")
+                  ? "bg-[#a855f7] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🎯</span> Control Center BTC
+            </Link>
+
+            <Link
+              href={`/events/${currentEventId}/leaderboard`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/leaderboard")
+                  ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🏆</span> Bảng Xếp Hạng Giải
+            </Link>
+          </nav>
+        </div>
+
+        {/* Bottom User Info & Role Switcher */}
+        <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
+          <div className="flex items-center justify-between font-mono text-xs">
+            <span className="text-[var(--text-muted)]">Vai trò:</span>
+            <span className="text-[#a855f7] font-bold">Coordinator</span>
+          </div>
+
+          {/* Role Switcher Bar */}
+          <div className="flex items-center justify-between gap-1 p-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-[10px]">
+            <button onClick={() => login("TeamLeader")} className="text-[var(--accent-team)] font-bold hover:underline" title="Đội Trưởng">Leader</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("TeamMember")} className="text-[var(--accent-team)] hover:underline" title="Thành Viên">Member</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("Mentor")} className="text-[#2dd4bf] font-bold hover:underline" title="Cố Vấn">Mentor</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("Judge")} className="text-[var(--accent-judge)] hover:underline" title="Giám Khảo">Judge</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("Coordinator")} className="text-[#a855f7] font-bold hover:underline" title="Ban Tổ Chức">Coord</button>
+          </div>
+
+          <button
+            onClick={logout}
+            className="w-full py-1.5 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped"
+          >
+            Đăng xuất
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CHẾ ĐỘ 1B: NAVBAR DỌC DÀNH RIÊNG CHO MENTOR (CỐ VẤN)
   // ─────────────────────────────────────────────────────────────
   if (isMentor) {
     return (
