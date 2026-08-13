@@ -243,6 +243,14 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1C: NAVBAR DỌC KHI THÍ SINH VÀO DÀNH RIÊNG CHO WORKSPACE ĐỘI THI
   // ─────────────────────────────────────────────────────────────
   if (showParticipantSidebar) {
+    // Xác định eventId đang xem trên URL
+    const urlEventId = pathname.includes("/events/")
+      ? pathname.split("/events/")[1]?.split("/")[0]
+      : null;
+
+    const activeViewEventId = urlEventId || currentEventId;
+    const isJoinedThisEvent = team && team.eventId === activeViewEventId;
+
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[var(--border-muted)] flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
         <div className="flex flex-col gap-6">
@@ -264,15 +272,19 @@ export function NavigationBar() {
           </div>
 
           {/* Event Status Banner */}
-          <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-1">
-            <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-[var(--accent-primary)]">
-              ĐẢNG THI ĐẤU
+          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
+            isJoinedThisEvent ? "border-[var(--border-muted)]" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
+          }`}>
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
+              isJoinedThisEvent ? "text-[var(--accent-primary)]" : "text-[var(--color-warning)]"
+            }`}>
+              {isJoinedThisEvent ? "ĐANG THI ĐẤU" : "SỰ KIỆN CHƯA THAM GIA"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
-              {team?.eventName || "SEAL Hackathon 2026"}
+              {isJoinedThisEvent ? (team?.eventName || "SEAL Hackathon 2026") : (activeViewEventId === "event-seal-mini" ? "SEAL Mini Hack 2026" : "SEAL AI Sprint 2026")}
             </span>
             <span className="font-mono text-[10px] font-bold text-[var(--accent-team)]">
-              Đội: {team?.name || "Cyber_Knights"}
+              {isJoinedThisEvent ? `Đội: ${team?.name}` : "Trạng thái: Thí sinh tự do"}
             </span>
           </div>
 
@@ -283,9 +295,9 @@ export function NavigationBar() {
             </span>
 
             <Link
-              href={`/events/${currentEventId}`}
+              href={`/events/${activeViewEventId}`}
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes(`/events/${currentEventId}`) && !pathname.includes(`/leaderboard`)
+                pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
                   ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
               }`}
@@ -293,49 +305,79 @@ export function NavigationBar() {
               <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
             </Link>
 
-            <Link
-              href="/my-team"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/my-team")
-                  ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>👥</span> Quản Lý Đội Thi
-            </Link>
+            {/* NẾU ĐÃ THAM GIA SỰ KIỆN NÀY: HIỂN THỊ CÁC CHỨC NĂNG THI ĐẤU CỦA ĐỘI */}
+            {isJoinedThisEvent && (
+              <>
+                <Link
+                  href="/my-team"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/my-team")
+                      ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>👥</span> {roleName === "TeamLeader" ? "Quản Lý Đội Thi" : "Xem Đội Thi Của Tôi"}
+                </Link>
 
-            <Link
-              href="/my-submissions"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/my-submissions") || pathname.includes("/submissions/")
-                  ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>📤</span> Bài Nộp Của Đội
-            </Link>
+                <Link
+                  href="/my-submissions"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/my-submissions") || pathname.includes("/submissions/")
+                      ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>📤</span> {roleName === "TeamLeader" ? "Bài Nộp Của Đội" : "Xem Bài Nộp Của Đội"}
+                </Link>
 
-            <Link
-              href={`/events/${currentEventId}/leaderboard`}
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/leaderboard")
-                  ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>🏆</span> Bảng Xếp Hạng
-            </Link>
+                <Link
+                  href={`/events/${activeViewEventId}/leaderboard`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/leaderboard")
+                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🏆</span> Bảng Xếp Hạng
+                </Link>
 
-            <Link
-              href="/appeals"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/appeals")
-                  ? "bg-[var(--accent-coordinator)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-coordinator)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>⚖</span> Phúc Khảo & Khiếu Nại
-            </Link>
+                {roleName === "TeamLeader" && (
+                  <Link
+                    href="/appeals"
+                    className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                      pathname.includes("/appeals")
+                        ? "bg-[var(--accent-coordinator)] text-[var(--bg-base)] shadow-sm"
+                        : "text-[var(--text-muted)] hover:text-[var(--accent-coordinator)] hover:bg-[var(--bg-input)]"
+                    }`}
+                  >
+                    <span>⚖</span> Phúc Khảo & Khiếu Nại
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* NẾU CHƯA THAM GIA SỰ KIỆN NÀY: HIỂN THỊ NÚT ĐĂNG KÝ / TẠO ĐỘI MỚI & BXH */}
+            {!isJoinedThisEvent && (
+              <>
+                <Link
+                  href="/register"
+                  className="flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold text-[var(--accent-team)] hover:bg-[var(--accent-team)] hover:text-black border border-[var(--accent-team)]/40 mt-1"
+                >
+                  <span>🚀</span> Đăng Ký / Tạo Đội Mới
+                </Link>
+
+                <Link
+                  href={`/events/${activeViewEventId}/leaderboard`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/leaderboard")
+                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>🏆</span> Bảng Xếp Hạng
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
