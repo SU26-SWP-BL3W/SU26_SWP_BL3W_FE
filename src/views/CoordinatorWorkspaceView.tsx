@@ -31,25 +31,117 @@ export function CoordinatorWorkspaceView() {
     },
   ]);
 
-  // State duyệt Thẻ Sinh Viên
+  // State duyệt Thẻ Sinh Viên (Tối ưu cho 100+ thí sinh)
   const [pendingProfiles, setPendingProfiles] = useState([
     {
       id: "usr-101",
       name: "Phạm Quỳnh Anh",
       email: "anh.pq@gmail.com",
+      studentCode: "20210045",
       school: "Đại Học Bách Khoa HN",
-      studentCardUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400",
+      studentCardUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=800",
       submittedAt: "11/08/2026 10:00",
     },
     {
       id: "usr-102",
       name: "Trần Văn Nam",
       email: "nam.tv@hust.edu.vn",
+      studentCode: "20213890",
       school: "Đại Học Bách Khoa HN",
-      studentCardUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400",
+      studentCardUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
       submittedAt: "12/08/2026 08:30",
     },
+    {
+      id: "usr-103",
+      name: "Lê Minh Trí",
+      email: "tri.lm@vnu.edu.vn",
+      studentCode: "22021543",
+      school: "Đại Học Quốc Gia Hà Nội",
+      studentCardUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800",
+      submittedAt: "12/08/2026 09:15",
+    },
+    {
+      id: "usr-104",
+      name: "Nguyễn Thu Hà",
+      email: "ha.nt@hcmut.edu.vn",
+      studentCode: "2110482",
+      school: "Đại Học Bách Khoa TP.HCM",
+      studentCardUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800",
+      submittedAt: "12/08/2026 11:20",
+    },
+    {
+      id: "usr-105",
+      name: "Vũ Hoàng Long",
+      email: "long.vh@ptit.edu.vn",
+      studentCode: "B21DCCN450",
+      school: "Học Viện Công Nghệ Bưu Chính Viễn Thông",
+      studentCardUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800",
+      submittedAt: "12/08/2026 14:05",
+    },
+    {
+      id: "usr-106",
+      name: "Đặng Hoàng Yến",
+      email: "yen.dh@neu.edu.vn",
+      studentCode: "11218902",
+      school: "Đại Học Kinh Tế Quốc Dân",
+      studentCardUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800",
+      submittedAt: "12/08/2026 15:40",
+    },
   ]);
+
+  // States quản lý bảng duyệt thẻ
+  const [profileSearchTerm, setProfileSearchTerm] = useState("");
+  const [profileSchoolFilter, setProfileSchoolFilter] = useState("ALL");
+  const [profileViewMode, setProfileViewMode] = useState<"table" | "grid">("table");
+  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>([]);
+  const [previewCardModal, setPreviewCardModal] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    school: string;
+    studentCode: string;
+    studentCardUrl: string;
+  } | null>(null);
+
+  // Filtered profiles
+  const filteredProfiles = pendingProfiles.filter((p) => {
+    const matchSearch =
+      p.name.toLowerCase().includes(profileSearchTerm.toLowerCase()) ||
+      p.email.toLowerCase().includes(profileSearchTerm.toLowerCase()) ||
+      p.school.toLowerCase().includes(profileSearchTerm.toLowerCase()) ||
+      (p.studentCode && p.studentCode.toLowerCase().includes(profileSearchTerm.toLowerCase()));
+
+    const matchSchool = profileSchoolFilter === "ALL" || p.school === profileSchoolFilter;
+    return matchSearch && matchSchool;
+  });
+
+  const handleSelectAllProfiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedProfileIds(filteredProfiles.map((p) => p.id));
+    } else {
+      setSelectedProfileIds([]);
+    }
+  };
+
+  const handleToggleSelectProfile = (id: string) => {
+    setSelectedProfileIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkApproveProfiles = () => {
+    if (selectedProfileIds.length === 0) return;
+    alert(`[BTC DUYỆT HÀNG LOẠT] Đã xác thực thành công Thẻ Sinh Viên cho ${selectedProfileIds.length} thí sinh!`);
+    setPendingProfiles((prev) => prev.filter((p) => !selectedProfileIds.includes(p.id)));
+    setSelectedProfileIds([]);
+  };
+
+  const handleBulkRejectProfiles = () => {
+    if (selectedProfileIds.length === 0) return;
+    alert(`[BTC TỪ CHỐI HÀNG LOẠT] Đã từ chối Thẻ Sinh Viên của ${selectedProfileIds.length} thí sinh!`);
+    setPendingProfiles((prev) => prev.filter((p) => !selectedProfileIds.includes(p.id)));
+    setSelectedProfileIds([]);
+  };
 
   // State Tính điểm & Công bố
   const [isCalculated, setIsCalculated] = useState(false);
@@ -254,70 +346,330 @@ export function CoordinatorWorkspaceView() {
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            TAB 2: 🆔 DUYỆT THẺ SINH VIÊN (NON-FPT PROFILES)
+            TAB 2: 🆔 DUYỆT THẺ SINH VIÊN (NON-FPT PROFILES MANAGEMENT)
            ───────────────────────────────────────────────────────────── */}
         {activeTab === "profiles" && (
           <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between font-mono text-xs text-[var(--text-muted)]">
-              <span>HỒ SƠ THÍ SINH NGOÀI FPT CHỜ XÁC THỰC THẺ SINH VIÊN</span>
-              <span className="text-[#a855f7] font-bold">Số lượng: {pendingProfiles.length} Thí sinh</span>
+            
+            {/* 1. KPI Stats Summary Bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-xs">
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-1">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">TỔNG THÍ SINH NGOÀI FPT</span>
+                <span className="font-display text-xl font-bold text-[var(--text-primary)]">48</span>
+              </div>
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--color-warning)]/40 hud-clipped flex flex-col gap-1">
+                <span className="text-[10px] text-[var(--color-warning)] uppercase tracking-wider font-bold">CHỜ XÁC THỰC THẺ</span>
+                <span className="font-display text-xl font-bold text-[var(--color-warning)]">{pendingProfiles.length}</span>
+              </div>
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--color-success)]/40 hud-clipped flex flex-col gap-1">
+                <span className="text-[10px] text-[var(--color-success)] uppercase tracking-wider font-bold">ĐÃ XÁC THỰC DỮ LIỆU</span>
+                <span className="font-display text-xl font-bold text-[var(--color-success)]">40</span>
+              </div>
+              <div className="p-4 bg-[var(--bg-panel)] border border-[#a855f7]/40 hud-clipped flex flex-col gap-1">
+                <span className="text-[10px] text-[#a855f7] uppercase tracking-wider font-bold">CHẾ ĐỘ XEM HÀNG LOẠT</span>
+                <span className="font-display text-xs font-bold text-[var(--text-primary)] mt-1">QUY MÔ 100-500 THÍ SINH</span>
+              </div>
             </div>
 
-            {pendingProfiles.length === 0 ? (
+            {/* 2. Smart Search & Filter Toolbar */}
+            <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 font-mono text-xs">
+              <div className="flex flex-1 items-center gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <input
+                    type="text"
+                    value={profileSearchTerm}
+                    onChange={(e) => setProfileSearchTerm(e.target.value)}
+                    placeholder="🔍 Tìm theo Tên, Email, Mã SV, Trường..."
+                    className="w-full pl-9 pr-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] hud-clipped focus:outline-none focus:border-[#a855f7]"
+                  />
+                  <span className="absolute left-3 top-2.5 text-[var(--text-muted)]">🔍</span>
+                </div>
+
+                <select
+                  value={profileSchoolFilter}
+                  onChange={(e) => setProfileSchoolFilter(e.target.value)}
+                  className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] hud-clipped focus:outline-none focus:border-[#a855f7]"
+                >
+                  <option value="ALL">🏫 Tất cả Trường ĐH</option>
+                  <option value="Đại Học Bách Khoa HN">ĐH Bách Khoa HN</option>
+                  <option value="Đại Học Quốc Gia Hà Nội">ĐH Quốc Gia Hà Nội</option>
+                  <option value="Đại Học Bách Khoa TP.HCM">ĐH Bách Khoa TP.HCM</option>
+                  <option value="Học Viện Công Nghệ Bưu Chính Viễn Thông">Học Viện PTIT</option>
+                  <option value="Đại Học Kinh Tế Quốc Dân">ĐH Kinh Tế Quốc Dân</option>
+                </select>
+              </div>
+
+              {/* View Mode Toggle & Bulk Actions */}
+              <div className="flex items-center gap-3">
+                {selectedProfileIds.length > 0 && (
+                  <div className="flex items-center gap-2 animate-fadeIn">
+                    <button
+                      onClick={handleBulkApproveProfiles}
+                      className="px-3 py-2 bg-[#a855f7] text-white font-bold uppercase hover:bg-white hover:text-black transition-all hud-clipped"
+                    >
+                      ✓ DUYỆT TẤT CẢ ({selectedProfileIds.length})
+                    </button>
+                    <button
+                      onClick={handleBulkRejectProfiles}
+                      className="px-3 py-2 border border-[var(--color-danger)] text-[var(--color-danger)] font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped"
+                    >
+                      ✕ TỪ CHỐI ({selectedProfileIds.length})
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center border border-[var(--border-muted)] hud-clipped overflow-hidden">
+                  <button
+                    onClick={() => setProfileViewMode("table")}
+                    className={`px-3 py-2 font-bold uppercase transition-colors ${
+                      profileViewMode === "table"
+                        ? "bg-[#a855f7] text-white"
+                        : "bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-white"
+                    }`}
+                  >
+                    ☰ BẢNG DỮ LIỆU NÉN
+                  </button>
+                  <button
+                    onClick={() => setProfileViewMode("grid")}
+                    className={`px-3 py-2 font-bold uppercase transition-colors ${
+                      profileViewMode === "grid"
+                        ? "bg-[#a855f7] text-white"
+                        : "bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-white"
+                    }`}
+                  >
+                    ⊞ DẠNG THẺ (CARD)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Main Data Content (Table or Grid) */}
+            {filteredProfiles.length === 0 ? (
               <div className="p-12 border border-[var(--border-muted)] bg-[var(--bg-panel)] text-center font-mono text-xs text-[var(--text-muted)] hud-clipped">
-                Không có thẻ sinh viên nào đang chờ duyệt
+                Không tìm thấy thẻ sinh viên nào phù hợp với bộ lọc.
+              </div>
+            ) : profileViewMode === "table" ? (
+              /* COMPACT DATA TABLE FOR 100+ PARTICIPANTS */
+              <div className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-[var(--bg-input)] border-b border-[var(--border-muted)] text-[var(--text-muted)] uppercase tracking-wider">
+                      <th className="p-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            filteredProfiles.length > 0 &&
+                            selectedProfileIds.length === filteredProfiles.length
+                          }
+                          onChange={handleSelectAllProfiles}
+                          className="accent-[#a855f7] cursor-pointer"
+                        />
+                      </th>
+                      <th className="p-3">Họ & Tên Thí Sinh</th>
+                      <th className="p-3">Trường Đăng Ký</th>
+                      <th className="p-3">Mã Sinh Viên</th>
+                      <th className="p-3 text-center">Ảnh Thẻ SV</th>
+                      <th className="p-3 text-center">Trạng Thái</th>
+                      <th className="p-3 text-right">Thao Tác Duyệt Nhanh</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-muted)]">
+                    {filteredProfiles.map((prof) => {
+                      const isSelected = selectedProfileIds.includes(prof.id);
+                      return (
+                        <tr
+                          key={prof.id}
+                          className={`hover:bg-[#a855f7]/5 transition-colors ${
+                            isSelected ? "bg-[#a855f7]/10" : ""
+                          }`}
+                        >
+                          <td className="p-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelectProfile(prof.id)}
+                              className="accent-[#a855f7] cursor-pointer"
+                            />
+                          </td>
+                          <td className="p-3">
+                            <div className="font-bold text-[var(--text-primary)] text-sm">
+                              {prof.name}
+                            </div>
+                            <div className="text-[10px] text-[var(--text-muted)]">{prof.email}</div>
+                          </td>
+                          <td className="p-3 text-[var(--text-primary)] font-medium">
+                            {prof.school}
+                          </td>
+                          <td className="p-3 text-[var(--text-muted)] font-mono">
+                            {prof.studentCode || "Chưa cập nhật"}
+                          </td>
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => setPreviewCardModal(prof)}
+                              className="group relative inline-block w-16 h-10 border border-[var(--border-muted)] hud-clipped overflow-hidden hover:border-[#a855f7] transition-all cursor-pointer"
+                              title="Nhấp để soi phóng to Ảnh Thẻ SV"
+                            >
+                              <img
+                                src={prof.studentCardUrl}
+                                alt="Card Preview"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[9px] text-white font-bold transition-opacity">
+                                👁 SOI
+                              </div>
+                            </button>
+                          </td>
+                          <td className="p-3 text-center">
+                            <Badge tone="warning">CHỜ DUYỆT THẺ</Badge>
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => setPreviewCardModal(prof)}
+                                className="px-2.5 py-1.5 border border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white hover:border-white transition-all text-[11px] hud-clipped cursor-pointer"
+                              >
+                                👁 SOI THẺ
+                              </button>
+                              <button
+                                onClick={() => handleRejectProfile(prof.id, prof.name)}
+                                className="px-2.5 py-1.5 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-bold hover:bg-[var(--color-danger)]/10 transition-all text-[11px] hud-clipped cursor-pointer"
+                              >
+                                ✕ TỪ CHỐI
+                              </button>
+                              <button
+                                onClick={() => handleApproveProfile(prof.id, prof.name)}
+                                className="px-3 py-1.5 bg-[#a855f7] text-white font-bold hover:bg-white hover:text-black transition-all text-[11px] hud-clipped cursor-pointer shadow-sm"
+                              >
+                                ✓ XÁC THỰC
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {pendingProfiles.map((prof) => (
+              /* GRID CARD VIEW MODE */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProfiles.map((prof) => (
                   <div
                     key={prof.id}
-                    className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] p-6 flex flex-col justify-between gap-5 hover:border-[#a855f7] transition-all shadow-md"
+                    className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] p-5 flex flex-col justify-between gap-4 hover:border-[#a855f7] transition-all shadow-md"
                   >
                     <div className="flex flex-col gap-3">
                       <div className="flex items-start justify-between pb-3 border-b border-[var(--border-muted)]">
                         <div>
-                          <h3 className="font-display text-xl font-bold text-[var(--text-primary)]">
+                          <h3 className="font-display text-lg font-bold text-[var(--text-primary)]">
                             {prof.name}
                           </h3>
                           <span className="font-mono text-xs text-[var(--text-muted)]">{prof.email}</span>
                         </div>
-                        <Badge tone="warning">CHỜ DUYỆT THẺ</Badge>
+                        <Badge tone="warning">CHỜ DUYỆT</Badge>
                       </div>
 
-                      <div className="font-mono text-xs text-[var(--text-muted)]">
-                        <span>Trường đăng ký:</span>
-                        <div className="text-[var(--text-primary)] font-bold">{prof.school}</div>
+                      <div className="font-mono text-xs text-[var(--text-muted)] space-y-1">
+                        <div>Trường: <strong className="text-[var(--text-primary)]">{prof.school}</strong></div>
+                        <div>Mã SV: <strong className="text-[var(--text-primary)]">{prof.studentCode}</strong></div>
                       </div>
 
                       {/* Card Preview */}
-                      <div className="flex flex-col gap-1.5 font-mono text-xs">
-                        <span className="text-[10px] text-[var(--text-muted)] uppercase">Ảnh Thẻ Sinh Viên Đã Tải Lên:</span>
-                        <div className="w-full h-40 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped overflow-hidden relative group">
-                          <img src={prof.studentCardUrl} alt="Student Card" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <div
+                        onClick={() => setPreviewCardModal(prof)}
+                        className="w-full h-32 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped overflow-hidden relative group cursor-pointer"
+                      >
+                        <img src={prof.studentCardUrl} alt="Student Card" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center font-mono text-xs text-white font-bold transition-opacity">
+                          🔍 NHẤP ĐỂ PHÓNG TO SOI THẺ
                         </div>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-3 pt-3 border-t border-[var(--border-muted)] font-mono text-xs">
+                    <div className="flex items-center gap-2 pt-3 border-t border-[var(--border-muted)] font-mono text-xs">
                       <button
                         onClick={() => handleRejectProfile(prof.id, prof.name)}
-                        className="flex-1 py-2.5 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped cursor-pointer"
+                        className="flex-1 py-2 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped cursor-pointer"
                       >
-                        ✕ TỪ CHỐI THẺ
+                        ✕ TỪ CHỐI
                       </button>
                       <button
                         onClick={() => handleApproveProfile(prof.id, prof.name)}
-                        className="flex-1 py-2.5 bg-[#a855f7] text-white font-bold uppercase hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-md"
+                        className="flex-1 py-2 bg-[#a855f7] text-white font-bold uppercase hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-md"
                       >
-                        ✓ XÁC THỰC THẺ SV
+                        ✓ XÁC THỰC
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            MODAL LIGHTBOX: SOI THẺ SINH VIÊN SẮC NÉT KHÔNG GIỚI HẠN
+           ───────────────────────────────────────────────────────────── */}
+        {previewCardModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-2xl bg-[var(--bg-panel)] border border-[#a855f7]/60 hud-clipped p-6 flex flex-col gap-5 shadow-2xl animate-scaleUp">
+              <div className="flex items-start justify-between border-b border-[var(--border-muted)] pb-4">
+                <div>
+                  <span className="font-mono text-[10px] text-[#a855f7] uppercase tracking-widest font-bold">
+                    🆔 BẢNG KHIỂM TRA THẺ SINH VIÊN CHI TIẾT
+                  </span>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)]">
+                    {previewCardModal.name}
+                  </h3>
+                  <p className="font-mono text-xs text-[var(--text-muted)]">
+                    {previewCardModal.email} • {previewCardModal.school} (MSSV: {previewCardModal.studentCode})
+                  </p>
+                </div>
+                <button
+                  onClick={() => setPreviewCardModal(null)}
+                  className="font-mono text-xs text-[var(--text-muted)] hover:text-white border border-[var(--border-muted)] px-3 py-1 hud-clipped cursor-pointer"
+                >
+                  ✕ ĐÓNG [ESC]
+                </button>
+              </div>
+
+              {/* High Resolution Image Container */}
+              <div className="w-full h-80 bg-black/60 border border-[var(--border-muted)] hud-clipped overflow-hidden flex items-center justify-center relative">
+                <img
+                  src={previewCardModal.studentCardUrl}
+                  alt="Student Card HD"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Modal Control Actions */}
+              <div className="flex items-center justify-between gap-4 pt-2 font-mono text-xs">
+                <span className="text-[var(--text-muted)] text-[11px]">
+                  💡 Kiểm tra dấu mộc trường, mã sinh viên và khuôn mặt trước khi bấm Duyệt.
+                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      handleRejectProfile(previewCardModal.id, previewCardModal.name);
+                      setPreviewCardModal(null);
+                    }}
+                    className="px-4 py-2 border border-[var(--color-danger)] text-[var(--color-danger)] font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped cursor-pointer"
+                  >
+                    ✕ TỪ CHỐI THẺ
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleApproveProfile(previewCardModal.id, previewCardModal.name);
+                      setPreviewCardModal(null);
+                    }}
+                    className="px-5 py-2 bg-[#a855f7] text-white font-bold uppercase hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-md"
+                  >
+                    ✓ XÁC THỰC CHÍNH THỨC
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
