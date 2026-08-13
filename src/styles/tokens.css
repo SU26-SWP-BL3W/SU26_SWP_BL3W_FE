@@ -56,3 +56,40 @@
   /* ---------- Layout ---------- */
   --container-max: 1280px;
 }
+
+@keyframes scanlineSweep {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.scanline-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-primary) 30%,
+    #00f2fe 50%,
+    var(--accent-primary) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 15px #00f2fe, 0 0 30px var(--accent-primary);
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanlineSweep 0.35s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanline-overlay {
+    display: none !important;
+  }
+}
