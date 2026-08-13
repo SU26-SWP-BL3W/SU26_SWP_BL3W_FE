@@ -4,11 +4,8 @@ import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui";
 
-interface MentorWorkspaceViewProps {
-  activeTab?: "tracks" | "teams" | "submissions";
-}
-
-export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceViewProps) {
+export function MentorWorkspaceView() {
+  const [activeTab, setActiveTab] = useState<"tracks" | "teams" | "submissions">("tracks");
   const [feedbackTeam, setFeedbackTeam] = useState<string | null>(null);
   const [feedbackNote, setFeedbackNote] = useState("");
   const [selectedTrackFilter, setSelectedTrackFilter] = useState("AI & Machine Learning");
@@ -232,14 +229,10 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
               MENTOR WORKSPACE [CỐ VẤN CHUYÊN MÔN HẠNG MỤC]
             </div>
             <h1 className="font-display text-3xl font-extrabold uppercase tracking-wide text-[var(--text-primary)] mt-1">
-              {activeTab === "tracks" && "🎯 Hạng Mục Thi Đấu Được Phân Công"}
-              {activeTab === "teams" && "👥 Danh Sách Đội Thi Cần Hỗ Trợ trong Track"}
-              {activeTab === "submissions" && "📁 Tiến Độ Bài Nộp & Mã Nguồn Sản Phẩm"}
+              BÀN LÀM VIỆC CỐ VẤN CHUYÊN MÔN
             </h1>
             <p className="font-mono text-xs text-[var(--text-muted)] mt-1">
-              {activeTab === "tracks" && "Mentor phụ trách cố vấn chuyên môn cho toàn bộ các Đội thi thuộc Hạng mục được Ban Tổ Chức phân công."}
-              {activeTab === "teams" && `Danh sách toàn bộ ${mockAiTrackTeams.length} Đội thi thuộc Hạng mục: AI & Machine Learning.`}
-              {activeTab === "submissions" && `Theo dõi mã nguồn GitHub, Slide thuyết trình, Video Demo và góp ý phản hồi cho 8 Đội thi.`}
+              Quản lý các Hạng mục thi đấu, theo dõi tiến độ sản phẩm và tư vấn định hướng kỹ thuật cho toàn bộ các Đội thi.
             </p>
           </div>
 
@@ -250,8 +243,44 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
           </div>
         </div>
 
+        {/* ── TAB CONTAINER (CHUYỂN TAB ĐỒNG BỘ 0MS TẠI CHỖ) ── */}
+        <div className="flex items-center gap-2 border-b border-[var(--border-muted)] pb-3 font-mono text-xs">
+          <button
+            onClick={() => setActiveTab("tracks")}
+            className={`px-5 py-2.5 hud-clipped transition-all font-bold flex items-center gap-2 cursor-pointer ${
+              activeTab === "tracks"
+                ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-[0_0_15px_rgba(45,212,191,0.3)]"
+                : "text-[var(--text-muted)] hover:text-white bg-[var(--bg-panel)] border border-[var(--border-muted)]"
+            }`}
+          >
+            <span>🎯</span> 1. Hạng Mục Phân Công ({mockAssignedTracks.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("teams")}
+            className={`px-5 py-2.5 hud-clipped transition-all font-bold flex items-center gap-2 cursor-pointer ${
+              activeTab === "teams"
+                ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-[0_0_15px_rgba(45,212,191,0.3)]"
+                : "text-[var(--text-muted)] hover:text-white bg-[var(--bg-panel)] border border-[var(--border-muted)]"
+            }`}
+          >
+            <span>👥</span> 2. Đội Thi Cần Hỗ Trợ ({mockAiTrackTeams.length} Đội)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("submissions")}
+            className={`px-5 py-2.5 hud-clipped transition-all font-bold flex items-center gap-2 cursor-pointer ${
+              activeTab === "submissions"
+                ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-[0_0_15px_rgba(45,212,191,0.3)]"
+                : "text-[var(--text-muted)] hover:text-white bg-[var(--bg-panel)] border border-[var(--border-muted)]"
+            }`}
+          >
+            <span>📁</span> 3. Tiến Độ Bài Nộp & Mã Nguồn (8 Bài)
+          </button>
+        </div>
+
         {/* ─────────────────────────────────────────────────────────────
-            MÀN HÌNH MỤC 1: 🎯 HẠNG MỤC PHÂN CÔNG (/mentor/tracks)
+            TAB 1: 🎯 HẠNG MỤC PHÂN CÔNG (TRACKS)
            ───────────────────────────────────────────────────────────── */}
         {activeTab === "tracks" && (
           <div className="flex flex-col gap-6">
@@ -307,12 +336,13 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
                     </div>
                   </div>
 
-                  {/* CTA link to Teams tab */}
-                  <Link href="/mentor/teams" className="w-full">
-                    <button className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped">
-                      ➡️ QUẢN LÝ CỐ VẤN {track.teamsCount} ĐỘI THI
-                    </button>
-                  </Link>
+                  {/* CTA Switch to Teams Tab */}
+                  <button
+                    onClick={() => setActiveTab("teams")}
+                    className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                  >
+                    ➡️ QUẢN LÝ CỐ VẤN {track.teamsCount} ĐỘI THI
+                  </button>
                 </div>
               ))}
             </div>
@@ -320,7 +350,7 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            MÀN HÌNH MỤC 2: 👥 ĐỘI THI CẦN HỖ TRỢ (/mentor/teams)
+            TAB 2: 👥 ĐỘI THI CẦN HỖ TRỢ (TEAMS - FULL 8 TEAMS)
            ───────────────────────────────────────────────────────────── */}
         {activeTab === "teams" && (
           <div className="flex flex-col gap-6">
@@ -388,7 +418,7 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
                   {/* Action */}
                   <button
                     onClick={() => setFeedbackTeam(team.name)}
-                    className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped"
+                    className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
                   >
                     💬 GỢI Ý & TƯ VẤN CHUYÊN MÔN CHO ĐỘI
                   </button>
@@ -399,7 +429,7 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            MÀN HÌNH MỤC 3: 📁 TIẾN ĐỘ BÀI NỘP (/mentor/submissions)
+            TAB 3: 📁 TIẾN ĐỘ BÀI NỘP (SUBMISSIONS)
            ───────────────────────────────────────────────────────────── */}
         {activeTab === "submissions" && (
           <div className="flex flex-col gap-6">
@@ -457,7 +487,7 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
                       <td className="p-4 text-center">
                         <button
                           onClick={() => setFeedbackTeam(team.name)}
-                          className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all uppercase font-bold text-[10px] hud-clipped"
+                          className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all uppercase font-bold text-[10px] hud-clipped cursor-pointer"
                         >
                           💬 PHẢN HỒI & GÓP Ý
                         </button>
@@ -488,14 +518,14 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
                   value={feedbackNote}
                   onChange={(e) => setFeedbackNote(e.target.value)}
                   placeholder="Nhập ghi chú phản hồi chuyên môn cho Đội..."
-                  className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] focus:border-[#2dd4bf] focus:outline-none"
+                  className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] focus:border-[#2dd4bf] focus:outline-none font-mono"
                 />
               </div>
 
               <div className="flex justify-end gap-3 font-mono text-xs pt-2">
                 <button
                   onClick={() => setFeedbackTeam(null)}
-                  className="px-4 py-2 border border-[var(--border-muted)] text-[var(--text-muted)]"
+                  className="px-4 py-2 border border-[var(--border-muted)] text-[var(--text-muted)] hover:bg-white/5"
                 >
                   HỦY
                 </button>
@@ -505,7 +535,7 @@ export function MentorWorkspaceView({ activeTab = "tracks" }: MentorWorkspaceVie
                     setFeedbackTeam(null);
                     setFeedbackNote("");
                   }}
-                  className="px-4 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold"
+                  className="px-4 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold hover:bg-white"
                 >
                   GỬI GÓP Ý
                 </button>

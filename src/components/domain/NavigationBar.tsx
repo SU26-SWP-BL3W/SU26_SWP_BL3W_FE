@@ -68,34 +68,12 @@ export function NavigationBar() {
             <Link
               href="/mentor/tracks"
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/mentor/tracks") || pathname === "/mentor"
+                pathname.includes("/mentor")
                   ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🎯</span> Hạng Mục Phân Công
-            </Link>
-
-            <Link
-              href="/mentor/teams"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/mentor/teams")
-                  ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>👥</span> Đội Thi Cần Hỗ Trợ
-            </Link>
-
-            <Link
-              href="/mentor/submissions"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/mentor/submissions")
-                  ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>📁</span> Tiến Độ Bài Nộp
+              <span>🎯</span> Bàn Làm Việc Cố Vấn
             </Link>
 
             <Link
@@ -106,7 +84,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🏆</span> Bảng Xếp Hạng
+              <span>🏆</span> Bảng Xếp Hạng Track
             </Link>
           </nav>
         </div>
