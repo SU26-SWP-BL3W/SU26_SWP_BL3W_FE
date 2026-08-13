@@ -729,6 +729,8 @@ export function NavigationBar() {
         {/* Role Switcher Demo Control Bar */}
         <div className="hidden lg:flex items-center gap-1.5 border border-[var(--border-muted)] px-2 py-1 bg-[var(--bg-input)] font-mono text-[10px] hud-clipped">
           <span className="text-[var(--text-muted)] font-bold">Role:</span>
+          <button onClick={() => login("Admin")} className={`hover:underline ${roleName === "Admin" ? "text-[var(--color-danger)] font-bold" : "text-[var(--text-muted)]"}`}>Admin</button>
+          <span className="text-[var(--border-muted)]">|</span>
           <button onClick={() => login("TeamLeader")} className={`hover:underline ${roleName === "TeamLeader" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Leader</button>
           <span className="text-[var(--border-muted)]">|</span>
           <button onClick={() => login("TeamMember")} className={`hover:underline ${roleName === "TeamMember" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Member</button>
