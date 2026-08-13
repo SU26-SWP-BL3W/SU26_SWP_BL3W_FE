@@ -33,7 +33,7 @@ export function useGetTeamScoreBreakdown(teamId?: string) {
     queryKey: ["team-score-breakdown", teamId],
     queryFn: async () => {
       const res = await apiClient.get<BaseResponse<ScoreBreakdownModel>>(
-        `/Scores/team/${teamId}/score-breakdown`
+        `/Scores/team/${teamId}/breakdown`
       );
       return res.data?.data;
     },

@@ -23,7 +23,7 @@ export const staffRepository = {
    */
   async inviteJudge(payload: InviteStaffPayload): Promise<BaseResponse<EventRoleInvitationEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/api/Judges/invite", payload);
+      const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/Judges/invite", payload);
       return res.data;
     } catch (err: any) {
       const mockInv: EventRoleInvitationEntity = {
@@ -49,7 +49,7 @@ export const staffRepository = {
    */
   async inviteMentor(payload: InviteStaffPayload): Promise<BaseResponse<EventRoleInvitationEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/api/Mentors/invite", payload);
+      const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/Mentors/invite", payload);
       return res.data;
     } catch (err: any) {
       const mockInv: EventRoleInvitationEntity = {
@@ -76,7 +76,7 @@ export const staffRepository = {
    */
   async assignRoleDirectly(payload: AssignRolePayload): Promise<BaseResponse<EventRole>> {
     try {
-      const res = await apiClient.post<BaseResponse<EventRole>>("/api/EventRoles/assign", payload);
+      const res = await apiClient.post<BaseResponse<EventRole>>("/EventRoles/assign", payload);
       return res.data;
     } catch (err: any) {
       const mockRole: EventRole = {

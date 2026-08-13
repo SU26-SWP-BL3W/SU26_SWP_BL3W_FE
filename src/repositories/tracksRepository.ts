@@ -16,7 +16,7 @@ export const tracksRepository = {
    */
   async createTrack(payload: CreateTrackPayload): Promise<BaseResponse<TrackEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<TrackEntity>>("/api/Tracks", payload);
+      const res = await apiClient.post<BaseResponse<TrackEntity>>("/Tracks", payload);
       return res.data;
     } catch (err: any) {
       const mockCreated: TrackEntity = {
@@ -42,7 +42,7 @@ export const tracksRepository = {
    */
   async assignTemplateToTrack(trackId: string, templateId: string): Promise<BaseResponse<boolean>> {
     try {
-      const res = await apiClient.patch<BaseResponse<boolean>>(`/api/Tracks/${trackId}/assign-template`, {
+      const res = await apiClient.patch<BaseResponse<boolean>>(`/Tracks/${trackId}/assign-template`, {
         templateId,
       });
       return res.data;

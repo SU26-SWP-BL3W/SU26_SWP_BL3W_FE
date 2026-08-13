@@ -153,7 +153,7 @@ export function useTransferLeadership() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ teamId, targetUserId }: { teamId: string; targetUserId: string }) => {
-      const res = await apiClient.post(`/Teams/${teamId}/transfer-leadership`, { targetUserId });
+      const res = await apiClient.post(`/Teams/${teamId}/transfer-leader`, { targetUserId });
       return res.data;
     },
     onSuccess: () => {
