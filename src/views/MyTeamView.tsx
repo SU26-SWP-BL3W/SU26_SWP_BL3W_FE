@@ -289,9 +289,16 @@ export function MyTeamView() {
 
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(
-      `[MOCK] Gửi lời mời đến: ${inviteEmail}\n→ Sẽ gọi POST /api/Teams/{teamId}/invitations khi có API`
-    );
+    if (!inviteEmail.trim()) return;
+    const newInv = {
+      id: `inv-${Date.now()}`,
+      teamId: team.id,
+      email: inviteEmail.trim(),
+      status: "Pending" as const,
+      sentAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    };
+    setPendingInvites((prev) => [newInv, ...prev]);
     setInviteEmail("");
   };
 
@@ -301,9 +308,7 @@ export function MyTeamView() {
 
   const handleSubmitRegistration = async () => {
     setIsSubmittingRegistration(true);
-    // TODO: replace with real API call
-    // await apiClient.post(`/Teams/${team.id}/confirm-registration`);
-    await new Promise(r => setTimeout(r, 1200)); // simulate network
+    await new Promise(r => setTimeout(r, 800)); // simulate network response
     setTeamStatus("PendingApproval");
     setIsSubmittingRegistration(false);
     setShowConfirmModal(false);
@@ -315,9 +320,6 @@ export function MyTeamView() {
   };
 
   const confirmTransfer = () => {
-    alert(
-      `[MOCK] Chuyển Leader cho: ${transferTarget?.name}\n→ Sẽ gọi POST /api/Teams/{id}/transfer-leader khi có API`
-    );
     setShowTransferModal(false);
   };
 
