@@ -692,10 +692,10 @@ export function NavigationBar() {
 
           {roleName === "Judge" && (
             <Link
-              href="/judge/scoring"
+              href="/judge/tracks"
               className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped"
             >
-              <span>Bàn Chấm Giám Khảo</span>
+              <span>Hạng Mục Chấm Điểm</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
