@@ -96,7 +96,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
             {/* ── Sub-Navbar Ngang Chức Năng Role ── */}
             <div className="mt-6 pt-4 border-t border-[var(--border-muted)]">
               <div className="font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest mb-2 flex items-center gap-2">
-                <span>⚡ CHỨC NĂNG THAM GIA ({isJoinedParticipant ? roleName : "USER / THÍ SINH TỰ DO"}):</span>
+                <span>⚡ CHỨC NĂNG THAM GIA ({roleName === "TeamLeader" || roleName === "TeamMember" ? (isJoinedParticipant ? roleName : "THÍ SINH TỰ DO") : roleName}):</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
                 {/* Active tab hiện tại */}
