@@ -128,7 +128,7 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
       {/* ── Full Score Table Section ── */}
       <section className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8">
         
-        {/* Filters */}
+        {/* Filters & Export */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped">
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-mono text-xs font-bold text-[var(--accent-judge)] uppercase">
@@ -139,10 +139,10 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
               onChange={(e) => setSelectedRound(e.target.value)}
               className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-judge)]"
             >
-              <option value="all">Tất cả vòng thi</option>
+              <option value="all">Tất cả Vòng thi</option>
               <option value="Chung Kết">Vòng 3: Chung Kết</option>
               <option value="Bán Kết">Vòng 2: Bán Kết</option>
-              <option value="Vòng Loại">Vòng 1: Vòng Loại</option>
+              <option value="Sơ Loại">Vòng 1: Sơ Loại</option>
             </select>
 
             <select
@@ -150,15 +150,38 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
               onChange={(e) => setSelectedTrack(e.target.value)}
               className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-judge)]"
             >
-              <option value="all">Tất cả hạng mục</option>
-              {event.tracks.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
+              <option value="all">Tất cả Hạng mục (Tracks)</option>
+              <option value="AI &amp; Machine Learning">AI &amp; Machine Learning</option>
+              <option value="Bảo mật &amp; An ninh mạng">Bảo mật &amp; An ninh mạng</option>
+              <option value="IoT &amp; Phần cứng thông minh">IoT &amp; Phần cứng thông minh</option>
+              <option value="Phát triển Web">Phát triển Web</option>
             </select>
           </div>
 
-          <div className="font-mono text-xs text-[var(--text-muted)]">
-            Hiển thị <strong className="text-[var(--text-primary)]">{filteredResults.length}</strong> đội thi
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                import("@/lib/exportUtils").then(({ exportToCsv }) => {
+                  exportToCsv(`Leaderboard_${event.eventName.replace(/\s+/g, "_")}`, filteredResults, [
+                    { key: "rank", label: "Hạng" },
+                    { key: "teamCode", label: "Mã Đội" },
+                    { key: "teamName", label: "Tên Đội Thi" },
+                    { key: "projectName", label: "Tên Dự Án" },
+                    { key: "school", label: "Trường Học" },
+                    { key: "track", label: "Hạng Mục Track" },
+                    { key: "roundName", label: "Vòng Thi" },
+                    { key: "score", label: "Điểm Số RBL" },
+                    { key: "status", label: "Thành Tích" },
+                  ]);
+                });
+              }}
+              className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--accent-judge)]/50 hover:border-[var(--accent-judge)] text-[var(--accent-judge)] font-mono text-xs font-bold hud-clipped flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <span>📥</span> XUẤT EXCEL BẢNG XẾP HẠNG
+            </button>
+            <span className="font-mono text-xs text-[var(--text-muted)]">
+              Hiển thị: <strong className="text-[var(--accent-judge)]">{filteredResults.length}</strong> / {MOCK_TABLE_RESULTS.length} đội
+            </span>
           </div>
         </div>
 
