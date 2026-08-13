@@ -5,7 +5,7 @@ import axios, {
 } from "axios";
 import type { ApiError, BaseResponse } from "./types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5180/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://seal-bl3w-backend.onrender.com/api";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

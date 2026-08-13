@@ -20,7 +20,7 @@ export const roundsRepository = {
       const res = await apiClient.post<BaseResponse<RoundEntity>>("/Rounds", payload);
       return res.data;
     } catch (err: any) {
-      const mockCreated: RoundEntity = {
+      const mockCreated: any = {
         RoundId: `rnd-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         EventId: payload.eventId,
         RoundName: payload.roundName,

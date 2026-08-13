@@ -24,12 +24,8 @@ export function CoordinatorTeamsView() {
   const [rejectReason, setRejectReason] = useState("");
   const [detailModal, setDetailModal] = useState<TeamEntity | null>(null);
 
-  const { data: pendingTeamsData, isLoading, refetch } = useGetPendingTeams({
-    pageNumber: 1,
-    pageSize: 50,
-  });
+  const { data: pendingTeams = [], isLoading, refetch } = useGetPendingTeams();
 
-  const pendingTeams = pendingTeamsData?.data ?? [];
 
   const { mutateAsync: approveTeam, isPending: isApproving } = useApproveTeamRegistration();
   const { mutateAsync: rejectTeam, isPending: isRejecting } = useRejectTeamRegistration();
@@ -115,7 +111,7 @@ export function CoordinatorTeamsView() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {pendingTeams.map((team) => {
+            {pendingTeams.map((team: any) => {
               const teamId = team.id || team.TeamId || "";
               const teamName = team.teamName || team.TeamName || "Đội thi";
               const members = team.members ?? [];
@@ -141,7 +137,7 @@ export function CoordinatorTeamsView() {
 
                       {/* Roster preview */}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {members.map((m) => (
+                        {members.map((m: any) => (
                           <div
                             key={m.userId}
                             className="px-2.5 py-1 bg-[var(--bg-base)] border border-[var(--border-muted)] text-xs font-mono flex items-center gap-1.5"

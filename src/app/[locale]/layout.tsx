@@ -6,14 +6,11 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
-import { NavigationBar } from "@/components/domain/NavigationBar";
-import { Footer } from "@/components/domain/Footer";
+import { AppLayoutWrapper } from "@/components/domain/AppLayoutWrapper";
 import { QuickRoleSwitcherBar } from "@/components/domain/QuickRoleSwitcherBar";
 import "@/styles/tokens.css";
 import "../globals.css";
 
-// Cả 3 font đều có subset "vietnamese" (đã kiểm chứng qua Google Fonts metadata
-// API trước khi chọn) — bắt buộc vì toàn bộ UI là tiếng Việt có dấu.
 const chakraPetch = Chakra_Petch({
   variable: "--font-chakra-petch",
   subsets: ["latin", "vietnamese"],
@@ -33,8 +30,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SEAL",
-  description: "SEAL — SU26 SWP391 BL3W",
+  title: "SEAL — Đấu Trường Hackathon Sinh Viên",
+  description: "Hệ thống quản lý giải đấu Hackathon & Kết nối Talent SEAL",
 };
 
 export default async function RootLayout({
@@ -56,17 +53,11 @@ export default async function RootLayout({
       lang={locale}
       className={`${chakraPetch.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
-              <NavigationBar />
-              <div className="flex-1 overflow-auto">
-                <div className="flex min-h-full flex-col">
-                  {children}
-                  <Footer />
-                </div>
-              </div>
+              <AppLayoutWrapper>{children}</AppLayoutWrapper>
               <QuickRoleSwitcherBar />
             </AuthProvider>
           </QueryProvider>

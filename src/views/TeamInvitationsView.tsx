@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetMyInvitations, useRespondInvitation } from "@/repositories/teamsRepository";
+import { useGetMyInvitations, useAcceptOrDeclineInvitation } from "@/repositories/teamsRepository";
 import { Button, Card, Badge } from "@/components/ui";
 import { Mail, CheckCircle2, XCircle, RefreshCw, Shield } from "lucide-react";
 import type { TeamInvitation } from "@/models/entities";
@@ -8,7 +8,7 @@ import type { TeamInvitation } from "@/models/entities";
 export function TeamInvitationsView() {
   const { data: invitations = [], isLoading, refetch } = useGetMyInvitations();
 
-  const { mutateAsync: respond, isPending } = useRespondInvitation();
+  const { mutateAsync: respond, isPending } = useAcceptOrDeclineInvitation();
 
   const handleRespond = async (invitationId: string, isAccepted: boolean) => {
     try {

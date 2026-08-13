@@ -1,10 +1,5 @@
-import { CoordinatorDashboardView } from "@/views/CoordinatorDashboardView";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+import { CoordinatorWorkspaceView } from "@/views/CoordinatorWorkspaceView";
 
 export default function CoordinatorDashboardPage() {
-  return (
-    <RoleGuard allowedRoles={["Coordinator", "Admin"]}>
-      <CoordinatorDashboardView />
-    </RoleGuard>
-  );
+  return <CoordinatorWorkspaceView />;
 }

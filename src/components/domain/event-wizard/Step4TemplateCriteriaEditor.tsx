@@ -114,7 +114,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                 onAddCriteria({
                   criteriaId: item.CriteriaId,
                   criterionName: item.CriterionName,
-                  description: item.Description,
+                  description: item.Description ?? undefined,
                   weight: item.Weight,
                   maxScore: item.MaxScore,
                 })

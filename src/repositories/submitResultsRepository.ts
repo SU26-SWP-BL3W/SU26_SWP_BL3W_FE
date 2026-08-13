@@ -2,6 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { SubmitResult, BaseResponse, PagedResult } from "@/models/entities";
 
+export interface SubmitResultRequest {
+  TeamId?: string;
+  TrackId?: string;
+  RoundId?: string;
+  SubmissionUrl?: string;
+  Description?: string;
+  teamId?: string;
+  trackId?: string;
+  roundId?: string;
+  submissionUrl?: string;
+  description?: string;
+}
+
 export const MOCK_SUBMISSIONS_LIST: SubmitResult[] = [
   {
     id: "sub-101",
@@ -37,17 +50,19 @@ export const MOCK_SUBMISSIONS_LIST: SubmitResult[] = [
 
 // ─── GET /api/Teams/my-submissions ──────────────────────────
 
-export function useMySubmissions() {
+export function useMySubmissions(teamId?: string) {
   return useQuery({
-    queryKey: ["my-submissions"],
+    queryKey: ["my-submissions", teamId],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<SubmitResult[]>>("/Teams/my-submissions");
+        const url = teamId ? `/SubmitResults/team/${teamId}` : "/Teams/my-submissions";
+        const res = await apiClient.get<any>(url);
         if (res.data?.data && res.data.data.length > 0) return res.data.data;
+        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
       } catch {
         console.warn("[SEAL] Returning mock my-submissions");
       }
-      return [MOCK_SUBMISSIONS_LIST[0]];
+      return MOCK_SUBMISSIONS_LIST;
     },
   });
 }
@@ -57,22 +72,55 @@ export function useMySubmissions() {
 export function useCreateSubmission() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: {
-      teamId: string;
-      trackId: string;
-      submissionUrl: string;
-      description?: string;
-    }) => {
+    mutationFn: async (data: SubmitResultRequest) => {
       try {
         const res = await apiClient.post<BaseResponse<SubmitResult>>("/SubmitResults", data);
-        return res.data?.data;
+        return res.data?.data ?? res.data;
       } catch {
         return {
           id: `sub-${Date.now()}`,
-          ...data,
+          teamId: data.teamId || data.TeamId || "team-1",
+          trackId: data.trackId || data.TrackId || "track-1",
+          submissionUrl: data.submissionUrl || data.SubmissionUrl || "",
+          description: data.description || data.Description || "",
           submittedAt: new Date().toISOString(),
           isEliminated: false,
         };
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["judge-submissions"] });
+    },
+  });
+}
+
+export function useUpdateSubmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<SubmitResultRequest> }) => {
+      try {
+        const res = await apiClient.put(`/SubmitResults/${id}`, data);
+        return res.data;
+      } catch {
+        return { id, ...data };
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-submissions"] });
+    },
+  });
+}
+
+export function useDeleteSubmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        const res = await apiClient.delete(`/SubmitResults/${id}`);
+        return res.data;
+      } catch {
+        return { success: true, message: "Xóa bài nộp (Mock Mode)" };
       }
     },
     onSuccess: () => {
@@ -93,6 +141,9 @@ export function useGetJudgeSubmissions(trackId?: string) {
         });
         if (res.data?.data?.data && res.data.data.data.length > 0) {
           return res.data.data.data;
+        }
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          return res.data;
         }
       } catch {
         console.warn("[SEAL] Returning mock judge submissions list");

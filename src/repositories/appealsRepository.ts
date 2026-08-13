@@ -2,6 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { Appeal, BaseResponse, AppealStatus } from "@/models/entities";
 
+export interface AppealDTO {
+  AppealId?: string;
+  SubmissionId?: string;
+  TeamId?: string;
+  TeamName?: string;
+  Reason?: string;
+  Status?: "Filed" | "Approved" | "Rejected" | number;
+  ResponseReason?: string;
+  CreatedAt?: string;
+  RespondedAt?: string;
+}
+
 export const MOCK_APPEALS_LIST: Appeal[] = [
   {
     id: "app-101",
@@ -27,13 +39,15 @@ export const MOCK_APPEALS_LIST: Appeal[] = [
 
 // ─── GET /api/Appeals ────────────────────────────────────────
 
-export function useGetAppeals(params?: { eventId?: string; status?: AppealStatus }) {
+export function useAppeals(params?: { eventId?: string; status?: any } | string) {
+  const queryParams = typeof params === "string" ? { teamId: params } : params;
   return useQuery({
-    queryKey: ["appeals", params],
+    queryKey: ["appeals", queryParams],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<Appeal[]>>("/Appeals", { params });
+        const res = await apiClient.get<BaseResponse<Appeal[]>>("/Appeals", { params: queryParams });
         if (res.data?.data && res.data.data.length > 0) return res.data.data;
+        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
       } catch {
         console.warn("[SEAL] Returning mock appeals list");
       }
@@ -42,22 +56,31 @@ export function useGetAppeals(params?: { eventId?: string; status?: AppealStatus
   });
 }
 
+export const useGetAppeals = useAppeals;
+
 // ─── POST /api/Appeals — Team Leader gửi Đơn Phúc khảo ───────
 
 export function useCreateAppeal() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { submitResultId: string; reason: string }) => {
+    mutationFn: async (payload: { submitResultId?: string; SubmissionId?: string; reason?: string; Reason?: string }) => {
       try {
-        const res = await apiClient.post<BaseResponse<Appeal>>("/Appeals", payload);
-        return res.data?.data;
+        const submissionId = payload.submitResultId || payload.SubmissionId || "";
+        const reasonStr = payload.reason || payload.Reason || "";
+        const res = await apiClient.post<BaseResponse<Appeal>>("/Appeals", {
+          submitResultId: submissionId,
+          SubmissionId: submissionId,
+          reason: reasonStr,
+          Reason: reasonStr,
+        });
+        return res.data?.data ?? res.data;
       } catch {
         return {
           id: `app-${Date.now()}`,
           teamId: "team-1",
           teamName: "CyberShield",
-          submitResultId: payload.submitResultId,
-          reason: payload.reason,
+          submitResultId: payload.submitResultId || payload.SubmissionId,
+          reason: payload.reason || payload.Reason,
           status: 0,
           response: null,
           createdTime: new Date().toISOString(),
@@ -79,15 +102,18 @@ export function useRespondAppeal() {
       appealId,
       status,
       response,
+      responseReason,
     }: {
       appealId: string;
-      status: AppealStatus;
-      response: string;
+      status: any;
+      response?: string;
+      responseReason?: string;
     }) => {
       try {
         const res = await apiClient.put(`/Appeals/${appealId}/respond`, {
           status,
-          response,
+          response: response || responseReason,
+          responseReason: responseReason || response,
         });
         return res.data;
       } catch {

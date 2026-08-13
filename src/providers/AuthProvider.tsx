@@ -91,7 +91,8 @@ interface AuthContextType {
   user: User | null;
   activeRole: EventRole | null;
   isInitialized: boolean;
-  loginWithRole: (roleName: PresetAccount["roleName"]) => string;
+  login: (roleName?: string) => string;
+  loginWithRole: (roleName: any) => string;
   loginWithEmail: (email: string) => string;
   logout: () => void;
 }
@@ -112,9 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedRole) setActiveRole(JSON.parse(storedRole));
     } catch (e) {
       console.error("Lỗi khôi phục phiên từ localStorage:", e);
-    } finally {
+    } font-mono:
       setIsInitialized(true);
-    }
   }, []);
 
   const saveSession = (newUser: User, newRole: EventRole | null) => {
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginWithRole = (roleName: PresetAccount["roleName"]): string => {
+  const loginWithRole = (roleName: string): string => {
     let newUser: User;
     let newRole: EventRole | null = null;
     let targetPath = "/";
@@ -304,11 +304,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithEmail = (email: string): string => {
-    const preset = PRESET_ACCOUNTS.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    const preset = PRESET_ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
     if (preset) {
       return loginWithRole(preset.roleName);
     }
     return loginWithRole("TeamLeader");
+  };
+
+  const login = (roleName: string = "TeamLeader") => {
+    return loginWithRole(roleName);
   };
 
   const logout = () => {
@@ -327,6 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         activeRole,
         isInitialized,
+        login,
         loginWithRole,
         loginWithEmail,
         logout,

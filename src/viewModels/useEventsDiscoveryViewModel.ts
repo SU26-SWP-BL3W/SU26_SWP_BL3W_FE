@@ -11,7 +11,7 @@ import {
 
 export type { EventDisplayStatus, EventCardData };
 
-export type EventStatusFilter = "all" | EventDisplayStatus;
+export type EventStatusFilter = "all" | "my_event" | EventDisplayStatus;
 export type EventSortOption = "relevant" | "soonest" | "newest" | "most_teams";
 
 export interface TrackSummary {
@@ -21,22 +21,10 @@ export interface TrackSummary {
 }
 
 export function useEventsDiscoveryViewModel() {
-  // Lazy initializer — tránh gọi Date.now() trực tiếp trong thân component
-  // (vi phạm React purity rules, xem ghi chú tương tự ở useGuestLandingViewModel cũ).
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<EventStatusFilter>("all");
   const [sort, setSort] = useState<EventSortOption>("relevant");
-
-  // Bộ lọc hạng mục (track) đồng bộ 2 chiều với query string (?track=...) —
-  // bấm vào 1 hàng ở "Hạng mục nổi bật" phải cảm giác như ĐIỀU HƯỚNG tới 1 kết
-  // quả đã lọc sẵn (đổi URL, back/forward được, share link được) giống Devpost
-  // thật, không phải chỉ âm thầm đổi 1 state ẩn trong trang.
-  //
-  // Dùng thẳng window.history thay vì useSearchParams()/useRouter() của Next —
-  // useSearchParams() bắt buộc bọc Suspense và trong thực tế bị treo vô thời
-  // hạn ở trang này (không có lỗi console nào, chỉ đứng yên ở fallback), nên
-  // tránh hẳn cơ chế đó cho 1 tính năng phụ không đáng đánh đổi độ phức tạp.
   const [trackFilter, setTrackFilterState] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,7 +56,11 @@ export function useEventsDiscoveryViewModel() {
         ev.eventName.toLowerCase().includes(q) ||
         ev.tagline.toLowerCase().includes(q) ||
         ev.tracks.some((t) => t.toLowerCase().includes(q));
-      const matchesStatus = statusFilter === "all" || ev.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "my_event"
+          ? ev.id === "event-seal-2026" || ev.id.includes("seal-2026")
+          : ev.status === statusFilter);
       const matchesTrack = !trackFilter || ev.tracks.includes(trackFilter);
       return matchesSearch && matchesStatus && matchesTrack;
     });

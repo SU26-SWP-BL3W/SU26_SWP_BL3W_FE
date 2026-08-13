@@ -86,7 +86,7 @@ export const templatesRepository = {
       const res = await apiClient.post<BaseResponse<TemplateEntity>>("/Templates", payload);
       return res.data;
     } catch (err: any) {
-      const mockCreated: TemplateEntity = {
+      const mockCreated: any = {
         TemplateId: `tpl-${Date.now()}`,
         TemplateName: payload.templateName,
         Description: payload.description,

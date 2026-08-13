@@ -29,20 +29,20 @@ export const CreateEventWizardView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 font-mono text-xs text-[var(--text-muted)] mb-2">
               <Link href="/coordinator/dashboard" className="hover:text-[var(--accent-primary)] flex items-center gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" /> Coordinator Dashboard
+                <ArrowLeft className="w-3.5 h-3.5" /> Coordinator Control Center
               </Link>
               <span>/</span>
-              <span className="text-[var(--accent-primary)] font-bold">Luồng 2: Quy Trình Tạo Sự Kiện</span>
+              <span className="text-[var(--accent-primary)] font-bold">Cấu Hình Chi Tiết Sự Kiện</span>
             </div>
             <h1 className="font-display font-bold text-2xl md:text-3xl text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-3">
               <Shield className="w-8 h-8 text-[var(--accent-primary)]" />
-              Trung Tâm Tạo & Cấu Hình Sự Kiện (Command Deck)
+              Thiết Lập Vòng Thi, Bảng Đấu & Tiêu Chí Chấm
             </h1>
           </div>
 
           <div className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
-            <span className="text-[var(--text-muted)] block uppercase text-[10px]">Trạng Thái Màn Hình:</span>
-            <span className="text-[var(--accent-primary)] font-bold">// E2E WIZARD IN PROGRESS</span>
+            <span className="text-[var(--text-muted)] block uppercase text-[10px]">Trạng Thái Nghiệp Vụ:</span>
+            <span className="text-[var(--accent-primary)] font-bold">CẤU HÌNH BAN TỔ CHỨC</span>
           </div>
         </div>
 
@@ -56,12 +56,8 @@ export const CreateEventWizardView: React.FC = () => {
               <button
                 key={step.number}
                 type="button"
-                onClick={() => {
-                  if (isCompleted || wizard.currentStep > step.number) {
-                    wizard.setCurrentStep(step.number);
-                  }
-                }}
-                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-3 ${
+                onClick={() => wizard.setCurrentStep(step.number)}
+                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-3 cursor-pointer ${
                   isActive
                     ? "bg-[var(--bg-panel)] border-[var(--accent-primary)] shadow-[0_0_12px_rgba(0,217,255,0.2)] text-[var(--accent-primary)]"
                     : isCompleted

@@ -320,7 +320,7 @@ export function OnboardingProfileView() {
                       isFpt: true,
                       studentCode: fptResult.studentCode ?? fptCode,
                       fullName: fptResult.fullName ?? undefined,
-                    }).catch((err) => console.warn("[SEAL] FPT submit mocked:", err?.message));
+                    } as any).catch((err) => console.warn("[SEAL] FPT submit mocked:", err?.message));
                     setStep("pending");
                   } catch {
                     setSubmitError("Không thể gửi hồ sơ. Vui lòng thử lại.");

@@ -10,6 +10,7 @@
 /** Matches backend UserModel (GET /api/Users, POST /api/Auth/login response) */
 export interface User {
   id?: string;
+  userId?: string;
   schoolId?: string | null;
   schoolName?: string | null;
   studentCode?: string | null;
@@ -24,7 +25,10 @@ export interface User {
   photoStudentCardUrl?: string | null;
   studentCardPhotoUrl?: string | null;
   rejectionCount?: number;
+  rejectedCount?: number;
+  rejectionReason?: string | null;
   createdTime?: string;
+  lastUpdatedTime?: string;
 
   // Legacy aliases
   UserID?: string;
@@ -53,45 +57,46 @@ export interface RegisterRequest {
 export interface UpdateStudentProfileRequest {
   schoolId?: string | null;
   studentCode?: string | null;
-  photoStudentCardUrl?: string | null;
-  isFpt: boolean;
-  fullName?: string | null;
+  isFpt?: boolean;
 }
 
-/** GET /api/fpt-mock/students/{studentCode} response */
+/** GET /api/Auth/fpt-student-verification response */
 export interface FptStudentResponse {
-  isValid: boolean;
-  studentCode?: string | null;
-  fullName?: string | null;
-  major?: string | null;
-  enrollYear?: number;
-}
-
-// ─── School ──────────────────────────────────────────────────
-
-/** Matches backend SchoolModel */
-export interface School {
-  id: string;
-  schoolName: string;
-  address?: string | null;
+  studentCode: string;
+  fullName: string;
+  email: string;
+  isFpt: boolean;
+  isVerified?: boolean;
 }
 
 // ─── User Rejection ──────────────────────────────────────────
 
 /** Matches backend UserRejectionModel (GET /api/UserRejections/user/{userId}) */
 export interface UserRejection {
-  id: string;
-  userId: string;
-  rejectedBy: string;
+  id?: string;
+  userId?: string;
+  rejectedBy?: string;
   reason?: string | null;
   isActive?: boolean;
   createdTime?: string;
+}
+
+// ─── School ──────────────────────────────────────────────────
+
+export interface School {
+  id?: string;
+  schoolId?: string;
+  schoolName?: string;
+  SchoolName?: string;
+  code?: string | null;
+  address?: string | null;
 }
 
 // ─── Event ───────────────────────────────────────────────────
 
 export interface EventEntity {
   id?: string;
+  eventId?: string;
   eventName?: string;
   season?: string;
   year?: number;
@@ -116,98 +121,70 @@ export interface EventEntity {
   RegistrationStartDate?: string | null;
   RegistrationEndDate?: string | null;
   Description?: string | null;
-  Status?: boolean;
   PhotoEventUrl?: string | null;
-  MaxTeams?: number;
-  MinTeamSize?: number;
-  MaxTeamSize?: number;
 }
+
+/** Legacy type alias */
+export type Event = EventEntity;
 
 // ─── Round ───────────────────────────────────────────────────
 
 export interface RoundEntity {
   id?: string;
+  roundId?: string;
   eventId?: string;
-  roundName?: string;
   roundNumber?: number;
+  roundName?: string;
   startDate?: string;
   endDate?: string;
   advancementRule?: string | null;
-  scoringStartDate?: string | null;
-  scoringEndDate?: string | null;
-  tracks?: TrackEntity[];
-  createdTime?: string;
-  lastUpdatedTime?: string;
+  description?: string | null;
 
   // Legacy aliases
   RoundId?: string;
   EventId?: string;
-  RoundName?: string;
   RoundNumber?: number;
+  RoundName?: string;
   StartDate?: string;
   EndDate?: string;
-  AdvancementRule?: string | null;
-  ScoringStartDate?: string | null;
-  ScoringEndDate?: string | null;
 }
+
+/** Legacy type alias */
+export type Round = RoundEntity;
 
 // ─── Track ───────────────────────────────────────────────────
 
 export interface TrackEntity {
   id?: string;
-  roundId?: string;
-  templateId?: string | null;
+  trackId?: string;
+  eventId?: string;
   trackName?: string;
   description?: string | null;
-  submissionRuleDescription?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-  scoringStartDate?: string | null;
-  scoringEndDate?: string | null;
-  judges?: User[];
-  mentors?: User[];
-  createdTime?: string;
-  lastUpdatedTime?: string;
 
   // Legacy aliases
   TrackId?: string;
-  RoundId?: string;
-  TemplateId?: string | null;
+  EventId?: string;
   TrackName?: string;
   Description?: string | null;
-  SubmissionRuleDescription?: string | null;
-  StartDate?: string | null;
-  EndDate?: string | null;
-  ScoringStartDate?: string | null;
-  ScoringEndDate?: string | null;
 }
 
-// ─── Template / Criteria ─────────────────────────────────────
+/** Legacy type alias */
+export type Track = TrackEntity;
 
-export interface TemplateEntity {
+// ─── Criteria & Template ──────────────────────────────────────
+
+export interface Criteria {
   id?: string;
-  templateName?: string;
-  description?: string | null;
-  createdTime?: string;
-  lastUpdatedTime?: string;
-  criterias?: TemplateCriteriaEntity[];
-
-  // Legacy aliases
-  TemplateId?: string;
-  TemplateName?: string;
-  Description?: string | null;
-}
-
-export interface CriteriaEntity {
-  id?: string;
-  criteriaName?: string | null;
-  criterionName?: string | null;
+  criteriaId?: string;
+  criteriaName?: string;
   description?: string | null;
   maxScore?: number;
   weight?: number;
   isActive?: boolean;
+}
 
-  // Legacy aliases
+export interface CriteriaEntity extends Criteria {
+  criterionName?: string | null;
   CriteriaId?: string;
   CriterionName?: string;
   Description?: string;
@@ -223,13 +200,24 @@ export interface TemplateCriteriaEntity {
   weight?: number;
   maxScore?: number;
 
-  // Legacy aliases
   TemplateId?: string;
   CriteriaId?: string;
   CriterionName?: string;
   Description?: string;
   Weight?: number;
   MaxScore?: number;
+}
+
+export interface Template {
+  id?: string;
+  templateId?: string;
+  TemplateId?: string;
+  name?: string;
+  templateName?: string;
+  TemplateName?: string;
+  description?: string | null;
+  criterias?: Criteria[];
+  totalWeight?: number;
 }
 
 // ─── EventRole ───────────────────────────────────────────────
@@ -246,6 +234,7 @@ export const EventRoleTypeMap: Record<EventRoleType, string> = {
 
 export interface EventRole {
   id?: string;
+  eventRoleId?: string;
   userId?: string;
   eventId?: string;
   teamId?: string | null;
@@ -265,12 +254,13 @@ export interface EventRole {
 }
 
 export interface EventRoleInvitation {
+  id?: string;
   invitationId?: string;
   eventId?: string;
   trackId?: string | null;
   email?: string | null;
   roleName?: string;
-  status?: 'Pending' | 'Accepted' | 'Rejected' | 'Expired';
+  status?: 'Pending' | 'Accepted' | 'Rejected' | 'Expired' | string;
   expiresAt?: string;
   respondedAt?: string | null;
   type?: string | null;
@@ -295,13 +285,16 @@ export type EventRoleInvitationEntity = EventRoleInvitation;
 
 // ─── Team ────────────────────────────────────────────────────
 
-export type TeamStatus = 'Forming' | 'PendingApproval' | 'Registered' | 'Disqualified';
+export type TeamStatus = 'Forming' | 'PendingApproval' | 'Registered' | 'Disqualified' | 'Rejected';
 
 export interface TeamEntity {
   id?: string;
+  teamId?: string;
   eventId?: string;
   leaderId?: string;
+  leaderUserId?: string;
   teamName?: string;
+  name?: string;
   description?: string | null;
   status?: TeamStatus;
   rejectReason?: string | null;
@@ -317,6 +310,8 @@ export interface TeamEntity {
   Status?: TeamStatus;
 }
 
+export type Team = TeamEntity;
+
 export interface TeamInvitation {
   id?: string;
   teamId?: string;
@@ -324,7 +319,8 @@ export interface TeamInvitation {
   email?: string;
   invitedEmail?: string;
   invitedByName?: string;
-  status?: 'Pending' | 'Accepted' | 'Declined' | 'Expired';
+  status?: 'Pending' | 'Accepted' | 'Declined' | 'Expired' | string;
+  sentAt?: string;
   expiresAt?: string;
   createdTime?: string;
 }
@@ -341,12 +337,16 @@ export interface TeamMemberModel {
   isLeader?: boolean;
   isApproved?: boolean;
   joinedTime?: string;
+  user?: User;
 }
+
+export type TeamMember = TeamMemberModel;
 
 // ─── Submission ──────────────────────────────────────────────
 
 export interface SubmitResult {
   id?: string;
+  submitResultId?: string;
   teamId?: string;
   teamName?: string;
   trackId?: string;
@@ -370,37 +370,32 @@ export interface Score {
   totalScore?: number;
   comment?: string | null;
   isSubmitted?: boolean;
-  isNew?: boolean;
-  details?: ScoreDetailItem[];
   createdTime?: string;
   lastUpdatedTime?: string;
+  criteriaScores?: CriteriaScore[];
 }
 
-export interface ScoreDetailItem {
+export interface CriteriaScore {
   id?: string;
-  templateId?: string | null;
+  scoreId?: string;
   criteriaId?: string;
-  criteriaName?: string | null;
-  value?: number;
-  maxScore?: number;
-  weight?: number;
+  scoreValue?: number;
 }
 
 export interface SaveScoreRequest {
-  eventId?: string;
-  eventRoleId?: string;
   submitResultId: string;
-  comment?: string;
+  judgeId?: string;
   isSubmitted: boolean;
-  details: {
+  scores: {
     criteriaId: string;
-    value: number;
+    scoreValue: number;
   }[];
+  comment?: string;
 }
 
 export interface ScoreBreakdownModel {
   teamId: string;
-  teamName?: string;
+  teamName: string;
   trackId?: string;
   trackName?: string;
   totalScore: number;
@@ -480,22 +475,24 @@ export interface Appeal {
   response?: string | null;
   assignedJudgeId?: string | null;
   createdTime?: string;
+  lastUpdatedTime?: string;
 }
 
-// ─── Pagination ──────────────────────────────────────────────
-
-export interface PagedResult<T> {
-  data: T[];
-  currentPage: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
-  hasPreviousPage: boolean;
-  hasNextPage: boolean;
-}
+// ─── Base / Paged Generic Responses ──────────────────────────
 
 export interface BaseResponse<T> {
+  statusCode: number;
+  message: string;
   data: T;
-  message?: string | null;
-  success: boolean;
+  success?: boolean;
+}
+
+export interface PagedResult<T> {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  data: T[];
 }

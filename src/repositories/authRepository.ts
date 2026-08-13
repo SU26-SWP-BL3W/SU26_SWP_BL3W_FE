@@ -19,10 +19,11 @@ export function useLogin() {
       return res.data.data;
     },
     onSuccess: (data) => {
-      if (data?.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        queryClient.setQueryData(["currentUser"], data.user);
+      const token = (data as any)?.token || (data as any)?.accessToken;
+      if (token) {
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("refreshToken", (data as any)?.refreshToken ?? "");
+        queryClient.setQueryData(["currentUser"], (data as any)?.user);
       }
     },
   });
@@ -49,10 +50,11 @@ export function useGoogleLogin() {
       return res.data.data;
     },
     onSuccess: (data) => {
-      if (data?.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        queryClient.setQueryData(["currentUser"], data.user);
+      const token = (data as any)?.token || (data as any)?.accessToken;
+      if (token) {
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("refreshToken", (data as any)?.refreshToken ?? "");
+        queryClient.setQueryData(["currentUser"], (data as any)?.user);
       }
     },
   });

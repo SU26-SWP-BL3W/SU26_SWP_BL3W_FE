@@ -18,14 +18,53 @@ import {
 } from "lucide-react";
 import type { SubmitResult, TemplateCriteriaEntity, CriteriaEntity } from "@/models/entities";
 
+import { hasEventPermission } from "@/lib/permissions";
+import { Link } from "@/i18n/routing";
+
+const MOCK_JUDGE_SUBMISSIONS: SubmitResult[] = [
+  {
+    id: "sub-101",
+    teamId: "ANONYMOUS_101",
+    submissionUrl: "https://github.com/anonymous-team-101/rbl-platform",
+    description: "Nền tảng tự động hóa đánh giá độ tin cậy RBL và kiến trúc microservices.",
+    submittedAt: "12/08/2026",
+  },
+  {
+    id: "sub-102",
+    teamId: "ANONYMOUS_102",
+    submissionUrl: "https://github.com/anonymous-team-102/threat-scanner",
+    description: "Ứng dụng Quét lỗ hổng an ninh mạng tự động dựa trên AI Agent.",
+    submittedAt: "12/08/2026",
+  },
+  {
+    id: "sub-103",
+    teamId: "ANONYMOUS_103",
+    submissionUrl: "https://github.com/anonymous-team-103/smart-campus",
+    description: "Giải pháp IoT quản lý năng lượng thông minh cho khuôn viên tòa nhà.",
+    submittedAt: "12/08/2026",
+  },
+  {
+    id: "sub-104",
+    teamId: "ANONYMOUS_104",
+    submissionUrl: "https://github.com/anonymous-team-104/review-bot",
+    description: "Bot hỗ trợ Review Code tự động và đánh giá tiêu chí bảo mật CI/CD.",
+    submittedAt: "12/08/2026",
+  },
+];
+
 export function JudgeScoringView() {
   const { user, activeRole } = useAuth();
   const [selectedTrackId, setSelectedTrackId] = useState("track-1");
-  const [selectedSubmission, setSelectedSubmission] = useState<SubmitResult | null>(null);
+
+  const activeEventId = activeRole?.eventId || "event-seal-2026";
+  const isAuthorizedJudge = hasEventPermission(user, activeRole, activeEventId);
 
   // Lấy danh sách bài nộp thuộc Track
-  const { data: submissions = [], isLoading: loadingSubmissions, refetch } =
+  const { data: apiSubmissions = [], isLoading: loadingSubmissions, refetch } =
     useGetJudgeSubmissions(selectedTrackId);
+
+  const displaySubmissions: any[] = (apiSubmissions.length > 0 ? apiSubmissions : MOCK_JUDGE_SUBMISSIONS) as any[];
+  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(MOCK_JUDGE_SUBMISSIONS[0]);
 
   // Lấy danh sách Tiêu chí (Template Criteria)
   const { data: criterias = [] } = useGetCriterias();
@@ -121,24 +160,30 @@ export function JudgeScoringView() {
   }
 
   return (
-    <div className="p-[var(--space-xl)] max-w-[var(--container-max)] mx-auto hud-lattice min-h-[calc(100vh-4rem)]">
+    <div className="p-6 md:p-8 max-w-[var(--container-max)] mx-auto hud-lattice min-h-[calc(100vh-4rem)]">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-[var(--border-muted)] pb-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 border-b border-[var(--border-muted)] pb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[rgba(251,191,36,0.1)] border border-[var(--accent-judge)]/30 flex items-center justify-center">
+          <div className="w-10 h-10 bg-[rgba(251,191,36,0.1)] border border-[var(--accent-judge)]/30 flex items-center justify-center shrink-0">
             <Award className="w-6 h-6 text-[var(--accent-judge)]" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold text-[var(--accent-judge)] tracking-widest uppercase">
-              CHẤM ĐIỂM BÀI THI (JUDGE SCORING)
+            <h1 className="font-display text-xl md:text-2xl font-bold text-[var(--accent-judge)] tracking-widest uppercase flex items-center gap-2">
+              <span>🔒 CHẤM ĐIỂM MÙ (BLIND JUDGING)</span>
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              // HẠNG MỤC THI ĐẤU: {selectedTrackId.toUpperCase()}
+              // HẠNG MỤC THI ĐẤU: {selectedTrackId.toUpperCase()} · TÊN ĐỘI THI ĐƯỢC ẨN TỰ ĐỘNG THEO CHUẨN RBL
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+          <Link href={`/events/${activeEventId}/leaderboard`}>
+            <Button variant="ghost" accent="judge" className="border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)] hover:text-black text-xs font-mono font-bold">
+              🏆 XEM BẢNG XẾP HẠNG
+            </Button>
+          </Link>
+
           <select
             value={selectedTrackId}
             onChange={(e) => setSelectedTrackId(e.target.value)}
@@ -157,45 +202,47 @@ export function JudgeScoringView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Submissions List */}
         <div className="flex flex-col gap-4">
-          <h2 className="font-display text-lg font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2 flex items-center justify-between">
-            <span>BÀI NỘP ({submissions.length})</span>
+          <h2 className="font-display text-base font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2 flex items-center justify-between">
+            <span>DANH SÁCH BÀI NỘP ({displaySubmissions.length})</span>
           </h2>
 
           {loadingSubmissions ? (
             <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
               Đang tải danh sách bài nộp...
             </div>
-          ) : submissions.length === 0 ? (
+          ) : displaySubmissions.length === 0 ? (
             <Card className="p-8 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
               Chưa có bài nộp nào trong Hạng mục này.
             </Card>
           ) : (
             <div className="space-y-3">
-              {submissions.map((sub) => {
+              {displaySubmissions.map((sub, idx) => {
                 const isSelected = selectedSubmission?.id === sub.id;
+                const anonymousCode = `BÀI NỘP #SUB-${101 + idx}`;
+
                 return (
                   <button
-                    key={sub.id || sub.teamId}
+                    key={sub.id || idx}
                     onClick={() => {
                       setSelectedSubmission(sub);
                       setScores({});
                     }}
                     className={`w-full p-4 text-left transition-all duration-200 hud-clipped border ${
                       isSelected
-                        ? "bg-[rgba(251,191,36,0.1)] border-[var(--accent-judge)]"
+                        ? "bg-[rgba(251,191,36,0.1)] border-[var(--accent-judge)] shadow-sm"
                         : "bg-[var(--bg-panel)] border-[var(--border-muted)] hover:border-[var(--accent-judge)]/50"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-sm font-bold text-[var(--text-primary)]">
-                        Đội: #{sub.teamId || "TEAM-MOCK"}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-mono text-xs font-bold text-[var(--accent-judge)]">
+                        🔒 {anonymousCode}
                       </span>
-                      <Badge tone={sub.isActive ? "success" : "neutral"}>
-                        {sub.isActive ? "ĐÃ NỘP" : "DRAFT"}
+                      <Badge tone={sub.submittedAt ? "success" : "neutral"}>
+                        {sub.submittedAt ? "ĐÃ NỘP" : "DRAFT"}
                       </Badge>
                     </div>
-                    <p className="text-xs font-mono text-[var(--text-muted)] truncate">
-                      {sub.description || "Không có mô tả thêm"}
+                    <p className="text-xs font-mono text-[var(--text-primary)] font-bold line-clamp-2">
+                      {sub.description || "Bài nộp dự án kỹ thuật"}
                     </p>
                   </button>
                 );
@@ -218,10 +265,10 @@ export function JudgeScoringView() {
           ) : (
             <Card className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-6">
               {/* Submission preview bar */}
-              <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] flex items-center justify-between">
+              <div className="p-4 bg-[var(--bg-base)] border border-[var(--accent-judge)]/30 flex items-center justify-between hud-clipped">
                 <div>
-                  <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
-                    SẢN PHẨM ĐANG CHẤM
+                  <span className="text-[10px] font-mono text-[var(--accent-judge)] uppercase font-bold block mb-1">
+                    🔒 SẢN PHẨM ẨN DANH (BLIND SUBMISSION)
                   </span>
                   <a
                     href={selectedSubmission.submissionUrl || "#"}
@@ -229,7 +276,7 @@ export function JudgeScoringView() {
                     rel="noreferrer"
                     className="text-xs font-mono text-[var(--accent-primary)] hover:underline flex items-center gap-1 font-bold"
                   >
-                    {selectedSubmission.submissionUrl || "https://github.com/my-team/repo"}{" "}
+                    {selectedSubmission.submissionUrl || "https://github.com/anonymous-team/repo"}{" "}
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>

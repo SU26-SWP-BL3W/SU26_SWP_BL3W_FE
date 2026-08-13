@@ -120,6 +120,7 @@ export function useMyTeam() {
       try {
         const res = await apiClient.get<BaseResponse<MyTeamResponse>>("/Teams/my-team");
         if (res.data?.data) return res.data.data;
+        if ((res.data as any)?.team) return res.data as any;
       } catch {
         console.warn("[SEAL] Returning mock my-team data");
       }
@@ -138,6 +139,7 @@ export function useGetMyInvitations() {
       try {
         const res = await apiClient.get<BaseResponse<TeamInvitation[]>>("/Teams/my-invitations");
         if (res.data?.data && res.data.data.length > 0) return res.data.data;
+        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
       } catch {
         console.warn("[SEAL] Returning mock invitations data");
       }
@@ -151,17 +153,24 @@ export function useGetMyInvitations() {
 export function useCreateTeam() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { teamName: string; description?: string; eventId: string }) => {
+    mutationFn: async (data: { teamName?: string; TeamName?: string; description?: string; Description?: string; eventId?: string; EventId?: string }) => {
       try {
-        const res = await apiClient.post<BaseResponse<TeamEntity>>("/Teams", data);
-        return res.data.data;
+        const nameStr = data.teamName || data.TeamName || "New Team";
+        const descStr = data.description || data.Description;
+        const evId = data.eventId || data.EventId || "seal-2026-mua-he";
+        const res = await apiClient.post<BaseResponse<TeamEntity>>("/Teams", {
+          teamName: nameStr,
+          description: descStr,
+          eventId: evId,
+        });
+        return res.data?.data ?? res.data;
       } catch {
         return {
           id: `team-${Date.now()}`,
-          teamName: data.teamName,
-          description: data.description,
-          status: "Forming",
-          eventId: data.eventId,
+          teamName: data.teamName || data.TeamName,
+          description: data.description || data.Description,
+          status: "Forming" as const,
+          eventId: data.eventId || data.EventId,
         };
       }
     },
@@ -198,9 +207,23 @@ export function useInviteMember() {
   });
 }
 
-// ─── POST /api/Teams/invitations/{invitationId}/respond ──────
+export function useCancelInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, invitationId }: { teamId: string; invitationId: string }) => {
+      try {
+        await apiClient.delete(`/Teams/${teamId}/invitations/${invitationId}`);
+      } catch {
+        // Mock mode cancel
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
 
-export function useRespondInvitation() {
+export function useAcceptOrDeclineInvitation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -211,7 +234,7 @@ export function useRespondInvitation() {
       isAccepted: boolean;
     }) => {
       try {
-        const res = await apiClient.post(`/Teams/invitations/${invitationId}/respond`, null, {
+        const res = await apiClient.post(`/Teams/invitations/${invitationId}/respond`, { isAccepted }, {
           params: { isAccepted },
         });
         return res.data;
@@ -225,6 +248,8 @@ export function useRespondInvitation() {
     },
   });
 }
+
+export const useRespondInvitation = useAcceptOrDeclineInvitation;
 
 // ─── POST /api/Teams/{teamId}/confirm-registration ─────────
 
@@ -258,6 +283,7 @@ export function useGetPendingTeams(params?: { pageNumber?: number; pageSize?: nu
           params: { ...params, status: "PendingApproval" },
         });
         if (res.data?.data?.data && res.data.data.data.length > 0) return res.data.data;
+        if (Array.isArray(res.data) && res.data.length > 0) return { data: res.data };
       } catch {
         console.warn("[SEAL] Returning mock pending teams");
       }
@@ -298,7 +324,7 @@ export function useApproveTeamRegistration() {
 export function useRejectTeamRegistration() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ teamId, reason }: { teamId: string; reason: string }) => {
+    mutationFn: async ({ teamId, reason }: { teamId: string; reason?: string }) => {
       try {
         const res = await apiClient.post(`/Teams/${teamId}/reject-registration`, { reason });
         return res.data;
@@ -314,15 +340,35 @@ export function useRejectTeamRegistration() {
 
 // ─── POST /api/Teams/{teamId}/transfer-leader ────────────────
 
-export function useTransferTeamLeader() {
+export function useTransferLeadership() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ teamId, newLeaderId }: { teamId: string; newLeaderId: string }) => {
+    mutationFn: async ({ teamId, newLeaderId, targetUserId }: { teamId: string; newLeaderId?: string; targetUserId?: string }) => {
+      const leaderIdToUse = newLeaderId || targetUserId;
       try {
-        const res = await apiClient.post(`/Teams/${teamId}/transfer-leader`, { newLeaderId });
+        const res = await apiClient.post(`/Teams/${teamId}/transfer-leader`, { newLeaderId: leaderIdToUse, targetUserId: leaderIdToUse });
         return res.data;
       } catch {
         return { success: true, message: "Chuyển quyền đội trưởng (Mock Mode)" };
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export const useTransferTeamLeader = useTransferLeadership;
+
+export function useLeaveTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      try {
+        const res = await apiClient.post(`/Teams/${teamId}/leave`);
+        return res.data;
+      } catch {
+        return { success: true, message: "Rời đội (Mock Mode)" };
       }
     },
     onSuccess: () => {

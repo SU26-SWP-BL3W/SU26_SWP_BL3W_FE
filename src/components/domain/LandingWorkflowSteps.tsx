@@ -39,8 +39,9 @@ export function LandingWorkflowSteps() {
       <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-[var(--space-xl)]">
         <div className="flex flex-col items-center text-center gap-2">
           <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
-            // OPERATIONAL PROTOCOL
+            {"// "}OPERATIONAL PROTOCOL
           </span>
+
           <h2 className="font-display text-2xl font-bold uppercase text-[var(--text-primary)] md:text-4xl">
             LUỒNG THI ĐẤU <span className="text-[var(--accent-primary)]">TACTICAL</span> HẠNG MỤC SEAL
           </h2>
@@ -87,7 +88,7 @@ export function LandingWorkflowSteps() {
         <div className="flex justify-center pt-2">
           <Link href="/register">
             <button className="hud-clipped relative px-8 py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_15px_rgba(255,255,255,0.4)] focus:outline-none">
-              // ĐẮNG KÝ VÀ TẠO ĐỘI NGAY &gt;
+              {"// "}ĐĂNG KÝ VÀ TẠO ĐỘI NGAY &gt;
             </button>
           </Link>
         </div>
