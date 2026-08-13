@@ -56,12 +56,8 @@ export const CreateEventWizardView: React.FC = () => {
               <button
                 key={step.number}
                 type="button"
-                onClick={() => {
-                  if (isCompleted || wizard.currentStep > step.number) {
-                    wizard.setCurrentStep(step.number);
-                  }
-                }}
-                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-3 ${
+                onClick={() => wizard.setCurrentStep(step.number)}
+                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-3 cursor-pointer ${
                   isActive
                     ? "bg-[var(--bg-panel)] border-[var(--accent-primary)] shadow-[0_0_12px_rgba(0,217,255,0.2)] text-[var(--accent-primary)]"
                     : isCompleted

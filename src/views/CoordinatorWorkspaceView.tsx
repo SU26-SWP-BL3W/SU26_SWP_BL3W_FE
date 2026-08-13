@@ -162,23 +162,30 @@ export function CoordinatorWorkspaceView() {
   const [responseModal, setResponseModal] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
 
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "danger" } | null>(null);
+
+  const showToast = (text: string, type: "success" | "danger" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   const handleApproveTeam = (id: string, name: string) => {
-    alert(`[BTC CHẤP THUẬN] Đã phê duyệt chính thức cho Đội: ${name}. Đội đã chuyển sang trạng thái Registered!`);
+    showToast(`✓ Đã phê duyệt chính thức cho Đội: ${name}. Đội chuyển sang trạng thái Registered!`, "success");
     setPendingTeams(prev => prev.filter(t => t.id !== id));
   };
 
   const handleRejectTeam = (id: string, name: string) => {
-    alert(`[BTC TỪ CHỐI] Đã từ chối hồ sơ Đội: ${name}. Đội đã chuyển về trạng thái Forming để cập nhật lại.`);
+    showToast(`✕ Đã từ chối hồ sơ Đội: ${name}. Đội đã chuyển về trạng thái Forming!`, "danger");
     setPendingTeams(prev => prev.filter(t => t.id !== id));
   };
 
   const handleApproveProfile = (id: string, name: string) => {
-    alert(`[BTC CHẤP THUẬN] Đã xác thực Thẻ Sinh Viên cho: ${name}`);
+    showToast(`✓ Đã xác thực thành công Thẻ Sinh Viên cho: ${name}`, "success");
     setPendingProfiles(prev => prev.filter(p => p.id !== id));
   };
 
   const handleRejectProfile = (id: string, name: string) => {
-    alert(`[BTC TỪ CHỐI] Đã từ chối Thẻ Sinh Viên của: ${name}`);
+    showToast(`✕ Đã từ chối Thẻ Sinh Viên của: ${name}`, "danger");
     setPendingProfiles(prev => prev.filter(p => p.id !== id));
   };
 

@@ -42,7 +42,7 @@ export function NavigationBar() {
                 <SealShield className="h-6 w-6 text-[#a855f7]" />
                 <span>COORD PANEL</span>
               </Link>
-              <NotificationBell />
+              <NotificationBell align="left" />
             </div>
             <Link
               href="/"

@@ -14,7 +14,11 @@ export interface NotificationItem {
   actionType?: "accept_team_invite";
 }
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  align?: "left" | "right";
+}
+
+export function NotificationBell({ align = "left" }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +114,11 @@ export function NotificationBell() {
 
       {/* ── Notifications HUD Popover Panel ── */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 shadow-2xl hud-clipped z-50 overflow-hidden flex flex-col font-mono text-xs animate-in fade-in zoom-in-95 duration-150">
+        <div
+          className={`absolute mt-2 w-80 md:w-88 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 shadow-2xl hud-clipped z-50 overflow-hidden flex flex-col font-mono text-xs animate-in fade-in zoom-in-95 duration-150 ${
+            align === "right" ? "right-0" : "left-0 sm:left-auto sm:right-0"
+          }`}
+        >
           
           {/* Header */}
           <div className="flex items-center justify-between p-3 bg-[var(--bg-base)] border-b border-[var(--border-muted)]">
