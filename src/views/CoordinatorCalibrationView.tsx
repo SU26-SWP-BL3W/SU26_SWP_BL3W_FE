@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 export function CoordinatorCalibrationView() {
+  const [activeTab, setActiveTab] = useState<"calibration" | "criteria">("criteria");
   const [trackId, setTrackId] = useState("track-1");
   const [roundId, setRoundId] = useState("round-1");
   const [eventId, setEventId] = useState("seal-2026-mua-he");
@@ -25,6 +26,37 @@ export function CoordinatorCalibrationView() {
   const { data: calibration, isLoading, refetch } = useGetTrackCalibration(trackId);
   const { mutateAsync: calculateRound, isPending: isCalculating } = useCalculateRoundResults();
   const { mutateAsync: exportCsv, isPending: isExporting } = useExportCsvAnonymized();
+
+  // Criteria State
+  const [criteriaList, setCriteriaList] = useState([
+    { id: "cr-1", name: "Ý tưởng & Đổi mới sáng tạo (Innovation)", maxScore: 10, weight: 30, description: "Đánh giá tính độc đáo, giải pháp đột phá và ứng dụng công nghệ mới." },
+    { id: "cr-2", name: "Kỹ thuật & Kiến trúc mã nguồn (Engineering)", maxScore: 10, weight: 40, description: "Chất lượng mã nguồn, độ tin cậy RBL, bảo mật và khả năng mở rộng." },
+    { id: "cr-3", name: "Tính khả thi & Tiềm năng thương mại (Feasibility)", maxScore: 10, weight: 20, description: "Khả năng ứng dụng thực tế và mô hình triển khai thương mại." },
+    { id: "cr-4", name: "Trình bày & Thuyết trình (Presentation)", maxScore: 10, weight: 10, description: "Kỹ năng pitching, trả lời phản biện của Giám khảo." },
+  ]);
+
+  const [newCriteriaName, setNewCriteriaName] = useState("");
+  const [newMaxScore, setNewMaxScore] = useState(10);
+  const [newWeight, setNewWeight] = useState(20);
+  const [newDesc, setNewDesc] = useState("");
+
+  const handleAddCriteria = () => {
+    if (!newCriteriaName.trim()) {
+      alert("Vui lòng nhập tên tiêu chí chấm điểm!");
+      return;
+    }
+    const newCr = {
+      id: `cr-${Date.now()}`,
+      name: newCriteriaName.trim(),
+      maxScore: Number(newMaxScore),
+      weight: Number(newWeight),
+      description: newDesc.trim() || "Mô tả tiêu chí RBL mới",
+    };
+    setCriteriaList([...criteriaList, newCr]);
+    setNewCriteriaName("");
+    setNewDesc("");
+    alert("✓ Đã thêm tiêu chí mới vào Kho Tiêu Chí Chấm Điểm!");
+  };
 
   const handleCalculate = async () => {
     try {
@@ -53,17 +85,17 @@ export function CoordinatorCalibrationView() {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] hud-lattice px-6 py-8">
       {/* Header */}
-      <div className="max-w-5xl mx-auto mb-8 border-b border-[var(--border-muted)] pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="max-w-5xl mx-auto mb-6 border-b border-[var(--border-muted)] pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[rgba(167,139,250,0.1)] border border-[var(--accent-coordinator)]/30 flex items-center justify-center">
             <BarChart2 className="w-6 h-6 text-[var(--accent-coordinator)]" />
           </div>
           <div>
             <h1 className="font-display text-2xl font-bold text-[var(--accent-coordinator)] tracking-widest uppercase">
-              HIỆU CHUẨN ĐIỂM & TÍNH XẾP HẠNG (CALIBRATION)
+              QUẢN LÝ TIÊU CHÍ & HIỆU CHUẨN ĐIỂM (RUBRIC CENTER)
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              // COORDINATOR SCORING MATRIX & ROUND RANKING
+              // BAN TỔ CHỨC: KHO TIÊU CHÍ RBL & MA TRẬN ĐIỂM GIÁM KHẢO
             </p>
           </div>
         </div>
@@ -93,77 +125,189 @@ export function CoordinatorCalibrationView() {
         </div>
       </div>
 
+      {/* Navigation Tabs */}
+      <div className="max-w-5xl mx-auto mb-6 flex border-b border-[var(--border-muted)] font-mono text-xs">
+        <button
+          onClick={() => setActiveTab("criteria")}
+          className={`px-5 py-3 font-bold border-b-2 transition-all uppercase flex items-center gap-2 ${
+            activeTab === "criteria"
+              ? "border-[var(--accent-judge)] text-[var(--accent-judge)] bg-[var(--accent-judge)]/10"
+              : "border-transparent text-[var(--text-muted)] hover:text-white"
+          }`}
+        >
+          <span>📐 Kho Tiêu Chí Chấm Điểm ({criteriaList.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("calibration")}
+          className={`px-5 py-3 font-bold border-b-2 transition-all uppercase flex items-center gap-2 ${
+            activeTab === "calibration"
+              ? "border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] bg-[var(--accent-coordinator)]/10"
+              : "border-transparent text-[var(--text-muted)] hover:text-white"
+          }`}
+        >
+          <span>📊 Ma Trận Chấm Điểm Giám Khảo</span>
+        </button>
+      </div>
+
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Controls */}
-        <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-[var(--text-muted)] uppercase">
-              Hạng mục (Track):
-            </span>
-            <select
-              value={trackId}
-              onChange={(e) => setTrackId(e.target.value)}
-              className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
-            >
-              <option value="track-1">Hạng mục 1: AI & Data Science</option>
-              <option value="track-2">Hạng mục 2: Cyber Security</option>
-              <option value="track-3">Hạng mục 3: Web3 & Blockchain</option>
-            </select>
-          </div>
+        {activeTab === "criteria" && (
+          <div className="space-y-6">
+            {/* Form Thêm Tiêu Chí */}
+            <Card className="p-6 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/30 hud-clipped space-y-4">
+              <h2 className="font-display text-sm font-bold text-[var(--accent-judge)] uppercase tracking-widest flex items-center gap-2">
+                <span>➕ THÊM TIÊU CHÍ CHẤM ĐIỂM RBL MỚI</span>
+              </h2>
 
-          <Badge tone={calibration?.isCompleted ? "success" : "warning"}>
-            {calibration?.isCompleted
-              ? "✓ TẤT CẢ GIÁM KHẢO ĐÃ HOÀN THÀNH CHẤM"
-              : "⚠ CÒN GIÁM KHẢO DRAFT"}
-          </Badge>
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Tên tiêu chí</label>
+                  <input
+                    type="text"
+                    value={newCriteriaName}
+                    onChange={(e) => setNewCriteriaName(e.target.value)}
+                    placeholder="VD: Tính Bảo Mật & Mã Hóa Dữ Liệu..."
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped focus:outline-none focus:border-[var(--accent-judge)]"
+                  />
+                </div>
 
-        {/* Matrix Table */}
-        {isLoading ? (
-          <div className="flex justify-center py-20">
-            <RefreshCw className="w-8 h-8 animate-spin text-[var(--accent-coordinator)]" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>GIÁM KHẢO</TableHead>
-                <TableHead>ĐỘI THI</TableHead>
-                <TableHead>ĐIỂM ĐÁNH GIÁ</TableHead>
-                <TableHead>TRẠNG THÁI CHẤM</TableHead>
-              </TableRow>
-            </TableHeader>
-            <tbody>
-              {(calibration?.scores ?? [
-                { judgeId: "j-1", judgeName: "Giám khảo Nguyễn Văn A", submitResultId: "sub-1", teamName: "Cyber_Knights", totalScore: 8.5, isAccepted: true, isSubmitted: true },
-                { judgeId: "j-2", judgeName: "Giám khảo Trần Thị B", submitResultId: "sub-1", teamName: "Cyber_Knights", totalScore: 9.0, isAccepted: true, isSubmitted: true },
-                { judgeId: "j-1", judgeName: "Giám khảo Nguyễn Văn A", submitResultId: "sub-2", teamName: "Dev_Dragons", totalScore: 7.2, isAccepted: true, isSubmitted: false },
-              ]).map((item: any, idx: number) => (
-                <TableRow key={idx}>
-                  <TableCell>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Điểm tối đa</label>
+                    <input
+                      type="number"
+                      value={newMaxScore}
+                      onChange={(e) => setNewMaxScore(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped text-center font-bold"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Trọng số (%)</label>
+                    <input
+                      type="number"
+                      value={newWeight}
+                      onChange={(e) => setNewWeight(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped text-center font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Mô tả tiêu chí RBL</label>
+                <textarea
+                  rows={2}
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="Ghi chú chi tiết cách Giám khảo đánh giá tiêu chí này..."
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped focus:outline-none focus:border-[var(--accent-judge)] resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleAddCriteria}
+                  className="bg-[var(--accent-judge)] text-black font-bold text-xs hover:bg-yellow-400"
+                >
+                  ➕ THÊM VÀO KHO TIÊU CHÍ
+                </Button>
+              </div>
+            </Card>
+
+            {/* Danh sách Tiêu Chí */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {criteriaList.map((cr) => (
+                <Card key={cr.id} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-2 hover:border-[var(--accent-judge)]/50 transition-all">
+                  <div className="flex items-center justify-between">
                     <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
-                      {item.judgeName}
+                      {cr.name}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs text-[var(--accent-team)] font-bold">
-                      {item.teamName}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-sm font-bold text-[var(--accent-coordinator)]">
-                      {item.totalScore} / 10
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge tone={item.isSubmitted ? "success" : "warning"}>
-                      {item.isSubmitted ? "✓ ĐÃ CHỐT" : "ĐANG LƯU NHÁP"}
+                    <Badge tone="warning">
+                      Trọng số: {cr.weight}% | Max: {cr.maxScore}đ
                     </Badge>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                  <p className="font-mono text-[11px] text-[var(--text-muted)] leading-relaxed">
+                    {cr.description}
+                  </p>
+                </Card>
               ))}
-            </tbody>
-          </Table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "calibration" && (
+          <div className="space-y-6">
+            {/* Controls */}
+            <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-mono text-[var(--text-muted)] uppercase">
+                  Hạng mục (Track):
+                </span>
+                <select
+                  value={trackId}
+                  onChange={(e) => setTrackId(e.target.value)}
+                  className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
+                >
+                  <option value="track-1">Hạng mục 1: AI & Data Science</option>
+                  <option value="track-2">Hạng mục 2: Cyber Security</option>
+                  <option value="track-3">Hạng mục 3: Web3 & Blockchain</option>
+                </select>
+              </div>
+
+              <Badge tone={calibration?.isCompleted ? "success" : "warning"}>
+                {calibration?.isCompleted
+                  ? "✓ TẤT CẢ GIÁM KHẢO ĐÃ HOÀN THÀNH CHẤM"
+                  : "⚠ CÒN GIÁM KHẢO DRAFT"}
+              </Badge>
+            </div>
+
+            {/* Matrix Table */}
+            {isLoading ? (
+              <div className="flex justify-center py-20">
+                <RefreshCw className="w-8 h-8 animate-spin text-[var(--accent-coordinator)]" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>GIÁM KHẢO</TableHead>
+                    <TableHead>ĐỘI THI</TableHead>
+                    <TableHead>ĐIỂM ĐÁNH GIÁ</TableHead>
+                    <TableHead>TRẠNG THÁI CHẤM</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <tbody>
+                  {(calibration?.scores ?? [
+                    { judgeId: "j-1", judgeName: "Giám khảo TS. Nguyễn Văn A", submitResultId: "sub-1", teamName: "CyberShield_FPT", totalScore: 9.2, isAccepted: true, isSubmitted: true },
+                    { judgeId: "j-2", judgeName: "Giám khảo ThS. Trần Thị B", submitResultId: "sub-1", teamName: "CyberShield_FPT", totalScore: 9.5, isAccepted: true, isSubmitted: true },
+                    { judgeId: "j-1", judgeName: "Giám khảo TS. Nguyễn Văn A", submitResultId: "sub-2", teamName: "ByteKnights", totalScore: 8.4, isAccepted: true, isSubmitted: true },
+                  ]).map((item: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
+                          {item.judgeName}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-mono text-xs text-[var(--accent-team)] font-bold">
+                          {item.teamName}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-mono text-xs font-bold text-[var(--accent-judge)]">
+                          {item.totalScore} / 10
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge tone={item.isSubmitted ? "success" : "warning"}>
+                          {item.isSubmitted ? "ĐÃ CHỐT BẢNG ĐIỂM" : "DRAFT"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </div>
         )}
       </div>
     </div>

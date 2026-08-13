@@ -106,6 +106,28 @@ export function NavigationBar() {
             </Link>
 
             <Link
+              href="/coordinator/profiles"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/profiles")
+                  ? "bg-[var(--accent-team)] text-black shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🪪</span> Duyệt Thẻ Sinh Viên
+            </Link>
+
+            <Link
+              href="/coordinator/calibration"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/calibration")
+                  ? "bg-[var(--accent-judge)] text-black shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>📐</span> Kho Tiêu Chí RBL
+            </Link>
+
+            <Link
               href={`/events/${currentEventId}/leaderboard`}
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
                 pathname.includes("/leaderboard")
@@ -627,15 +649,35 @@ export function NavigationBar() {
             Khám phá Sự kiện
           </Link>
 
-          {/* Quick Access Link based on Active Role */}
+          {/* Quick Access Links for Coordinator */}
           {roleName === "Coordinator" && (
-            <Link
-              href="/coordinator/dashboard"
-              className="text-[#a855f7] font-bold hover:underline flex items-center gap-1 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped"
-            >
-              <span>🎯 Control Center BTC</span>
-              <span className="text-[10px]">➔</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/coordinator/events/new"
+                className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-2.5 py-1 hud-clipped text-xs"
+              >
+                <span>➕ Tạo Sự Kiện</span>
+              </Link>
+              <Link
+                href="/coordinator/profiles"
+                className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-2.5 py-1 hud-clipped text-xs"
+              >
+                <span>🪪 Duyệt Thẻ SV</span>
+              </Link>
+              <Link
+                href="/coordinator/calibration"
+                className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-2.5 py-1 hud-clipped text-xs"
+              >
+                <span>📐 Kho Tiêu Chí RBL</span>
+              </Link>
+              <Link
+                href="/coordinator/dashboard"
+                className="text-[#a855f7] font-bold hover:underline flex items-center gap-1 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped text-xs"
+              >
+                <span>🎯 Control Center BTC</span>
+                <span className="text-[10px]">➔</span>
+              </Link>
+            </div>
           )}
 
           {roleName === "Mentor" && (
