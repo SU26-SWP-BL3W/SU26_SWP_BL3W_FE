@@ -2,6 +2,7 @@
 
 import React, { ReactNode } from "react";
 import { useAuth } from "@/providers/AuthProvider";
+import { getRoleName } from "@/lib/permissions";
 import { HexagonLoader, Button, Card } from "@/components/ui";
 import { ShieldAlert, Lock } from "lucide-react";
 import Link from "next/link";
@@ -66,7 +67,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
   }
 
   const isUserAdmin = user.isAdmin;
-  const userRoleName = activeRole?.roleName;
+  const userRoleName = getRoleName(activeRole);
 
   // Map API roleName to display role
   const userRoleDisplay = userRoleName === "EventCoordinator" ? "Coordinator" : userRoleName;
