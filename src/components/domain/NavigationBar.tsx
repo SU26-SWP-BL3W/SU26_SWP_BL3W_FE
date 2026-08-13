@@ -5,6 +5,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { Link } from "@/i18n/routing";
 import { getMockTeam } from "@/viewModels/mockTeamData";
 import { SealShield } from "./SealShield";
+import { NotificationBell } from "./NotificationBell";
 
 export function NavigationBar() {
   const pathname = usePathname() || "";
@@ -92,7 +93,10 @@ export function NavigationBar() {
         {/* Bottom User Info & Role Switcher */}
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
           <div className="flex items-center justify-between font-mono text-xs">
-            <span className="text-[var(--text-muted)]">Vai trò:</span>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <span className="text-[var(--text-muted)]">Vai trò:</span>
+            </div>
             <span className="text-[#2dd4bf] font-bold">[Mentor]</span>
           </div>
 
@@ -143,14 +147,14 @@ export function NavigationBar() {
 
           {/* Event Status Banner */}
           <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-1">
-            <span className="font-mono text-[9px] text-[var(--accent-primary)] font-bold uppercase tracking-widest">
-              ĐANG THI ĐẤU
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${roleName === "Guest" ? "text-[var(--text-muted)]" : "text-[var(--accent-primary)]"}`}>
+              {roleName === "Guest" ? "TÀI KHOẢN KHÁCH [GUEST]" : "ĐANG THI ĐẤU"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {team?.eventName || "SEAL Hackathon 2026"}
             </span>
-            <span className="font-mono text-[10px] text-[var(--accent-team)] font-bold">
-              Đội: {team?.name || "CyberGuardians"}
+            <span className={`font-mono text-[10px] font-bold ${roleName === "Guest" ? "text-[var(--text-muted)] opacity-70" : "text-[var(--accent-team)]"}`}>
+              {roleName === "Guest" ? "Chưa đăng ký Đội thi" : `Đội: ${team?.name || "CyberGuardians"}`}
             </span>
           </div>
 
@@ -163,7 +167,7 @@ export function NavigationBar() {
             <Link
               href={`/events/${currentEventId}`}
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes(`/events/`)
+                pathname.includes(`/events/`) && !pathname.includes(`/leaderboard`)
                   ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
               }`}
@@ -179,19 +183,24 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>👥</span> Quản Lý Đội Thi
+              <span>{roleName === "Guest" ? "➕" : "👥"}</span> {roleName === "Guest" ? "Đăng Ký / Tạo Đội Thi" : "Quản Lý Đội Thi"}
             </Link>
 
-            <Link
-              href="/my-submissions"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/my-submissions") || pathname.includes("/submissions/")
-                  ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>📤</span> Bài Nộp Của Đội
-            </Link>
+            {/* Chỉ hiển thị Bài Nộp & Phúc Khảo cho Thành Viên Đội Thi (TeamLeader / TeamMember) */}
+            {roleName !== "Guest" && (
+              <>
+                <Link
+                  href="/my-submissions"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                    pathname.includes("/my-submissions") || pathname.includes("/submissions/")
+                      ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
+                  }`}
+                >
+                  <span>📤</span> Bài Nộp Của Đội
+                </Link>
+              </>
+            )}
 
             <Link
               href={`/events/${currentEventId}/leaderboard`}
@@ -204,16 +213,18 @@ export function NavigationBar() {
               <span>🏆</span> Bảng Xếp Hạng
             </Link>
 
-            <Link
-              href="/appeals"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/appeals")
-                  ? "bg-[var(--accent-coordinator)] text-[var(--bg-base)] shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--accent-coordinator)] hover:bg-[var(--bg-input)]"
-              }`}
-            >
-              <span>⚖</span> Phúc Khảo & Khiếu Nại
-            </Link>
+            {roleName !== "Guest" && (
+              <Link
+                href="/appeals"
+                className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                  pathname.includes("/appeals")
+                    ? "bg-[var(--accent-coordinator)] text-[var(--bg-base)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--accent-coordinator)] hover:bg-[var(--bg-input)]"
+                }`}
+              >
+                <span>⚖</span> Phúc Khảo & Khiếu Nại
+              </Link>
+            )}
           </nav>
         </div>
 
