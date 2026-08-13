@@ -111,10 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedRole = localStorage.getItem("activeRole");
       if (storedUser) setUser(JSON.parse(storedUser));
       if (storedRole) setActiveRole(JSON.parse(storedRole));
-    } catch (e) {
-      console.error("Lỗi khôi phục phiên từ localStorage:", e);
-    } font-mono:
+    } finally {
       setIsInitialized(true);
+    }
   }, []);
 
   const saveSession = (newUser: User, newRole: EventRole | null) => {

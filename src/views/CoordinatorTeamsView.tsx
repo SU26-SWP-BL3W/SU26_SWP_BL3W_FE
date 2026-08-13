@@ -24,7 +24,10 @@ export function CoordinatorTeamsView() {
   const [rejectReason, setRejectReason] = useState("");
   const [detailModal, setDetailModal] = useState<TeamEntity | null>(null);
 
-  const { data: pendingTeams = [], isLoading, refetch } = useGetPendingTeams();
+  const { data: rawPendingTeams, isLoading, refetch } = useGetPendingTeams();
+  const pendingTeams: TeamEntity[] = Array.isArray(rawPendingTeams)
+    ? rawPendingTeams
+    : (rawPendingTeams as any)?.data ?? [];
 
 
   const { mutateAsync: approveTeam, isPending: isApproving } = useApproveTeamRegistration();

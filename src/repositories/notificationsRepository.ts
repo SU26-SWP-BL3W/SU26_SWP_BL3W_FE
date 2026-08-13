@@ -19,6 +19,7 @@ export const notificationsRepository = {
       return res.data;
     } catch (error) {
       return {
+        statusCode: 200,
         success: true,
         data: [
           {
@@ -60,7 +61,7 @@ export const notificationsRepository = {
       const res = await apiClient.put<BaseResponse<boolean>>(`/Notifications/${notificationId}/read`);
       return res.data;
     } catch (error) {
-      return { success: true, data: true, message: "Marked as read" };
+      return { statusCode: 200, success: true, data: true, message: "Marked as read" };
     }
   },
 };

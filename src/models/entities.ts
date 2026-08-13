@@ -58,6 +58,7 @@ export interface UpdateStudentProfileRequest {
   schoolId?: string | null;
   studentCode?: string | null;
   isFpt?: boolean;
+  photoStudentCardUrl?: string | null;
 }
 
 /** GET /api/Auth/fpt-student-verification response */
@@ -67,6 +68,9 @@ export interface FptStudentResponse {
   email: string;
   isFpt: boolean;
   isVerified?: boolean;
+  isValid?: boolean;
+  major?: string;
+  enrollYear?: string | number;
 }
 
 // ─── User Rejection ──────────────────────────────────────────
@@ -164,8 +168,11 @@ export interface TrackEntity {
   // Legacy aliases
   TrackId?: string;
   EventId?: string;
+  RoundId?: string;
+  TemplateId?: string;
   TrackName?: string;
   Description?: string | null;
+  SubmissionRuleDescription?: string | null;
 }
 
 /** Legacy type alias */
@@ -220,6 +227,8 @@ export interface Template {
   totalWeight?: number;
 }
 
+export type TemplateEntity = Template;
+
 // ─── EventRole ───────────────────────────────────────────────
 
 /** EventRoleType enum: 0=TeamLeader,1=TeamMember,2=Judge,3=Mentor,4=EventCoordinator */
@@ -243,6 +252,7 @@ export interface EventRole {
   roleName?: string;
   roleNameDetail?: string;
   expiredAt?: string | null;
+  assignedEventIds?: string[];
 
   // Legacy aliases
   EventRoleId?: string;
@@ -385,10 +395,14 @@ export interface CriteriaScore {
 export interface SaveScoreRequest {
   submitResultId: string;
   judgeId?: string;
+  eventRoleId?: string;
+  eventId?: string;
   isSubmitted: boolean;
-  scores: {
+  details?: any;
+  scores?: {
     criteriaId: string;
-    scoreValue: number;
+    scoreValue?: number;
+    value?: number;
   }[];
   comment?: string;
 }

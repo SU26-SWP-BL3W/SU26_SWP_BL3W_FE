@@ -25,6 +25,7 @@ export const uploadRepository = {
       // Fallback preview URL in mock mode
       const mockUrl = URL.createObjectURL(file);
       return {
+        statusCode: 200,
         success: true,
         data: {
           fileUrl: mockUrl,

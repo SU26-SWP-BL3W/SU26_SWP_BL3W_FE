@@ -143,7 +143,7 @@ export function MyTeamView() {
               DANH SÁCH THÀNH VIÊN ({members.length} / {maxTeamSize})
             </h3>
             <div className="divide-y divide-[var(--border-muted)]">
-              {members.map((m) => (
+              {members.map((m: any) => (
                 <div key={m.userId || m.id} className="py-3 flex items-center justify-between font-mono text-xs">
                   <div>
                     <span className="font-bold text-[var(--text-primary)]">{m.fullName}</span>
