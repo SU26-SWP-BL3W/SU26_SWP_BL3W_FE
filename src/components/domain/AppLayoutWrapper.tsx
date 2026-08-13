@@ -8,6 +8,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
 
   const isEventWorkspace =
+    pathname.includes("/mentor") ||
     pathname.includes("/events/event-") ||
     pathname.includes("/events/seal-") ||
     pathname.includes("/my-team") ||
