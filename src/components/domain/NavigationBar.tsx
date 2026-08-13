@@ -385,7 +385,9 @@ export function NavigationBar() {
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
           <div className="flex items-center justify-between font-mono text-xs">
             <span className="text-[var(--text-muted)]">Vai trò:</span>
-            <span className="text-[var(--accent-team)] font-bold">{roleName}</span>
+            <span className="text-[var(--accent-team)] font-bold">
+              {isJoinedThisEvent ? roleName : "User (Thí sinh tự do)"}
+            </span>
           </div>
 
           <button
