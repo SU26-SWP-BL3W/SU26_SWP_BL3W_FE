@@ -8,12 +8,12 @@ export interface MockRound {
   id: string;
   roundNumber: number;
   roundName: string;
-  startDate: string;
-  endDate: string;
-  // Mô tả ngắn việc diễn ra trong vòng — dùng cho khối "Lịch trình sự kiện" ở
-  // trang chi tiết. Vẫn bám đúng khái niệm Round thật (không bịa mốc giờ/hoạt
-  // động không có trong domain, khác kiểu agenda giờ-theo-giờ của hackathon
-  // on-site 48h).
+  registrationDate?: string;        // 1. Ngày mở form đăng ký
+  startDate: string;               // 2. Ngày mở thời gian thi
+  endDate: string;                 // 2. Ngày kết thúc thi
+  submissionDeadline?: string;      // 3. Hạn nộp bài thi
+  resultAnnouncementDate?: string;  // 4. Hạn công bố kết quả
+  appealDeadline?: string;          // 5. Hạn đệ trình phúc khảo
   description: string;
 }
 
@@ -32,16 +32,12 @@ export interface MockEvent {
   teamCount: number;
   tracks: string[];
   rounds: MockRound[];
-  // Tổng giá trị giải thưởng (VND) — mock, dùng cho khối "Hạng mục/Sự kiện nổi
-  // bật" kiểu Devpost. BE có sẵn entity Prize thật nhưng Luồng 5 (Kết quả &
-  // Giải thưởng) chưa nối API cho trang guest, nên tạm mock cùng chỗ với các
-  // field Event khác.
   totalPrizeVnd: number;
 }
 
 export const MOCK_EVENTS: MockEvent[] = [
   {
-    id: "seal-2026-mua-he",
+    id: "event-seal-2026",
     eventName: "SEAL Hackathon 2026",
     season: "Mùa Hè",
     year: 2026,
@@ -65,25 +61,37 @@ export const MOCK_EVENTS: MockEvent[] = [
       {
         id: "r1",
         roundNumber: 1,
-        roundName: "Vòng loại",
+        roundName: "Vòng Sơ Loại",
+        registrationDate: "2026-06-01T00:00:00Z",
         startDate: "2026-07-15T00:00:00Z",
         endDate: "2026-08-10T23:59:59Z",
+        submissionDeadline: "2026-08-08T23:59:59Z",
+        resultAnnouncementDate: "2026-08-12T17:00:00Z",
+        appealDeadline: "2026-08-15T23:59:59Z",
         description: "Đội thi nộp bài theo hạng mục đã chọn. Giám khảo track chấm điểm, chọn đội vào Bán kết.",
       },
       {
         id: "r2",
         roundNumber: 2,
-        roundName: "Bán kết",
-        startDate: "2026-08-11T00:00:00Z",
+        roundName: "Vòng Bán Kết",
+        registrationDate: "2026-08-11T00:00:00Z",
+        startDate: "2026-08-15T00:00:00Z",
         endDate: "2026-09-05T23:59:59Z",
+        submissionDeadline: "2026-09-03T23:59:59Z",
+        resultAnnouncementDate: "2026-09-07T17:00:00Z",
+        appealDeadline: "2026-09-10T23:59:59Z",
         description: "Các đội hoàn thiện sản phẩm, nộp bản demo. Kết quả công bố trước khi vào Chung kết.",
       },
       {
         id: "r3",
         roundNumber: 3,
-        roundName: "Chung kết",
+        roundName: "Vòng Chung Kết",
+        registrationDate: "2026-09-11T00:00:00Z",
         startDate: "2026-09-15T00:00:00Z",
         endDate: "2026-09-20T23:59:59Z",
+        submissionDeadline: "2026-09-18T23:59:59Z",
+        resultAnnouncementDate: "2026-09-20T18:00:00Z",
+        appealDeadline: "2026-09-22T23:59:59Z",
         description: "Thuyết trình trực tiếp trước hội đồng giám khảo, công bố và trao giải các hạng mục.",
       },
     ],

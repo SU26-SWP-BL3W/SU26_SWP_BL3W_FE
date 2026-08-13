@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge, Button } from "@/components/ui";
+import { useState } from "react";
+import { Badge } from "@/components/ui";
 import { Link } from "@/i18n/routing";
 import { SealShield } from "@/components/domain/SealShield";
 import { useEventDetailViewModel } from "@/viewModels/useEventDetailViewModel";
@@ -8,8 +9,6 @@ import type { RoundStatus } from "@/viewModels/useEventDetailViewModel";
 import { useCountdown } from "@/lib/useCountdown";
 import { TRACK_META, DEFAULT_TRACK_META, type TrackIconKey } from "@/viewModels/mockEventsData";
 
-// View — chi tiết 1 sự kiện (khách xem được, không cần đăng nhập), vào từ
-// EventsDiscoveryView. Dữ liệu MOCK theo eventId (useEventDetailViewModel).
 export function EventDetailView({ eventId }: { eventId: string }) {
   const {
     notFound,
@@ -27,6 +26,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
     deadlineRoundName,
   } = useEventDetailViewModel(eventId);
   const countdown = useCountdown(deadline);
+  const [activeTab, setActiveTab] = useState<"overview" | "schedule" | "tracks">("overview");
 
   if (notFound) {
     return (
@@ -41,62 +41,187 @@ export function EventDetailView({ eventId }: { eventId: string }) {
 
   return (
     <main className="hud-lattice flex flex-1 flex-col">
-      <Link
-        href="/events"
-        className="mx-auto mt-[var(--space-lg)] w-full max-w-[var(--container-max)] px-[var(--space-xl)] font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)] hover:text-[color:var(--accent-primary)]"
-      >
-        ← Tất cả sự kiện
-      </Link>
-
-      <section className="relative mx-auto grid w-full max-w-[var(--container-max)] grid-cols-1 items-start gap-[var(--space-xl)] overflow-hidden px-[var(--space-xl)] py-[var(--space-xl)] md:grid-cols-[3fr_2fr]">
-        <div className="flex flex-col items-start gap-[var(--space-md)]">
-          <span className="flex items-center gap-[var(--space-sm)] font-mono text-[length:var(--fs-caption-sm)] font-medium tracking-[0.2em] text-[color:var(--accent-primary)]">
-            <span className="inline-block h-px w-6 bg-[var(--accent-primary)]" aria-hidden="true" />[ {season}{" "}
-            {year} ]
+      {/* ── Breadcrumb Bar ── */}
+      <div className="border-b border-[var(--border-muted)] bg-[var(--bg-panel)]/40 px-6 py-3">
+        <div className="mx-auto flex max-w-[var(--container-max)] items-center justify-between font-mono text-xs text-[var(--text-muted)]">
+          <Link href="/events" className="hover:text-[var(--accent-primary)] flex items-center gap-1">
+            ← Tất cả sự kiện
+          </Link>
+          <span className="text-[var(--accent-primary)] font-bold">
+            SỰ KIỆN: {eventName.toUpperCase()}
           </span>
-          <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-wide text-[color:var(--text-primary)] md:text-6xl">
-            {eventName}
-          </h1>
-          <p className="max-w-[46ch] text-[length:var(--fs-body-md)] text-[color:var(--text-muted)]">{tagline}</p>
-          <p className="max-w-[60ch] text-sm text-[color:var(--text-muted)]">{description}</p>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap items-center gap-x-[var(--space-lg)] gap-y-[var(--space-xs)] pt-[var(--space-xs)] font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]">
-            <span>
-              {teamCount}/{maxTeams} đội đã đăng ký
-            </span>
-            {totalPrizeVnd > 0 && (
-              <span>
-                Tổng giải thưởng{" "}
-                <span className="font-bold text-[color:var(--text-primary)]">{formatVnd(totalPrizeVnd)}</span>
+      {/* ── Main Layout: Vertical Sidebar + Content Workspace ── */}
+      <div className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8 flex flex-col md:flex-row gap-8 flex-1">
+        
+        {/* ─────────────────────────────────────────────────────────────
+            LEFT COLUMN: DYNAMIC EVENT VERTICAL SIDEBAR (DOCK DỌC CỦA SỰ KIỆN)
+           ───────────────────────────────────────────────────────────── */}
+        <aside className="w-full md:w-64 shrink-0 flex flex-col gap-6">
+          <div className="sticky top-6 p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-6 shadow-[0_0_20px_rgba(56,189,248,0.05)]">
+            
+            {/* Event Header in Sidebar */}
+            <div className="flex flex-col gap-2 pb-4 border-b border-[var(--border-muted)]">
+              <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-primary)] tracking-widest uppercase">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+                {season} {year}
+              </div>
+              <h3 className="font-display text-lg font-bold text-[var(--text-primary)] leading-tight">
+                {eventName}
+              </h3>
+              <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                {teamCount}/{maxTeams} đội đăng ký
               </span>
-            )}
-          </div>
-
-          <div className="flex flex-col items-start gap-[var(--space-sm)] pt-[var(--space-md)]">
-            <Link href="/login">
-              <Button>Đăng nhập / Đăng ký →</Button>
-            </Link>
-            <span className="font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]">
-              Cổng đăng ký đang mở
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-[var(--space-lg)] md:items-end">
-          <SealShield className="h-28 w-28 md:h-36 md:w-36" />
-          {deadlineRoundName && !countdown.isPast && (
-            <div className="hud-clipped w-full border border-[var(--border-muted)] bg-[var(--bg-panel)] p-[var(--space-lg)] md:max-w-xs">
-              <p className="mb-[var(--space-sm)] font-mono text-[length:var(--fs-caption-sm)] uppercase tracking-wider text-[color:var(--text-muted)]">
-                Hạn nộp bài — {deadlineRoundName}
-              </p>
-              <CountdownClock {...countdown} />
             </div>
-          )}
-        </div>
-      </section>
 
-      <ScheduleSection rounds={rounds} />
-      <TracksSection tracks={tracks} />
+            {/* Vertical Menu Links */}
+            <nav className="flex flex-col gap-1.5 font-mono text-xs">
+              <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
+                MENU SỰ KIỆN
+              </span>
+
+              <a
+                href="#overview"
+                onClick={() => setActiveTab("overview")}
+                className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all ${
+                  activeTab === "overview"
+                    ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-bold"
+                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
+                }`}
+              >
+                <span>📌</span> Tổng quan & Thể lệ
+              </a>
+
+              <a
+                href="#schedule"
+                onClick={() => setActiveTab("schedule")}
+                className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all ${
+                  activeTab === "schedule"
+                    ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-bold"
+                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
+                }`}
+              >
+                <span>🗓</span> Lịch trình các vòng thi
+              </a>
+
+              <a
+                href="#tracks"
+                onClick={() => setActiveTab("tracks")}
+                className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all ${
+                  activeTab === "tracks"
+                    ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-bold"
+                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
+                }`}
+              >
+                <span>🎯</span> Hạng mục thi ({tracks.length})
+              </a>
+
+              <div className="my-2 border-t border-[var(--border-muted)]" />
+
+              <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
+                HOẠT ĐỘNG & BẢNG ĐIỂM
+              </span>
+
+              <Link
+                href={`/events/${eventId}/leaderboard`}
+                className="flex items-center gap-2.5 px-3 py-2.5 border border-[var(--accent-judge)]/40 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)]/20 transition-all"
+              >
+                <span>🏆</span> Bảng Xếp Hạng
+              </Link>
+
+              <Link
+                href="/submissions/new"
+                className="flex items-center gap-2.5 px-3 py-2.5 border border-[var(--accent-team)]/40 bg-[var(--accent-team)]/10 text-[var(--accent-team)] font-bold hover:bg-[var(--accent-team)]/20 transition-all"
+              >
+                <span>🚀</span> Nộp Bài Thi Của Đội
+              </Link>
+
+              <Link
+                href="/appeals"
+                className="flex items-center gap-2.5 px-3 py-2.5 border border-[var(--accent-coordinator)]/40 bg-[var(--accent-coordinator)]/10 text-[var(--accent-coordinator)] font-bold hover:bg-[var(--accent-coordinator)]/20 transition-all"
+              >
+                <span>⚖</span> Gửi Phúc Khảo / Khiếu Nại
+              </Link>
+            </nav>
+
+            {/* CTA Register Button in Sidebar */}
+            <div className="pt-2 border-t border-[var(--border-muted)]">
+              <Link href="/register" className="w-full">
+                <button className="hud-clipped w-full py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md">
+                  ĐĂNG KÝ THAM GIA
+                </button>
+              </Link>
+            </div>
+
+          </div>
+        </aside>
+
+        {/* ─────────────────────────────────────────────────────────────
+            RIGHT COLUMN: EVENT CONTENT WORKSPACE
+           ───────────────────────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 flex flex-col gap-10">
+
+          {/* Section Overview */}
+          <section id="overview" className="p-8 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col md:flex-row justify-between gap-8">
+            <div className="flex flex-col gap-4 flex-1">
+              <span className="font-mono text-xs font-bold text-[var(--accent-primary)] tracking-widest uppercase">
+                [ {season} {year} ]
+              </span>
+              <h1 className="font-display text-4xl font-bold uppercase tracking-wide text-[var(--text-primary)]">
+                {eventName}
+              </h1>
+              <p className="font-mono text-sm text-[var(--accent-primary)]">{tagline}</p>
+              <p className="font-sans text-sm text-[var(--text-muted)] leading-relaxed">{description}</p>
+
+              <div className="flex flex-wrap items-center gap-6 pt-2 font-mono text-xs text-[var(--text-muted)] border-t border-[var(--border-muted)] mt-2">
+                <span>Số đội: <strong className="text-[var(--text-primary)]">{teamCount}/{maxTeams}</strong></span>
+                {totalPrizeVnd > 0 && (
+                  <span>Tổng giải thưởng: <strong className="text-[var(--accent-judge)]">{formatVnd(totalPrizeVnd)}</strong></span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 pt-4">
+                <Link href="/register">
+                  <button className="hud-clipped px-6 py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md">
+                    🚀 ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
+                  </button>
+                </Link>
+                <Link href={`/events/${eventId}/leaderboard`}>
+                  <button className="hud-clipped px-5 py-3 border border-[var(--accent-judge)]/50 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all">
+                    🏆 BẢNG XẾP HẠNG SỰ KIỆN
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-between gap-6 shrink-0 md:w-64 border-t md:border-t-0 md:border-l border-[var(--border-muted)] pt-6 md:pt-0 md:pl-8">
+              <SealShield className="h-24 w-24 text-[var(--accent-primary)]" />
+              {deadlineRoundName && !countdown.isPast && (
+                <div className="hud-clipped w-full border border-[var(--border-muted)] bg-[var(--bg-input)] p-4">
+                  <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                    Hạn nộp bài — {deadlineRoundName}
+                  </p>
+                  <CountdownClock {...countdown} />
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Section Schedule */}
+          <div id="schedule">
+            <ScheduleSection rounds={rounds} />
+          </div>
+
+          {/* Section Tracks */}
+          <div id="tracks">
+            <TracksSection tracks={tracks} />
+          </div>
+
+        </div>
+
+      </div>
     </main>
   );
 }
@@ -117,150 +242,222 @@ function CountdownClock({
 
   return (
     <div
-      className={`flex items-end gap-[var(--space-md)] font-mono ${
-        isUrgent ? "animate-pulse text-[color:var(--color-danger)]" : "text-[color:var(--text-primary)]"
+      className={`flex items-end gap-2 font-mono ${
+        isUrgent ? "text-[color:var(--color-danger)]" : "text-[color:var(--accent-primary)]"
       }`}
-      suppressHydrationWarning
     >
-      {units.map((u) => (
-        <div key={u.label} className="flex flex-col items-center" suppressHydrationWarning>
-          <span className="text-3xl font-bold tabular-nums md:text-4xl" suppressHydrationWarning>
-            {String(u.value).padStart(2, "0")}
-          </span>
-          <span className="text-[length:var(--fs-caption-sm)] uppercase tracking-wider text-[color:var(--text-muted)]">
-            {u.label}
-          </span>
+      {units.map(({ value, label }) => (
+        <div key={label} className="flex flex-col items-center">
+          <span className="font-display text-xl font-bold">{String(value).padStart(2, "0")}</span>
+          <span className="text-[9px] uppercase text-[color:var(--text-muted)]">{label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-function formatVnd(value: number): string {
-  return `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
-}
+function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailViewModel>["rounds"] }) {
+  const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
+  const currentRound = rounds[selectedRoundIndex] || rounds[0];
 
-function formatDateRange(startIso: string, endIso: string): string {
-  const fmt = (iso: string) => new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  return `${fmt(startIso)} – ${fmt(endIso)}`;
-}
+  if (!currentRound) return null;
 
-const STATUS_LABEL: Record<RoundStatus, string> = {
-  past: "Đã qua",
-  current: "Đang diễn ra",
-  upcoming: "Sắp tới",
-};
+  const milestones = [
+    {
+      id: "reg",
+      title: "Mở Form Đăng Ký",
+      date: formatShortDate(currentRound.registrationDate || currentRound.startDate),
+      color: "var(--accent-primary)",
+      desc: "Bắt đầu mở cổng nhận hồ sơ tạo đội thi",
+    },
+    {
+      id: "start",
+      title: "Thời Gian Thi",
+      date: `${formatShortDate(currentRound.startDate)} – ${formatShortDate(currentRound.endDate)}`,
+      color: "var(--accent-team)",
+      desc: "Các đội thực hiện sản phẩm & làm bài",
+    },
+    {
+      id: "sub",
+      title: "Hạn Nộp Bài Thi",
+      date: formatShortDate(currentRound.submissionDeadline || currentRound.endDate),
+      color: "var(--color-danger)",
+      desc: "Đóng cổng nhận bài thi vòng này",
+    },
+    {
+      id: "res",
+      title: "Công Bố Kết Quả",
+      date: formatShortDate(currentRound.resultAnnouncementDate || currentRound.endDate),
+      color: "var(--accent-judge)",
+      desc: "Giám khảo công bố danh sách đi tiếp",
+    },
+    {
+      id: "app",
+      title: "Hạn Phúc Khảo",
+      date: formatShortDate(currentRound.appealDeadline || currentRound.endDate),
+      color: "var(--accent-coordinator)",
+      desc: "Hạn cuối tiếp nhận khiếu nại điểm số",
+    },
+  ];
 
-const STATUS_COLOR_VAR: Record<RoundStatus, string> = {
-  past: "var(--text-muted)",
-  current: "var(--accent-primary)",
-  upcoming: "var(--border-muted)",
-};
-
-// ────────────────────────────────────────────────────────────────
-// Lịch trình sự kiện — mốc theo Round thật (không bịa agenda giờ-theo-giờ
-// kiểu hackathon on-site 48h, vì SEAL là thi theo vòng kéo dài nhiều tuần).
-// Bố cục đường thẳng đứng + chấm tròn + thẻ lệch trái/phải, dịu mắt hơn dải
-// ngang trước đây — mượn cảm hứng timeline "Mission Schedule" nhưng giữ đúng
-// nội dung nghiệp vụ thật của SEAL.
-// ────────────────────────────────────────────────────────────────
-
-function ScheduleSection({ rounds }: { rounds: Array<RoundStatusRound> }) {
   return (
-    <section className="mx-auto w-full max-w-[var(--container-max)] px-[var(--space-xl)] py-[var(--space-xl)]">
-      <span className="mb-[var(--space-xs)] flex items-center gap-[var(--space-sm)] font-mono text-[length:var(--fs-caption-sm)] tracking-[0.2em] text-[color:var(--accent-primary)]">
-        <span className="inline-block h-px w-6 bg-[var(--accent-primary)]" aria-hidden="true" />[ LỊCH TRÌNH ]
-      </span>
-      <h2 className="mb-[var(--space-xl)] font-display text-[length:var(--fs-heading-md)] font-semibold text-[color:var(--text-primary)]">
-        Lịch trình sự kiện
-      </h2>
-
-      <div className="relative flex flex-col gap-[var(--space-xl)] pl-[var(--space-xl)]">
-        <div className="absolute top-1 bottom-1 left-[7px] w-px bg-[var(--border-muted)]" aria-hidden="true" />
-        {rounds.map((round) => (
-          <div key={round.id} className="relative">
-            <span
-              className="absolute top-1 -left-[calc(var(--space-xl)-3px)] h-[13px] w-[13px] shrink-0 rounded-full border-2"
-              style={{ borderColor: STATUS_COLOR_VAR[round.status], backgroundColor: "var(--bg-base)" }}
-              aria-hidden="true"
-            />
-            <div
-              className="border-l-2 bg-[var(--bg-panel)] p-[var(--space-lg)]"
-              style={{ borderLeftColor: STATUS_COLOR_VAR[round.status] }}
-            >
-              <div className="mb-[var(--space-xs)] flex flex-wrap items-center gap-[var(--space-sm)]">
-                <span className="font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]">
-                  {formatDateRange(round.startDate, round.endDate)}
-                </span>
-                <Badge tone={round.status === "current" ? "success" : "neutral"}>{STATUS_LABEL[round.status]}</Badge>
-              </div>
-              <h3 className="font-display text-[length:var(--fs-body-md)] font-bold text-[color:var(--text-primary)]">
-                {round.roundName}
-              </h3>
-              <p className="mt-[2px] max-w-[60ch] text-sm text-[color:var(--text-muted)]">{round.description}</p>
-            </div>
+    <section className="p-8 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-8 shadow-sm">
+      {/* ── Section Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-muted)]">
+        <div>
+          <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-primary)] uppercase tracking-widest">
+            <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+            TIMELINE TIẾN TRÌNH VÒNG THI
           </div>
-        ))}
+          <h2 className="font-display text-2xl font-bold uppercase text-[var(--text-primary)] mt-0.5">
+            Lịch Trình Cuộc Thi
+          </h2>
+        </div>
+
+        {/* Round Switcher Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          {rounds.map((r, index) => (
+            <button
+              key={r.id || r.roundName}
+              onClick={() => setSelectedRoundIndex(index)}
+              className={`font-mono text-xs px-4 py-2 hud-clipped transition-all font-bold whitespace-nowrap ${
+                selectedRoundIndex === index
+                  ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-md"
+                  : "bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-muted)]"
+              }`}
+            >
+              {r.roundName.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Active Round Info Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[var(--bg-input)]/60 border border-[var(--border-muted)] hud-clipped">
+        <div>
+          <span className="font-mono text-[10px] text-[var(--accent-primary)] font-bold uppercase tracking-wider">
+            VÒNG {currentRound.roundNumber}: {currentRound.roundName.toUpperCase()}
+          </span>
+          <p className="font-sans text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">
+            {currentRound.description}
+          </p>
+        </div>
+        <Badge tone={roundTone(currentRound.status)}>
+          {roundStatusLabel(currentRound.status)}
+        </Badge>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          HORIZONTAL STEPPER TIMELINE (TRỤC TIẾN TRÌNH NGANG 5 MỐC)
+         ───────────────────────────────────────────────────────────── */}
+      <div className="relative py-6">
+        {/* Connecting Background Line */}
+        <div className="hidden md:block absolute top-[2.25rem] left-[10%] right-[10%] h-0.5 bg-[var(--border-muted)]" />
+
+        {/* 5 Milestone Nodes Stepper */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+          {milestones.map((m, idx) => (
+            <div key={m.id} className="flex flex-col items-center text-center group">
+              {/* Stepper Node Icon / Number */}
+              <div
+                className="w-11 h-11 hud-clipped flex items-center justify-center font-mono font-bold text-xs mb-3 border bg-[var(--bg-panel)] transition-all group-hover:scale-110 shadow-sm"
+                style={{
+                  borderColor: m.color,
+                  color: m.color,
+                  boxShadow: `0 0 15px ${m.color}20`,
+                }}
+              >
+                0{idx + 1}
+              </div>
+
+              {/* Title & Date */}
+              <span className="font-mono text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
+                {m.title}
+              </span>
+              
+              <strong
+                className="font-mono text-xs mt-1 px-2.5 py-0.5 bg-[var(--bg-input)] border border-[var(--border-muted)]"
+                style={{ color: m.color }}
+              >
+                {m.date}
+              </strong>
+
+              <p className="font-sans text-[11px] text-[var(--text-muted)] mt-1.5 leading-tight max-w-[160px]">
+                {m.desc}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-type RoundStatusRound = {
-  id: string;
-  roundName: string;
-  startDate: string;
-  endDate: string;
-  description: string;
-  status: RoundStatus;
-};
-
-// ────────────────────────────────────────────────────────────────
-// Các hạng mục thi đấu — thẻ có icon/màu riêng theo track (TRACK_META), thay
-// cho dải badge phẳng trước đây.
-// ────────────────────────────────────────────────────────────────
-
 function TracksSection({ tracks }: { tracks: string[] }) {
-  if (tracks.length === 0) return null;
-
   return (
-    <section className="mx-auto w-full max-w-[var(--container-max)] px-[var(--space-xl)] pb-[calc(var(--space-xl)*2)]">
-      <span className="mb-[var(--space-xs)] flex items-center gap-[var(--space-sm)] font-mono text-[length:var(--fs-caption-sm)] tracking-[0.2em] text-[color:var(--accent-primary)]">
-        <span className="inline-block h-px w-6 bg-[var(--accent-primary)]" aria-hidden="true" />[ HẠNG MỤC ]
-      </span>
-      <h2 className="mb-[var(--space-lg)] font-display text-[length:var(--fs-heading-md)] font-semibold text-[color:var(--text-primary)]">
-        Các hạng mục thi đấu
-      </h2>
-      <div className="grid grid-cols-1 gap-[var(--space-lg)] sm:grid-cols-2 lg:grid-cols-3">
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center gap-2 pb-2 border-b border-[var(--border-muted)]">
+        <span className="w-1.5 h-4 bg-[var(--accent-primary)] inline-block" />
+        <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-[color:var(--text-primary)]">
+          Hạng mục thi đấu
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {tracks.map((track, i) => {
           const meta = TRACK_META[track] ?? DEFAULT_TRACK_META;
           return (
             <div
               key={track}
-              className="border p-[var(--space-lg)]"
-              style={{ borderColor: "var(--border-muted)", borderTop: `2px solid ${meta.accent}` }}
+              className="border p-5 bg-[var(--bg-panel)] hud-clipped flex flex-col gap-3"
+              style={{ borderColor: "var(--border-muted)", borderLeft: `3px solid ${meta.accent}` }}
             >
-              <div className="mb-[var(--space-md)] flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div
-                  className="flex h-10 w-10 items-center justify-center"
+                  className="flex h-10 w-10 items-center justify-center hud-clipped"
                   style={{ background: `color-mix(in srgb, ${meta.accent} 18%, var(--bg-input))` }}
                 >
                   <TrackIcon icon={meta.icon} color={meta.accent} />
                 </div>
-                <span className="font-mono text-[length:var(--fs-caption-sm)] text-[color:var(--text-muted)]">
+                <span className="font-mono text-[10px] text-[color:var(--text-muted)]">
                   TRACK_{String(i + 1).padStart(2, "0")}
                 </span>
               </div>
-              <h3 className="font-display text-[length:var(--fs-body-md)] font-bold text-[color:var(--text-primary)]">
+              <h3 className="font-display text-base font-bold text-[color:var(--text-primary)]">
                 {track}
               </h3>
-              <p className="mt-[var(--space-xs)] text-sm text-[color:var(--text-muted)]">{meta.description}</p>
+              <p className="text-xs text-[color:var(--text-muted)] leading-relaxed">{meta.description}</p>
             </div>
           );
         })}
       </div>
     </section>
   );
+}
+
+function roundStatusLabel(status: RoundStatus): string {
+  switch (status) {
+    case "current": return "Đang diễn ra";
+    case "upcoming": return "Sắp tới";
+    case "past": return "Đã kết thúc";
+    default: return "Chưa xác định";
+  }
+}
+
+function roundTone(status: RoundStatus): "success" | "warning" | "neutral" {
+  switch (status) {
+    case "current": return "success";
+    case "upcoming": return "warning";
+    case "past": return "neutral";
+    default: return "neutral";
+  }
+}
+
+function formatVnd(val: number): string {
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
+}
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 function TrackIcon({ icon, color }: { icon: TrackIconKey; color: string }) {
@@ -297,14 +494,6 @@ function TrackIcon({ icon, color }: { icon: TrackIconKey; color: string }) {
       return (
         <svg {...common} aria-hidden="true">
           <path d="M9 18h6M10 21h4M8 14a4 4 0 1 1 8 0c0 1.5-.8 2.3-1.5 3-.4.4-.5.7-.5 1H9.9c0-.3-.1-.6-.5-1C8.7 16.3 8 15.5 8 14Z" strokeLinejoin="round" />
-        </svg>
-      );
-    case "blockchain":
-      return (
-        <svg {...common} aria-hidden="true">
-          <rect x="3" y="9" width="7" height="7" rx="1.5" />
-          <rect x="14" y="9" width="7" height="7" rx="1.5" />
-          <path d="M10 12.5h4" strokeLinecap="round" />
         </svg>
       );
   }
