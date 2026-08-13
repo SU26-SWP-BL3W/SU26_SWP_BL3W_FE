@@ -1,0 +1,267 @@
+"use client";
+
+import React, { useState } from "react";
+import { Button, Card, Badge, Table, Input } from "@/components/ui";
+import { MOCK_EVENTS, MockEvent } from "@/viewModels/mockEventsData";
+import { staffRepository } from "@/repositories/staffRepository";
+import { ShieldAlert, Plus, Users, School, Settings, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+
+export const AdminDashboardView: React.FC = () => {
+  const [selectedEvent, setSelectedEvent] = useState<MockEvent | null>(null);
+  const [ecEmail, setEcEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignSuccessMessage, setAssignSuccessMessage] = useState<string | null>(null);
+
+  const handleOpenAssignModal = (ev: MockEvent) => {
+    setSelectedEvent(ev);
+    setEcEmail("");
+    setAssignSuccessMessage(null);
+  };
+
+  const handleAssignEc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ecEmail.trim() || !selectedEvent) return;
+
+    setIsSubmitting(true);
+    const res = await staffRepository.assignRoleDirectly({
+      userId: `usr-ec-${Date.now()}`,
+      eventId: selectedEvent.id,
+      roleName: "EventCoordinator",
+    });
+    setIsSubmitting(false);
+
+    if (res.success) {
+      setAssignSuccessMessage(`Đã phân công ${ecEmail} làm Event Coordinator cho sự kiện "${selectedEvent.eventName}" thành công!`);
+      setTimeout(() => {
+        setSelectedEvent(null);
+        setAssignSuccessMessage(null);
+      }, 2000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
+      <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-4 py-8 space-y-8">
+        {/* Admin Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
+          <div>
+            <div className="flex items-center gap-2 font-mono text-xs text-[var(--color-danger)] mb-1">
+              <ShieldAlert className="w-4 h-4" />
+              <span>TRUNG TÂM QUẢN TRỊ HỆ THỐNG (SYSTEM ADMIN)</span>
+            </div>
+            <h1 className="font-display font-bold text-2xl md:text-3xl text-[var(--text-primary)] uppercase tracking-wider">
+              Bảng Điều Hành Admin Tổng
+            </h1>
+            <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
+              Dành riêng cho System Admin (`User.IsAdmin = true`): Khởi tạo sự kiện toàn hệ thống & phân công Event Coordinator quản lý.
+            </p>
+          </div>
+
+          <Link href="/admin/events/new">
+            <Button variant="primary" className="hud-glow-cyan flex items-center gap-2 bg-[var(--color-danger)] hover:bg-white text-[var(--bg-base)]">
+              <Plus className="w-4 h-4" /> // TẠO SỰ KIỆN MỚI (POST /api/Events) &gt;
+            </Button>
+          </Link>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hud-glow-cyan p-5 space-y-2 border-l-4 border-l-[var(--color-danger)]">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              Tổng Sự Kiện Hệ Thống
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono font-bold text-2xl text-[var(--color-danger)]">
+                {MOCK_EVENTS.length}
+              </span>
+              <Shield className="w-5 h-5 text-[var(--color-danger)] opacity-60" />
+            </div>
+            <span className="font-mono text-[10px] text-[var(--color-success)] block">
+              ● 2 Sự kiện active trên hệ thống
+            </span>
+          </Card>
+
+          <Card className="hud-glow-coordinator p-5 space-y-2">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              Event Coordinators (EC)
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono font-bold text-2xl text-[var(--accent-coordinator)]">
+                12
+              </span>
+              <Users className="w-5 h-5 text-[var(--accent-coordinator)] opacity-60" />
+            </div>
+            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+              Đã được gán phụ trách các mùa giải
+            </span>
+          </Card>
+
+          <Card className="hud-glow-amber p-5 space-y-2">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              Tổng Người Dùng Hệ Thống
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono font-bold text-2xl text-[var(--accent-judge)]">
+                1,450
+              </span>
+              <Activity className="w-5 h-5 text-[var(--accent-judge)] opacity-60" />
+            </div>
+            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+              Sinh viên, Giám khảo & Cố vấn
+            </span>
+          </Card>
+
+          <Card className="hud-glow-mentor p-5 space-y-2">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              Trường Đại Học Đăng Ký
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono font-bold text-2xl text-[var(--accent-mentor)]">
+                18
+              </span>
+              <School className="w-5 h-5 text-[var(--accent-mentor)] opacity-60" />
+            </div>
+            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+              FPTU, HUST, VNU, UIT, HCMUT...
+            </span>
+          </Card>
+        </div>
+
+        {/* All Events Admin Table */}
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
+            <h3 className="font-mono font-bold text-sm text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-[var(--color-danger)]" />
+              Danh Sách Tất Cả Sự Kiện Trong Hệ Thống ({MOCK_EVENTS.length})
+            </h3>
+            <Link href="/admin/events/new">
+              <Button variant="primary" className="text-xs font-mono bg-[var(--color-danger)]">
+                + Khởi Tạo Event Mới
+              </Button>
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <Table>
+              <thead>
+                <tr>
+                  <th>MÃ EVENT / TÊN SỰ KIỆN</th>
+                  <th>MÙA GIẢI</th>
+                  <th>SỐ VÒNG THI</th>
+                  <th>EVENT COORDINATOR PHỤ TRÁCH</th>
+                  <th>TRẠNG THÁI</th>
+                  <th className="text-center">THAO TÁC ADMIN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_EVENTS.map((ev, index) => (
+                  <tr key={ev.id}>
+                    <td>
+                      <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{ev.eventName}</div>
+                      <div className="font-mono text-[10px] text-[var(--accent-primary)]">ID: #{ev.id}</div>
+                    </td>
+                    <td>
+                      <Badge tone="team">{ev.season} {ev.year}</Badge>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-[var(--text-primary)]">
+                        {ev.rounds.length} Vòng Thi
+                      </span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold">
+                        EC. {index % 2 === 0 ? "Phúc HNV (ec.coordinator@seal.edu.vn)" : "Tuấn NVA (ec.tuan@seal.edu.vn)"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
+                        ACTIVE
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleOpenAssignModal(ev)}
+                        className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" /> Gán EC
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Card>
+
+        {/* Modal Gán Event Coordinator Dành Cho Admin */}
+        {selectedEvent && (
+          <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fade-in">
+            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)] hud-glow-coordinator space-y-4 relative hud-clipped">
+              <button
+                type="button"
+                onClick={() => setSelectedEvent(null)}
+                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="space-y-1">
+                <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-[var(--accent-coordinator)]" />
+                  Phân Công Event Coordinator (EC)
+                </h3>
+                <p className="font-mono text-xs text-[var(--text-muted)]">
+                  Chỉ định tài khoản Điều Phối Viên phụ trách quản lý & cấu hình sự kiện{" "}
+                  <span className="text-[var(--accent-primary)] font-bold">"{selectedEvent.eventName}"</span>.
+                </p>
+              </div>
+
+              {assignSuccessMessage ? (
+                <div className="p-4 bg-[rgba(16,185,129,0.1)] border border-[var(--color-success)] text-[var(--color-success)] font-mono text-xs hud-clipped flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[var(--color-success)]" />
+                  <span>{assignSuccessMessage}</span>
+                </div>
+              ) : (
+                <form onSubmit={handleAssignEc} className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                      Email Tài Khoản Event Coordinator *
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="e.g. ec.coordinator@seal.edu.vn"
+                      value={ecEmail}
+                      onChange={(e) => setEcEmail(e.target.value)}
+                      className="w-full"
+                      required
+                    />
+                  </div>
+
+                  <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1">
+                    <span className="font-mono text-[10px] text-[var(--accent-coordinator)] uppercase block font-bold">
+                      Ghi chú phân quyền (§7.7 / STT #8 API /EventRoles/assign):
+                    </span>
+                    <p className="font-mono text-[10px] text-[var(--text-muted)]">
+                      Admin chỉ định EC quản lý sự kiện này. Tài khoản EC được gán sẽ thấy sự kiện xuất hiện trên Bảng điều hành EC của họ để cấu hình Vòng thi (Rounds), Hạng mục (Tracks) & Tiêu chí.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="ghost" type="button" onClick={() => setSelectedEvent(null)}>
+                      Hủy Bỏ
+                    </Button>
+                    <Button variant="primary" accent="coordinator" type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Đang xử lý..." : "// XÁC NHẬN GÁN EC >"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </Card>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
