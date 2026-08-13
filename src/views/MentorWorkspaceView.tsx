@@ -217,6 +217,22 @@ export function MentorWorkspaceView() {
     },
   ];
 
+  // State Quản Lý Giao Diện Tab 2 Đội Thi
+  const [teamViewMode, setTeamViewMode] = useState<"table" | "cards">("table");
+  const [teamSearchQuery, setTeamSearchQuery] = useState("");
+  const [teamStatusFilter, setTeamStatusFilter] = useState("ALL");
+  const [selectedRosterTeam, setSelectedRosterTeam] = useState<typeof mockAiTrackTeams[0] | null>(null);
+
+  const filteredTeams = mockAiTrackTeams.filter((t) => {
+    const matchesSearch =
+      t.name.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.code.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.school.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.leader.email.toLowerCase().includes(teamSearchQuery.toLowerCase());
+    const matchesStatus = teamStatusFilter === "ALL" || t.status === teamStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="hud-lattice min-h-[calc(100vh-4rem)]">
       <div className="max-w-[var(--container-max)] mx-auto px-6 py-8 flex flex-col gap-8">
@@ -350,81 +366,211 @@ export function MentorWorkspaceView() {
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            TAB 2: 👥 ĐỘI THI CẦN HỖ TRỢ (TEAMS - FULL 8 TEAMS)
+            TAB 2: 👥 ĐỘI THI CẦN HỖ TRỢ (TEAMS - DATA TABLE & CARD MODES)
            ───────────────────────────────────────────────────────────── */}
         {activeTab === "teams" && (
           <div className="flex flex-col gap-6">
-            {/* Header Track Selector */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
-              <div className="flex items-center gap-3">
-                <span className="text-[var(--text-muted)] font-bold">HẠNG MỤC ĐANG CỐ VẤN:</span>
+            {/* Header Track & View Control Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-[var(--text-muted)] font-bold uppercase">HẠNG MỤC ĐANG CỐ VẤN:</span>
                 <span className="text-[#2dd4bf] font-bold bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1">
-                  AI & Machine Learning (8 Đội)
+                  AI & Machine Learning ({mockAiTrackTeams.length} Đội thi)
                 </span>
               </div>
-              <span className="text-[var(--text-muted)]">Hiển thị đầy đủ {mockAiTrackTeams.length} / {mockAiTrackTeams.length} Đội thi</span>
-            </div>
 
-            {/* Teams Grid - Full 8 teams */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mockAiTrackTeams.map((team) => (
-                <div
-                  key={team.id}
-                  className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] p-6 flex flex-col justify-between gap-5 hover:border-[#2dd4bf]/50 transition-all shadow-sm"
-                >
-                  {/* Team Card Header */}
-                  <div className="flex items-start justify-between pb-3 border-b border-[var(--border-muted)]">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#2dd4bf]">{team.code}</span>
-                        <span className="font-mono text-xs text-[var(--text-muted)]">·</span>
-                        <span className="font-mono text-xs text-[var(--text-muted)]">{team.school}</span>
-                      </div>
-                      <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">
-                        {team.name}
-                      </h3>
-                    </div>
-                    <Badge tone={team.status === "Registered" ? "success" : "warning"}>
-                      {team.status === "Registered" ? "ĐÃ GHI DANH" : "ĐANG HÌNH THÀNH"}
-                    </Badge>
-                  </div>
+              {/* View Switcher & Counter */}
+              <div className="flex items-center gap-3">
+                <span className="text-[var(--text-muted)] hidden sm:inline">
+                  Hiển thị <strong className="text-white">{filteredTeams.length}</strong> / {mockAiTrackTeams.length} Đội
+                </span>
 
-                  {/* Members Roster */}
-                  <div className="flex flex-col gap-2 font-mono text-xs">
-                    <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
-                      THÀNH VIÊN ĐỘI THI ({team.membersCount} NGƯỜI):
-                    </span>
-                    <div className="flex flex-col gap-1.5 bg-[var(--bg-input)]/50 p-3 border border-[var(--border-muted)]">
-                      {team.members.map((m, idx) => (
-                        <div key={idx} className="flex items-center justify-between py-1 border-b border-[var(--border-muted)]/40 last:border-none">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-[var(--text-primary)]">{m.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-[var(--accent-team)]/10 text-[var(--accent-team)] border border-[var(--accent-team)]/30 font-bold">
-                              {m.role}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-[var(--text-muted)]">{m.school}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Leader Contact */}
-                  <div className="p-2.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-xs flex justify-between items-center">
-                    <span className="text-[var(--text-muted)]">Email Đội Trưởng:</span>
-                    <span className="text-[#2dd4bf] font-bold">{team.leader.email}</span>
-                  </div>
-
-                  {/* Action */}
+                <div className="flex items-center border border-[var(--border-muted)] p-0.5 bg-[var(--bg-input)]">
                   <button
-                    onClick={() => setFeedbackTeam(team.name)}
-                    className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                    onClick={() => setTeamViewMode("table")}
+                    className={`px-3 py-1 font-bold transition-all cursor-pointer ${
+                      teamViewMode === "table"
+                        ? "bg-[#2dd4bf] text-[var(--bg-base)]"
+                        : "text-[var(--text-muted)] hover:text-white"
+                    }`}
                   >
-                    💬 GỢI Ý & TƯ VẤN CHUYÊN MÔN CHO ĐỘI
+                    📊 Data Table (Gọn)
+                  </button>
+                  <button
+                    onClick={() => setTeamViewMode("cards")}
+                    className={`px-3 py-1 font-bold transition-all cursor-pointer ${
+                      teamViewMode === "cards"
+                        ? "bg-[#2dd4bf] text-[var(--bg-base)]"
+                        : "text-[var(--text-muted)] hover:text-white"
+                    }`}
+                  >
+                    🎴 Thẻ Card
                   </button>
                 </div>
-              ))}
+              </div>
             </div>
+
+            {/* Smart Search & Filter Toolbar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
+              {/* Search Box */}
+              <div className="relative w-full sm:w-96">
+                <input
+                  type="text"
+                  value={teamSearchQuery}
+                  onChange={(e) => setTeamSearchQuery(e.target.value)}
+                  placeholder="🔍 Tìm tên đội, mã đội, trường học, email đội trưởng..."
+                  className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[#2dd4bf]"
+                />
+                {teamSearchQuery && (
+                  <button
+                    onClick={() => setTeamSearchQuery("")}
+                    className="absolute right-2.5 top-2 text-[var(--text-muted)] hover:text-white font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-[var(--text-muted)] shrink-0">Lọc Trạng Thái:</span>
+                <select
+                  value={teamStatusFilter}
+                  onChange={(e) => setTeamStatusFilter(e.target.value)}
+                  className="bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#2dd4bf] w-full sm:w-auto"
+                >
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="Registered">Đã ghi danh</option>
+                  <option value="Forming">Đang hình thành</option>
+                </select>
+              </div>
+            </div>
+
+            {/* MODE 1: DATA TABLE VIEW (Compact View for 100+ Teams) */}
+            {teamViewMode === "table" && (
+              <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
+                <table className="w-full text-left border-collapse font-mono text-xs">
+                  <thead>
+                    <tr className="border-b border-[var(--border-muted)] bg-[var(--bg-base)] text-[var(--text-muted)]">
+                      <th className="p-3 uppercase">Mã Đội</th>
+                      <th className="p-3 uppercase">Tên Đội Thi & Trường</th>
+                      <th className="p-3 uppercase">Thành Viên</th>
+                      <th className="p-3 uppercase">Email Đội Trưởng</th>
+                      <th className="p-3 uppercase">Trạng Thái</th>
+                      <th className="p-3 uppercase text-right">Tư Vấn Chuyên Môn</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-muted)]/60">
+                    {filteredTeams.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-[var(--text-muted)] italic">
+                          Không tìm thấy đội thi nào phù hợp với bộ lọc.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTeams.map((team) => (
+                        <tr key={team.id} className="hover:bg-[var(--bg-input)]/40 transition-colors">
+                          <td className="p-3 font-bold text-[#2dd4bf] whitespace-nowrap">
+                            {team.code}
+                          </td>
+                          <td className="p-3">
+                            <div className="font-bold text-[var(--text-primary)] text-sm">{team.name}</div>
+                            <div className="text-[10px] text-[var(--text-muted)]">{team.school}</div>
+                          </td>
+                          <td className="p-3 whitespace-nowrap">
+                            <button
+                              onClick={() => setSelectedRosterTeam(team)}
+                              className="px-2.5 py-1 bg-[var(--accent-team)]/10 text-[var(--accent-team)] border border-[var(--accent-team)]/30 font-bold text-[10px] hover:bg-[var(--accent-team)] hover:text-black transition-all cursor-pointer"
+                            >
+                              👥 {team.membersCount} Thành Viên (Xem List)
+                            </button>
+                          </td>
+                          <td className="p-3 text-[var(--text-primary)] font-mono text-[11px] whitespace-nowrap">
+                            {team.leader.email}
+                          </td>
+                          <td className="p-3 whitespace-nowrap">
+                            <Badge tone={team.status === "Registered" ? "success" : "warning"}>
+                              {team.status === "Registered" ? "ĐÃ GHI DANH" : "ĐANG HÌNH THÀNH"}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => setFeedbackTeam(team.name)}
+                              className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-bold text-[11px] uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                            >
+                              💬 GỢI Ý & TƯ VẤN
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* MODE 2: CARDS GRID VIEW */}
+            {teamViewMode === "cards" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredTeams.map((team) => (
+                  <div
+                    key={team.id}
+                    className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] p-6 flex flex-col justify-between gap-5 hover:border-[#2dd4bf]/50 transition-all shadow-sm"
+                  >
+                    {/* Team Card Header */}
+                    <div className="flex items-start justify-between pb-3 border-b border-[var(--border-muted)]">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-[#2dd4bf]">{team.code}</span>
+                          <span className="font-mono text-xs text-[var(--text-muted)]">·</span>
+                          <span className="font-mono text-xs text-[var(--text-muted)]">{team.school}</span>
+                        </div>
+                        <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">
+                          {team.name}
+                        </h3>
+                      </div>
+                      <Badge tone={team.status === "Registered" ? "success" : "warning"}>
+                        {team.status === "Registered" ? "ĐÃ GHI DANH" : "ĐANG HÌNH THÀNH"}
+                      </Badge>
+                    </div>
+
+                    {/* Members Roster */}
+                    <div className="flex flex-col gap-2 font-mono text-xs">
+                      <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                        THÀNH VIÊN ĐỘI THI ({team.membersCount} NGƯỜI):
+                      </span>
+                      <div className="flex flex-col gap-1.5 bg-[var(--bg-input)]/50 p-3 border border-[var(--border-muted)]">
+                        {team.members.map((m, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-1 border-b border-[var(--border-muted)]/40 last:border-none">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[var(--text-primary)]">{m.name}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-[var(--accent-team)]/10 text-[var(--accent-team)] border border-[var(--accent-team)]/30 font-bold">
+                                {m.role}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-[var(--text-muted)]">{m.school}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Leader Contact */}
+                    <div className="p-2.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-xs flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">Email Đội Trưởng:</span>
+                      <span className="text-[#2dd4bf] font-bold">{team.leader.email}</span>
+                    </div>
+
+                    {/* Action */}
+                    <button
+                      onClick={() => setFeedbackTeam(team.name)}
+                      className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                    >
+                      💬 GỢI Ý & TƯ VẤN CHUYÊN MÔN CHO ĐỘI
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -525,19 +671,87 @@ export function MentorWorkspaceView() {
               <div className="flex justify-end gap-3 font-mono text-xs pt-2">
                 <button
                   onClick={() => setFeedbackTeam(null)}
-                  className="px-4 py-2 border border-[var(--border-muted)] text-[var(--text-muted)] hover:bg-white/5"
+                  className="px-4 py-2 border border-[var(--border-muted)] text-[var(--text-muted)] hover:bg-white/5 cursor-pointer"
                 >
                   HỦY
                 </button>
                 <button
                   onClick={() => {
-                    alert(`[MOCK] Đã gửi góp ý cố vấn thành công tới Đội: ${feedbackTeam}`);
                     setFeedbackTeam(null);
                     setFeedbackNote("");
                   }}
-                  className="px-4 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold hover:bg-white"
+                  className="px-4 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold hover:bg-white cursor-pointer"
                 >
                   GỬI GÓP Ý
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODAL LIGHTBOX XEM DANH SÁCH THÀNH VIÊN ĐỘI THI ── */}
+        {selectedRosterTeam && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-[var(--bg-panel)] border border-[#2dd4bf] p-6 max-w-xl w-full hud-clipped flex flex-col gap-5 shadow-2xl font-mono text-xs">
+              {/* Header Modal */}
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-muted)]">
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] text-[#2dd4bf] font-bold">
+                    <span>{selectedRosterTeam.code}</span>
+                    <span>·</span>
+                    <span>{selectedRosterTeam.school}</span>
+                  </div>
+                  <h3 className="font-display font-bold text-xl text-white mt-0.5">
+                    THÀNH VIÊN ĐỘI: {selectedRosterTeam.name}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedRosterTeam(null)}
+                  className="text-lg text-[var(--text-muted)] hover:text-white cursor-pointer p-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Roster List Table */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold">
+                  DANH SÁCH THÀNH VIÊN ({selectedRosterTeam.membersCount} NGƯỜI):
+                </span>
+                <div className="border border-[var(--border-muted)] bg-[var(--bg-input)] divide-y divide-[var(--border-muted)]">
+                  {selectedRosterTeam.members.map((member, idx) => (
+                    <div key={idx} className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-white text-sm">{member.name}</span>
+                        <span
+                          className={`text-[9px] px-2 py-0.5 font-bold uppercase border ${
+                            member.role === "Đội Trưởng"
+                              ? "bg-[#2dd4bf]/20 text-[#2dd4bf] border-[#2dd4bf]/40"
+                              : "bg-[var(--accent-team)]/10 text-[var(--accent-team)] border-[var(--accent-team)]/30"
+                          }`}
+                        >
+                          {member.role}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[var(--text-muted)]">{member.school}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Leader Email Info */}
+              <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] flex justify-between items-center text-xs">
+                <span className="text-[var(--text-muted)]">Email Đội Trưởng Liên Hệ:</span>
+                <span className="text-[#2dd4bf] font-bold">{selectedRosterTeam.leader.email}</span>
+              </div>
+
+              {/* Footer Modal */}
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setSelectedRosterTeam(null)}
+                  className="px-5 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold uppercase hover:bg-white transition-all cursor-pointer hud-clipped"
+                >
+                  ĐÓNG CỬA SỔ
                 </button>
               </div>
             </div>

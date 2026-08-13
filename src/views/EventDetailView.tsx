@@ -7,9 +7,13 @@ import { SealShield } from "@/components/domain/SealShield";
 import { useEventDetailViewModel } from "@/viewModels/useEventDetailViewModel";
 import type { RoundStatus } from "@/viewModels/useEventDetailViewModel";
 import { useCountdown } from "@/lib/useCountdown";
+import { useAuth } from "@/providers/AuthProvider";
 import { TRACK_META, DEFAULT_TRACK_META, type TrackIconKey } from "@/viewModels/mockEventsData";
 
 export function EventDetailView({ eventId }: { eventId: string }) {
+  const { user, activeRole } = useAuth();
+  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+
   const {
     notFound,
     eventName,
@@ -80,21 +84,59 @@ export function EventDetailView({ eventId }: { eventId: string }) {
               <span>Số hạng mục: <strong className="text-[var(--text-primary)] font-bold">{tracks.length} Tracks</strong></span>
             </div>
 
-            {/* Quick Action Buttons */}
+            {/* Quick Action Buttons with RBAC Role Gating */}
             <div className="flex flex-wrap items-center gap-4 pt-4">
-              <Link href="/register">
-                <button className="hud-clipped px-6 py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md">
-                  🚀 ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
-                </button>
-              </Link>
+              {roleName === "Mentor" && (
+                <Link href="/mentor/tracks">
+                  <button className="hud-clipped px-6 py-3 bg-[#2dd4bf] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    💼 VÀO BÀN LÀM VIỆC CỐ VẤN (TRACKS) ➔
+                  </button>
+                </Link>
+              )}
+
+              {roleName === "Coordinator" && (
+                <Link href="/coordinator/dashboard">
+                  <button className="hud-clipped px-6 py-3 bg-[#a855f7] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    🎯 VÀO BÀN ĐIỀU HÀNH BAN TỔ CHỨC ➔
+                  </button>
+                </Link>
+              )}
+
+              {roleName === "Judge" && (
+                <Link href="/judge/scoring">
+                  <button className="hud-clipped px-6 py-3 bg-[var(--accent-judge)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    ⚖ VÀO BÀN CHẤM ĐIỂM GIÁM KHẢO ➔
+                  </button>
+                </Link>
+              )}
+
+              {roleName === "Admin" && (
+                <Link href="/admin/dashboard">
+                  <button className="hud-clipped px-6 py-3 bg-[var(--color-danger)] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    👑 VÀO BẢNG ĐIỀU HÀNH ADMIN ➔
+                  </button>
+                </Link>
+              )}
+
+              {/* Dành cho Thí sinh / Đội thi (TeamLeader, TeamMember, Guest) */}
+              {(roleName === "TeamLeader" || roleName === "TeamMember" || roleName === "Guest") && (
+                <>
+                  <Link href="/register">
+                    <button className="hud-clipped px-6 py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md cursor-pointer">
+                      🚀 ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
+                    </button>
+                  </Link>
+                  <Link href="/submissions/new">
+                    <button className="hud-clipped px-5 py-3 border border-[var(--accent-team)]/50 bg-[var(--accent-team)]/10 text-[var(--accent-team)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-team)]/20 transition-all cursor-pointer">
+                      📤 NỘP BÀI THI CỦA ĐỘI
+                    </button>
+                  </Link>
+                </>
+              )}
+
               <Link href={`/events/${eventId}/leaderboard`}>
-                <button className="hud-clipped px-5 py-3 border border-[var(--accent-judge)]/50 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all">
+                <button className="hud-clipped px-5 py-3 border border-[var(--accent-judge)]/50 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all cursor-pointer">
                   🏆 XEM BẢNG XẾP HẠNG
-                </button>
-              </Link>
-              <Link href="/submissions/new">
-                <button className="hud-clipped px-5 py-3 border border-[var(--accent-team)]/50 bg-[var(--accent-team)]/10 text-[var(--accent-team)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-team)]/20 transition-all">
-                  📤 NỘP BÀI THI
                 </button>
               </Link>
             </div>
