@@ -66,7 +66,7 @@ export const templatesRepository = {
    */
   async getAllCriterias(): Promise<BaseResponse<CriteriaEntity[]>> {
     try {
-      const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/api/Criterias");
+      const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
       return res.data;
     } catch (err: any) {
       return {
@@ -83,7 +83,7 @@ export const templatesRepository = {
    */
   async createTemplate(payload: CreateTemplatePayload): Promise<BaseResponse<TemplateEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<TemplateEntity>>("/api/Templates", payload);
+      const res = await apiClient.post<BaseResponse<TemplateEntity>>("/Templates", payload);
       return res.data;
     } catch (err: any) {
       const mockCreated: any = {
@@ -106,7 +106,7 @@ export const templatesRepository = {
   async addCriteriaToTemplate(payload: AddCriteriaToTemplatePayload): Promise<BaseResponse<TemplateCriteriaEntity>> {
     try {
       const res = await apiClient.post<BaseResponse<TemplateCriteriaEntity>>(
-        `/api/Templates/${payload.templateId}/criteria`,
+        `/Templates/${payload.templateId}/criteria`,
         payload
       );
       return res.data;
