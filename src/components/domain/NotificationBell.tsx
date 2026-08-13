@@ -115,8 +115,10 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
       {/* ── Notifications HUD Popover Panel ── */}
       {isOpen && (
         <div
-          className={`absolute mt-2 w-80 md:w-88 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 shadow-2xl hud-clipped z-50 overflow-hidden flex flex-col font-mono text-xs animate-in fade-in zoom-in-95 duration-150 ${
-            align === "right" ? "right-0" : "left-0 sm:left-auto sm:right-0"
+          className={`bg-[var(--bg-panel)] border border-[var(--accent-primary)]/50 shadow-2xl hud-clipped z-[100] overflow-hidden flex flex-col font-mono text-xs animate-in fade-in zoom-in-95 duration-150 ${
+            align === "right"
+              ? "absolute right-0 top-full mt-2 w-80 md:w-96"
+              : "fixed left-4 top-16 md:left-6 md:top-14 w-80 md:w-96"
           }`}
         >
           
