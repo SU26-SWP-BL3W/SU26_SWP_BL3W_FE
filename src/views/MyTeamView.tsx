@@ -32,14 +32,14 @@ const STATUS_CONFIG: Record<
     dot: "bg-[var(--accent-secondary)]",
   },
   Registered: {
-    label: "ĐÃ ĐĂNG KÝ",
+    label: "ĐÃ ĐƯỢC BTC DUYỆT ĐĂNG KÝ",
     color: "text-[var(--color-success)]",
     bg: "bg-[var(--color-success)]/10",
     border: "border-[var(--color-success)]/40",
     dot: "bg-[var(--color-success)]",
   },
   Disqualified: {
-    label: "ĐÃ BỊ LOẠI",
+    label: "TỪ CHỐI / BỊ LOẠI",
     color: "text-[var(--color-danger)]",
     bg: "bg-[var(--color-danger)]/10",
     border: "border-[var(--color-danger)]/40",
