@@ -727,19 +727,19 @@ export function NavigationBar() {
         <NotificationBell align="right" />
 
         {/* Role Switcher Demo Control Bar */}
-        <div className="hidden lg:flex items-center gap-1.5 border border-[var(--border-muted)] px-2 py-1 bg-[var(--bg-input)] font-mono text-[10px] hud-clipped">
-          <span className="text-[var(--text-muted)] font-bold">Role:</span>
-          <button onClick={() => login("Admin")} className={`hover:underline ${roleName === "Admin" ? "text-[var(--color-danger)] font-bold" : "text-[var(--text-muted)]"}`}>Admin</button>
+        <div className="hidden lg:flex items-center gap-1.5 border border-[var(--border-muted)] px-2.5 py-1 bg-[var(--bg-input)] font-mono text-[10px] hud-clipped opacity-90 hover:opacity-100 transition-opacity">
+          <span className="text-[var(--text-muted)] font-bold text-[9px] uppercase tracking-wider">DEV TOOLS:</span>
+          <button onClick={() => login("Admin")} className={`hover:underline cursor-pointer ${roleName === "Admin" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-muted)]"}`}>Admin</button>
           <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("TeamLeader")} className={`hover:underline ${roleName === "TeamLeader" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Leader</button>
+          <button onClick={() => login("TeamLeader")} className={`hover:underline cursor-pointer ${roleName === "TeamLeader" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-muted)]"}`}>Leader</button>
           <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("TeamMember")} className={`hover:underline ${roleName === "TeamMember" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Member</button>
+          <button onClick={() => login("TeamMember")} className={`hover:underline cursor-pointer ${roleName === "TeamMember" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-muted)]"}`}>Member</button>
           <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Mentor")} className={`hover:underline ${roleName === "Mentor" ? "text-[#2dd4bf] font-bold" : "text-[var(--text-muted)]"}`}>Mentor</button>
+          <button onClick={() => login("Mentor")} className={`hover:underline cursor-pointer ${roleName === "Mentor" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-muted)]"}`}>Mentor</button>
           <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Judge")} className={`hover:underline ${roleName === "Judge" ? "text-[var(--accent-judge)] font-bold" : "text-[var(--text-muted)]"}`}>Judge</button>
+          <button onClick={() => login("Judge")} className={`hover:underline cursor-pointer ${roleName === "Judge" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-muted)]"}`}>Judge</button>
           <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Coordinator")} className={`hover:underline ${roleName === "Coordinator" ? "text-[#a855f7] font-bold" : "text-[var(--text-muted)]"}`}>Coord</button>
+          <button onClick={() => login("Coordinator")} className={`hover:underline cursor-pointer ${roleName === "Coordinator" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-muted)]"}`}>Coord</button>
         </div>
 
         {user ? (

@@ -40,7 +40,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
             Bước 4: Thiết Lập Tiêu Chí & Trọng Số Chấm Điểm
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Actor: Event Coordinator (POST /api/Templates, PATCH /api/Tracks/assign-template). Bắt buộc tổng trọng số đạt ĐÚNG 100% trước khi kích hoạt.
+            Thiết lập bảng tiêu chí đánh giá RBL. Tổng trọng số bắt buộc đạt ĐÚNG 100% trước khi lưu.
           </p>
         </div>
 

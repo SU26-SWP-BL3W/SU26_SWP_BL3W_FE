@@ -290,13 +290,17 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Sự kiện cần ít nhất 1 Vòng thi (Round)!");
         return;
       }
-      // Call API create rounds
+      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
+      if (!realEventId) {
+        setErrorMessage("Vui lòng hoàn thành Bước 1 để khởi tạo Sự kiện trước!");
+        return;
+      }
+
       setIsSubmitting(true);
       try {
-        const eventId = createdEvent?.EventId || "ev-mock-1";
         for (const rnd of rounds) {
           await roundsRepository.createRound({
-            eventId,
+            eventId: realEventId,
             roundName: rnd.roundName,
             roundNumber: rnd.roundNumber,
             startDate: rnd.startDate,
@@ -315,13 +319,13 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Vui lòng cấu hình ít nhất 1 Hạng mục thi (Track)!");
         return;
       }
-      // Call API create tracks
+      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
+
       setIsSubmitting(true);
       try {
-        const roundId = rounds[0]?.id || "rnd-mock-1";
         for (const trk of tracks) {
           await tracksRepository.createTrack({
-            roundId,
+            roundId: trk.roundId || "rnd-1",
             trackName: trk.trackName,
             description: trk.description,
           });
@@ -337,14 +341,14 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage(`Tổng trọng số tiêu chí phải đạt ĐÚNG 100%! Hiện tại là ${totalWeight}%.`);
         return;
       }
-      // Call API create template & criteria
+
       setIsSubmitting(true);
       try {
         const resTpl = await templatesRepository.createTemplate({
           templateName: templateName || "Mẫu Tiêu Chí Đánh Giá RBL Standard",
           description: "Mẫu tiêu chí tổng hợp 100% trọng số",
         });
-        const templateId = resTpl.data?.TemplateId || "tpl-mock-1";
+        const templateId = (resTpl.data as any)?.id || (resTpl.data as any)?.Id || resTpl.data?.TemplateId || "tpl-1";
         for (const crit of criterias) {
           await templatesRepository.addCriteriaToTemplate({
             templateId,
@@ -360,20 +364,19 @@ export function useCreateEventWizardViewModel() {
         setIsSubmitting(false);
       }
     } else if (currentStep === 5) {
-      // Final Finish Step
+      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
       setIsSubmitting(true);
       try {
-        // Send invitations for all judges and mentors
         for (const staff of staffInvites) {
           if (staff.roleName === "Judge") {
             await staffRepository.inviteJudge({
-              eventId: createdEvent?.EventId || "ev-mock-1",
+              eventId: realEventId || "ev-1",
               trackId: staff.trackId,
               email: staff.email,
             });
           } else {
             await staffRepository.inviteMentor({
-              eventId: createdEvent?.EventId || "ev-mock-1",
+              eventId: realEventId || "ev-1",
               trackId: staff.trackId,
               email: staff.email,
             });

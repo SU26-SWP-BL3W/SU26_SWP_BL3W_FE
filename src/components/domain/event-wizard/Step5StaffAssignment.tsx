@@ -46,7 +46,7 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
             Bước 5: Phân Công Giám Khảo & Cố Vấn (Staffing)
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Actor: Event Coordinator (POST /api/Judges/invite, POST /api/Mentors/invite). Tự động tạo tài khoản tạm nếu chưa có & gửi email mời kích hoạt 24h.
+            Gửi email mời Giám khảo &amp; Cố vấn tham gia Hội đồng chuyên môn của Sự kiện.
           </p>
         </div>
         <span className="px-3 py-1 font-mono text-xs bg-[var(--bg-input)] text-[var(--accent-mentor)] border border-[var(--accent-mentor)]/30 hud-clipped">
