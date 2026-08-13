@@ -479,6 +479,13 @@ export function MyTeamView() {
               {team.name}
             </h1>
             <div className="flex flex-wrap items-center gap-3 mt-3">
+              <span className={`font-mono text-[10px] font-bold px-2.5 py-1 border tracking-widest uppercase ${
+                isLeader
+                  ? "bg-[var(--accent-team)]/10 text-[var(--accent-team)] border-[var(--accent-team)]/40"
+                  : "bg-[#2dd4bf]/10 text-[#2dd4bf] border-[#2dd4bf]/40"
+              }`}>
+                {isLeader ? "👑 QUYỀN ĐỘI TRƯỞNG (FULL MANAGEMENT)" : "👥 VAI TRÒ THÀNH VIÊN (READ-ONLY VIEW)"}
+              </span>
               <span className="font-mono text-xs text-[var(--text-muted)] border border-[var(--border-muted)] px-2 py-0.5">
                 #{team.id.toUpperCase()}
               </span>

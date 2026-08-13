@@ -15,13 +15,17 @@ export function NavigationBar() {
   const currentEventId = team?.eventId || "event-seal-2026";
 
   // XÁC ĐỊNH NGHIỆP VỤ RENDER THANH NAVBAR DỌC HOẶC NGANG
-  // 1. Sidebar Dọc (Vertical Panel) CHỈ RENDER khi đang nằm trong trang Dashboard / Workspace chuyên biệt:
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
   const isAdminRoute = pathname.includes("/admin");
+  const isWorkspaceRoute =
+    pathname.includes("/my-team") ||
+    pathname.includes("/my-submissions") ||
+    pathname.includes("/appeals");
 
   const showCoordinatorSidebar = isCoordinatorRoute;
   const showMentorSidebar = isMentorRoute;
+  const showParticipantSidebar = isWorkspaceRoute && roleName !== "Guest";
 
   // ─────────────────────────────────────────────────────────────
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
@@ -279,6 +283,17 @@ export function NavigationBar() {
             <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
               ĐIỀU HƯỚNG SỰ KIỆN
             </span>
+
+            <Link
+              href={`/events/${currentEventId}`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes(`/events/${currentEventId}`) && !pathname.includes(`/leaderboard`)
+                  ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
+            </Link>
 
             <Link
               href="/my-team"

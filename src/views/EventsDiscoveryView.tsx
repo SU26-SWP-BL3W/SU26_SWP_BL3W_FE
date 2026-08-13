@@ -336,66 +336,68 @@ export function EventsDiscoveryView() {
         {/* Right: results + list */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
 
-          {/* ── My Joined Event Banner (Always visible with smart RBAC role routing) ── */}
-          <div className="p-5 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 hud-clipped flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_20px_rgba(0,217,255,0.08)]">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
-                ⭐ SỰ KIỆN CỦA TÔI {roleName === "Mentor" ? "(VAI TRÒ: CỐ VẤN TRACK)" : roleName === "Coordinator" ? "(VAI TRÒ: BAN TỔ CHỨC)" : roleName === "Judge" ? "(VAI TRÒ: GIÁM KHẢO)" : team ? `(ĐỘI: ${team.name})` : ""}
+          {/* ── My Joined Event Banner (CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP & CÓ VAI TRÒ) ── */}
+          {user && roleName !== "Guest" && (
+            <div className="p-5 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 hud-clipped flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_20px_rgba(0,217,255,0.08)]">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest">
+                  <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+                  ⭐ SỰ KIỆN CỦA TÔI {roleName === "Mentor" ? "(VAI TRÒ: CỐ VẤN TRACK)" : roleName === "Coordinator" ? "(VAI TRÒ: BAN TỔ CHỨC)" : roleName === "Judge" ? "(VAI TRÒ: GIÁM KHẢO)" : team ? `(ĐỘI: ${team.name})` : ""}
+                </div>
+                <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">
+                  {team ? team.eventName : "SEAL Hackathon 2026 — Đang Hoạt Động"}
+                </h2>
+                <div className="flex items-center gap-3 font-mono text-xs text-[var(--text-muted)] mt-0.5">
+                  <span>Vai trò hiện tại: <strong className="text-[var(--accent-primary)]">{roleName}</strong></span>
+                  <span>·</span>
+                  <span>Trạng thái: <strong className="text-[var(--color-success)]">ĐANG DIỄN RA</strong></span>
+                  <span>·</span>
+                  <span>Mùa Hè 2026</span>
+                </div>
               </div>
-              <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">
-                {team ? team.eventName : "SEAL Hackathon 2026 — Đang Hoạt Động"}
-              </h2>
-              <div className="flex items-center gap-3 font-mono text-xs text-[var(--text-muted)] mt-0.5">
-                <span>Vai trò hiện tại: <strong className="text-[var(--accent-primary)]">{roleName}</strong></span>
-                <span>·</span>
-                <span>Trạng thái: <strong className="text-[var(--color-success)]">ĐANG DIỄN RA</strong></span>
-                <span>·</span>
-                <span>Mùa Hè 2026</span>
-              </div>
+
+              {/* Smart Role-Based Button Action */}
+              {roleName === "Mentor" && (
+                <Link href="/mentor/tracks">
+                  <button className="hud-clipped px-5 py-2.5 bg-[#2dd4bf] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
+                    💼 VÀO BÀN LÀM VIỆC CỐ VẤN ➔
+                  </button>
+                </Link>
+              )}
+
+              {roleName === "Coordinator" && (
+                <Link href="/coordinator/dashboard">
+                  <button className="hud-clipped px-5 py-2.5 bg-[#a855f7] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-sm shrink-0 cursor-pointer">
+                    🎯 CONTROL CENTER BTC ➔
+                  </button>
+                </Link>
+              )}
+
+              {roleName === "Judge" && (
+                <Link href="/judge/scoring">
+                  <button className="hud-clipped px-5 py-2.5 bg-[var(--accent-judge)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
+                    ⚖ VÀO BÀN CHẤM GIÁM KHẢO ➔
+                  </button>
+                </Link>
+              )}
+
+              {roleName === "Admin" && (
+                <Link href="/admin/dashboard">
+                  <button className="hud-clipped px-5 py-2.5 bg-[var(--color-danger)] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-sm shrink-0 cursor-pointer">
+                    👑 BẢNG ĐIỀU HÀNH ADMIN ➔
+                  </button>
+                </Link>
+              )}
+
+              {(roleName === "TeamLeader" || roleName === "TeamMember") && (
+                <Link href={`/events/${myEventId}`}>
+                  <button className="hud-clipped px-5 py-2.5 bg-[var(--accent-team)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
+                    ↗ XEM CHI TIẾT SỰ KIỆN CỦA TÔI ➔
+                  </button>
+                </Link>
+              )}
             </div>
-
-            {/* Smart Role-Based Button Action */}
-            {roleName === "Mentor" && (
-              <Link href="/mentor/tracks">
-                <button className="hud-clipped px-5 py-2.5 bg-[#2dd4bf] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
-                  💼 VÀO BÀN LÀM VIỆC CỐ VẤN ➔
-                </button>
-              </Link>
-            )}
-
-            {roleName === "Coordinator" && (
-              <Link href="/coordinator/dashboard">
-                <button className="hud-clipped px-5 py-2.5 bg-[#a855f7] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-sm shrink-0 cursor-pointer">
-                  🎯 CONTROL CENTER BTC ➔
-                </button>
-              </Link>
-            )}
-
-            {roleName === "Judge" && (
-              <Link href="/judge/scoring">
-                <button className="hud-clipped px-5 py-2.5 bg-[var(--accent-judge)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
-                  ⚖ VÀO BÀN CHẤM GIÁM KHẢO ➔
-                </button>
-              </Link>
-            )}
-
-            {roleName === "Admin" && (
-              <Link href="/admin/dashboard">
-                <button className="hud-clipped px-5 py-2.5 bg-[var(--color-danger)] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-sm shrink-0 cursor-pointer">
-                  👑 BẢNG ĐIỀU HÀNH ADMIN ➔
-                </button>
-              </Link>
-            )}
-
-            {(roleName === "TeamLeader" || roleName === "TeamMember" || roleName === "Guest") && (
-              <Link href={team ? `/events/${myEventId}` : "/login"}>
-                <button className="hud-clipped px-5 py-2.5 bg-[var(--accent-team)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
-                  ↗ XEM CHI TIẾT SỰ KIỆN CỦA TÔI
-                </button>
-              </Link>
-            )}
-          </div>
+          )}
 
           {/* Result count + Sort tabs */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--border-muted)]">
