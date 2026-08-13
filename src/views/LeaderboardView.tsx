@@ -73,7 +73,7 @@ export function LeaderboardView({ eventId }: { eventId: string }) {
       </section>
 
       {/* ── Top 3 E-Sports Podium Section ── */}
-      <LandingLeaderboardPodium />
+      <LandingLeaderboardPodium eventName={event.eventName} season="MÙA HÈ 2026" totalPrizeVnd={200_000_000} />
 
       {/* ── Full Score Table Section ── */}
       <section className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8">

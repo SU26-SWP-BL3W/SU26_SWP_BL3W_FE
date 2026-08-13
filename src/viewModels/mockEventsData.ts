@@ -331,8 +331,8 @@ export interface PodiumTeam {
   prizeVnd: number;
 }
 
-export const MOCK_PODIUM_EVENT_NAME = "SEAL Hackathon 2025";
-export const MOCK_PODIUM_TOTAL_PRIZE = 150_000_000;
+export const MOCK_PODIUM_EVENT_NAME = "SEAL Hackathon 2026";
+export const MOCK_PODIUM_TOTAL_PRIZE = 200_000_000;
 
 export const MOCK_PODIUM_TEAMS: PodiumTeam[] = [
   {
@@ -343,8 +343,8 @@ export const MOCK_PODIUM_TEAMS: PodiumTeam[] = [
     score: 9.85,
     membersCount: 4,
     school: "Đại học FPT",
-    season: "Mùa Đông 2025",
-    eventName: "SEAL Hackathon 2025",
+    season: "Mùa Hè 2026",
+    eventName: "SEAL Hackathon 2026",
     prizeTitle: "GIẢI NHẤT",
     prizeVnd: 80_000_000,
   },
@@ -356,8 +356,8 @@ export const MOCK_PODIUM_TEAMS: PodiumTeam[] = [
     score: 9.42,
     membersCount: 5,
     school: "Đại học Bách Khoa",
-    season: "Mùa Đông 2025",
-    eventName: "SEAL Hackathon 2025",
+    season: "Mùa Hè 2026",
+    eventName: "SEAL Hackathon 2026",
     prizeTitle: "GIẢI NHÌ",
     prizeVnd: 45_000_000,
   },
@@ -369,8 +369,8 @@ export const MOCK_PODIUM_TEAMS: PodiumTeam[] = [
     score: 9.15,
     membersCount: 4,
     school: "Đại học Công nghệ - ĐHQGHN",
-    season: "Mùa Đông 2025",
-    eventName: "SEAL Hackathon 2025",
+    season: "Mùa Hè 2026",
+    eventName: "SEAL Hackathon 2026",
     prizeTitle: "GIẢI BA",
     prizeVnd: 25_000_000,
   },

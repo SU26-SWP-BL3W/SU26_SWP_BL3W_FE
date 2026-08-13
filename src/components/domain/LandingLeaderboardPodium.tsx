@@ -134,8 +134,18 @@ function PodiumCard({
   );
 }
 
+interface LandingLeaderboardPodiumProps {
+  eventName?: string;
+  season?: string;
+  totalPrizeVnd?: number;
+}
+
 // ─── Main Podium Section ───────────────────────────────────────────────────────
-export function LandingLeaderboardPodium() {
+export function LandingLeaderboardPodium({
+  eventName = "SEAL Hackathon 2026",
+  season = "MÙA GIẢI 2026",
+  totalPrizeVnd = 200_000_000,
+}: LandingLeaderboardPodiumProps) {
   const gold   = MOCK_PODIUM_TEAMS.find((t) => t.rank === 1);
   const silver = MOCK_PODIUM_TEAMS.find((t) => t.rank === 2);
   const bronze = MOCK_PODIUM_TEAMS.find((t) => t.rank === 3);
@@ -152,12 +162,12 @@ export function LandingLeaderboardPodium() {
           <h2 className="font-display text-2xl font-bold uppercase text-[var(--text-primary)] md:text-3xl">
             Vinh Danh{" "}
             <span className="text-[var(--accent-judge)]">Bảng Vàng</span>{" "}
-            Mùa Giải 2025
+            {season}
           </h2>
           <div className="mt-1 flex flex-wrap items-center justify-center gap-3 border border-[var(--accent-judge)]/25 bg-[var(--accent-judge)]/6 px-4 py-2 font-mono text-xs text-[var(--accent-judge)]">
             <span>
-              Tổng quỹ:{" "}
-              <strong className="text-sm">{formatVnd(MOCK_PODIUM_TOTAL_PRIZE)}</strong>
+              Tổng quỹ giải thưởng:{" "}
+              <strong className="text-sm">{formatVnd(totalPrizeVnd)}</strong>
             </span>
             <span className="hidden sm:inline text-[var(--border-muted)]">|</span>
             <span className="text-[var(--text-muted)] text-[10px]">
@@ -166,8 +176,8 @@ export function LandingLeaderboardPodium() {
           </div>
           <p className="max-w-2xl font-mono text-[11px] text-[var(--text-muted)] mt-1">
             Kết quả chính thức từ{" "}
-            <strong className="text-[var(--text-primary)]">{MOCK_PODIUM_EVENT_NAME}</strong>
-            {" "}— 3 đội xuất sắc nhất trong hơn 80 đội toàn quốc.
+            <strong className="text-[var(--text-primary)]">{eventName}</strong>
+            {" "}— 3 đội xuất sắc nhất trong hơn 98 đội thi đấu toàn quốc.
           </p>
         </div>
 
