@@ -1,30 +1,61 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
+import type { MockSubmission } from "@/viewModels/mockTeamData";
 
-export interface SubmitResult {
-  SubmitResultId: string;
+export interface SubmitResultRequest {
   TeamId: string;
   TrackId: string;
+  RoundId: string;
   SubmissionUrl: string;
   Description?: string;
-  IsEliminated: boolean;
 }
 
-export function useMySubmissions() {
+export function useMySubmissions(teamId?: string) {
   return useQuery({
-    queryKey: ["my-submissions"],
+    queryKey: ["my-submissions", teamId],
     queryFn: async () => {
-      const res = await apiClient.get<SubmitResult[]>("/Teams/my-submissions");
-      return res.data;
+      try {
+        const res = await apiClient.get<MockSubmission[]>(`/SubmitResults/team/${teamId}`);
+        return res.data;
+      } catch {
+        return [];
+      }
     },
+    enabled: !!teamId,
   });
 }
 
 export function useCreateSubmission() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Omit<SubmitResult, "SubmitResultId" | "IsEliminated">) => {
-      const res = await apiClient.post("/SubmitResults", data);
+    mutationFn: async (data: SubmitResultRequest) => {
+      const res = await apiClient.post<MockSubmission>("/SubmitResults", data);
+      return res.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["my-submissions", variables.TeamId] });
+    },
+  });
+}
+
+export function useUpdateSubmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<SubmitResultRequest> }) => {
+      const res = await apiClient.put<MockSubmission>(`/SubmitResults/${id}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-submissions"] });
+    },
+  });
+}
+
+export function useDeleteSubmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/SubmitResults/${id}`);
       return res.data;
     },
     onSuccess: () => {
