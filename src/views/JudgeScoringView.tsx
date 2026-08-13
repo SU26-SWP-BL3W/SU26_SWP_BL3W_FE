@@ -18,10 +18,16 @@ import {
 } from "lucide-react";
 import type { SubmitResult, TemplateCriteriaEntity, CriteriaEntity } from "@/models/entities";
 
+import { hasEventPermission } from "@/lib/permissions";
+import { Link } from "@/i18n/routing";
+
 export function JudgeScoringView() {
   const { user, activeRole } = useAuth();
   const [selectedTrackId, setSelectedTrackId] = useState("track-1");
   const [selectedSubmission, setSelectedSubmission] = useState<SubmitResult | null>(null);
+
+  const activeEventId = activeRole?.eventId || "event-seal-2026";
+  const isAuthorizedJudge = hasEventPermission(user, activeRole, activeEventId);
 
   // Lấy danh sách bài nộp thuộc Track
   const { data: submissions = [], isLoading: loadingSubmissions, refetch } =
@@ -130,15 +136,21 @@ export function JudgeScoringView() {
           </div>
           <div>
             <h1 className="font-display text-2xl font-bold text-[var(--accent-judge)] tracking-widest uppercase">
-              CHẤM ĐIỂM BÀI THI (JUDGE SCORING)
+              BÀN CHẤM ĐIỂM GIÁM KHẢO (JUDGE SCORING)
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              // HẠNG MỤC THI ĐẤU: {selectedTrackId.toUpperCase()}
+              // HẠNG MỤC THI ĐẤU: {selectedTrackId.toUpperCase()} · CHẤM ĐIỂM THEO CHUẨN RBL
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <Link href={`/events/${activeEventId}/leaderboard`}>
+            <Button variant="ghost" accent="judge" className="border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)] hover:text-black text-xs font-mono font-bold">
+              🏆 XEM BẢNG XẾP HẠNG
+            </Button>
+          </Link>
+
           <select
             value={selectedTrackId}
             onChange={(e) => setSelectedTrackId(e.target.value)}
