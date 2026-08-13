@@ -18,14 +18,16 @@ export function NavigationBar() {
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
   const isAdminRoute = pathname.includes("/admin");
-  const isWorkspaceRoute =
+  const isEventInnerRoute =
+    pathname.includes("/events/") ||
     pathname.includes("/my-team") ||
     pathname.includes("/my-submissions") ||
-    pathname.includes("/appeals");
+    pathname.includes("/appeals") ||
+    pathname.includes("/leaderboard");
 
   const showCoordinatorSidebar = isCoordinatorRoute;
   const showMentorSidebar = isMentorRoute;
-  const showParticipantSidebar = isWorkspaceRoute && roleName !== "Guest";
+  const showParticipantSidebar = isEventInnerRoute && roleName !== "Guest";
 
   // ─────────────────────────────────────────────────────────────
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)

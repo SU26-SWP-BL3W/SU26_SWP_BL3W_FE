@@ -13,14 +13,18 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
   const isAdminRoute = pathname.includes("/admin");
-  const isParticipantWorkspaceRoute =
-    (pathname.includes("/my-team") ||
-      pathname.includes("/my-submissions") ||
-      pathname.includes("/appeals")) &&
-    roleName !== "Guest";
+  const isEventInnerRoute =
+    pathname.includes("/events/") ||
+    pathname.includes("/my-team") ||
+    pathname.includes("/my-submissions") ||
+    pathname.includes("/appeals") ||
+    pathname.includes("/leaderboard");
 
   const hasVerticalSidebar =
-    isCoordinatorRoute || isMentorRoute || isAdminRoute || isParticipantWorkspaceRoute;
+    isCoordinatorRoute ||
+    isMentorRoute ||
+    isAdminRoute ||
+    (isEventInnerRoute && roleName !== "Guest");
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-base)] text-[var(--text-primary)] relative">
