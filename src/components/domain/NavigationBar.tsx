@@ -122,10 +122,11 @@ export function NavigationBar() {
           </div>
 
           <button
+            type="button"
             onClick={logout}
-            className="w-full py-1.5 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
           >
-            Đăng xuất
+            🚪 ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -220,10 +221,11 @@ export function NavigationBar() {
           </div>
 
           <button
+            type="button"
             onClick={logout}
-            className="w-full py-1.5 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
           >
-            Đăng xuất
+            🚪 ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -332,10 +334,11 @@ export function NavigationBar() {
           </div>
 
           <button
+            type="button"
             onClick={logout}
-            className="w-full py-1.5 border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)]/10 transition-all hud-clipped cursor-pointer"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
           >
-            Đăng xuất
+            🚪 ĐĂNG XUẤT
           </button>
         </div>
       </aside>

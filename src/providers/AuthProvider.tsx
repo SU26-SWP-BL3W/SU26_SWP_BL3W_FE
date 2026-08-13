@@ -226,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("currentUser");
       localStorage.removeItem("activeRole");
       localStorage.removeItem("accessToken");
+      window.location.href = "/";
     }
   };
 
