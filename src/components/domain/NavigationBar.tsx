@@ -35,12 +35,8 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
   // ─────────────────────────────────────────────────────────────
   if (showCoordinatorSidebar) {
-    const urlEventId = pathname.includes("/events/")
-      ? pathname.split("/events/")[1]?.split("/")[0]
-      : null;
-    const activeViewEventId = urlEventId || currentEventId;
-    const isAuthorizedCoord = hasEventPermission(user, activeRole, activeViewEventId);
-
+    // Khi đang ở route /coordinator/... (Control Center / Wizard Tạo Sự Kiện Mới)
+    // Event Coordinator LUÔN CÓ FULL QUYỀN khởi tạo và điều hành sự kiện
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[#a855f7]/40 flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
         <div className="flex flex-col gap-6">
@@ -62,19 +58,15 @@ export function NavigationBar() {
           </div>
 
           {/* Coordinator Profile Card */}
-          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
-            isAuthorizedCoord ? "border-[#a855f7]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
-          }`}>
-            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
-              isAuthorizedCoord ? "text-[#a855f7]" : "text-[var(--color-warning)]"
-            }`}>
-              {isAuthorizedCoord ? "EVENT COORDINATOR" : "SỰ KIỆN CHƯA PHÂN CÔNG"}
+          <div className="p-3 bg-[var(--bg-input)] border border-[#a855f7]/40 hud-clipped flex flex-col gap-1">
+            <span className="font-mono text-[9px] text-[#a855f7] font-bold uppercase tracking-widest">
+              EVENT COORDINATOR
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Trần Văn Điều Phối"}
             </span>
             <span className="font-mono text-[10px] text-[var(--text-muted)]">
-              {isAuthorizedCoord ? "BTC Sự kiện chính thức" : "Quyền hạn: Read-Only (Chỉ Xem)"}
+              Ban Tổ Chức Hệ Thống
             </span>
           </div>
 
@@ -84,66 +76,38 @@ export function NavigationBar() {
               MENU BAN TỔ CHỨC
             </span>
 
-            {isAuthorizedCoord ? (
-              <>
-                <Link
-                  href="/coordinator/dashboard"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname === "/coordinator/dashboard"
-                      ? "bg-[#a855f7] text-white shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-                  }`}
-                >
-                  <span>🎯</span> Control Center BTC
-                </Link>
+            <Link
+              href="/coordinator/dashboard"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname === "/coordinator/dashboard"
+                  ? "bg-[#a855f7] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🎯</span> Control Center BTC
+            </Link>
 
-                <Link
-                  href="/coordinator/events/new"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/events/new")
-                      ? "bg-[var(--accent-primary)] text-white shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
-                  }`}
-                >
-                  <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
-                </Link>
+            <Link
+              href="/coordinator/events/new"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/events/new")
+                  ? "bg-[var(--accent-primary)] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
+            </Link>
 
-                <Link
-                  href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
-                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
-                >
-                  <span>🏆</span> Bảng Xếp Hạng Giải
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href={`/events/${activeViewEventId}`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
-                      ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-                  }`}
-                >
-                  <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
-                </Link>
-
-                <Link
-                  href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
-                      ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
-                >
-                  <span>🏆</span> Bảng Xếp Hạng
-                </Link>
-              </>
-            )}
+            <Link
+              href={`/events/${currentEventId}/leaderboard`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/leaderboard")
+                  ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🏆</span> Bảng Xếp Hạng Giải
+            </Link>
           </nav>
         </div>
 
@@ -151,9 +115,7 @@ export function NavigationBar() {
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
           <div className="flex items-center justify-between font-mono text-xs">
             <span className="text-[var(--text-muted)]">Vai trò:</span>
-            <span className="text-[#a855f7] font-bold">
-              {isAuthorizedCoord ? "Coordinator" : "User (Chưa Cấp Quyền Event)"}
-            </span>
+            <span className="text-[#a855f7] font-bold">Coordinator</span>
           </div>
 
           {/* Role Switcher Bar */}
