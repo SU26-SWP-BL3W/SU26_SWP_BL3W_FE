@@ -1,10 +1,5 @@
-import { CoordinatorWorkspaceView } from "@/views/CoordinatorWorkspaceView";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+import { redirect } from "next/navigation";
 
 export default function CoordinatorResultsPage() {
-  return (
-    <RoleGuard allowedRoles={["Coordinator", "Admin"]}>
-      <CoordinatorWorkspaceView />
-    </RoleGuard>
-  );
+  redirect("/coordinator/publish-results");
 }
