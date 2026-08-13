@@ -1,18 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button, Card, Badge } from "@/components/ui";
 import { useEvents } from "@/repositories/eventsRepository";
-import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
-import { Shield, Settings, Activity, Calendar, Layers, Users, ArrowRight } from "lucide-react";
+import { computeEventStatus, STATUS_LABEL, STATUS_TONE, STATUS_DOT_VAR, type MockEvent } from "@/viewModels/mockEventsData";
+import type { Event as EventDTO } from "@/models/entities";
+import { Shield, Settings, Activity, Layers, Users, ArrowRight, CalendarPlus } from "lucide-react";
 import Link from "next/link";
+
+// Danh sách Round/Track chưa có trong DTO Event chính thức (chỉ lấy được qua
+// endpoint riêng /Events/{id}/rounds) — khai báo optional để không phải dùng any.
+type EventWithCounts = EventDTO & { rounds?: unknown[]; tracks?: unknown[] };
+
+function toEventDates(ev: EventDTO): Pick<MockEvent, "startDate" | "endDate" | "registrationEndDate"> {
+  return {
+    startDate: ev.startDate || ev.StartDate || "",
+    endDate: ev.endDate || ev.EndDate || "",
+    registrationEndDate: ev.registrationEndDate || ev.RegistrationEndDate || ev.endDate || ev.EndDate || "",
+  };
+}
 
 export const CoordinatorDashboardView: React.FC = () => {
   const { data: rawData, isLoading } = useEvents();
-  const eventsData = (Array.isArray(rawData) ? rawData : (rawData as any)?.data) || MOCK_EVENTS;
-  const eventsList = Array.isArray(eventsData) && eventsData.length > 0 ? eventsData : MOCK_EVENTS;
+  const [now] = useState(() => Date.now());
+  const eventsData = Array.isArray(rawData) ? rawData : (rawData as { data?: EventWithCounts[] } | undefined)?.data;
+  const eventsList: EventWithCounts[] = Array.isArray(eventsData) ? eventsData : [];
 
-  const totalRounds = eventsList.reduce((acc, ev) => acc + (ev.rounds?.length || 3), 0);
+  const totalRounds = eventsList.reduce((acc, ev) => acc + (ev.rounds?.length || 0), 0);
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
@@ -48,8 +62,8 @@ export const CoordinatorDashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metrics Grid — chỉ giữ chỉ số có dữ liệu thật, bỏ số hardcode giả */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="hud-glow-coordinator p-5 space-y-2">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Sự Kiện Đang Phụ Trách
@@ -60,53 +74,23 @@ export const CoordinatorDashboardView: React.FC = () => {
               </span>
               <Shield className="w-5 h-5 text-[var(--accent-coordinator)] opacity-60" />
             </div>
-            <span className="font-mono text-[10px] text-[var(--color-success)] block">
-              ● Sự kiện đang diễn ra trực tiếp
+            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+              Theo dữ liệu Backend API hiện tại
             </span>
           </Card>
 
-          <Card className="hud-glow-cyan p-5 space-y-2">
+          <Card className="hud-glow-coordinator p-5 space-y-2">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Tổng Số Vòng Thi (Rounds)
             </span>
             <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--accent-primary)]">
+              <span className="font-mono font-bold text-2xl text-[var(--accent-coordinator)]">
                 {isLoading ? "..." : totalRounds}
               </span>
-              <Layers className="w-5 h-5 text-[var(--accent-primary)] opacity-60" />
+              <Layers className="w-5 h-5 text-[var(--accent-coordinator)] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--text-muted)] block">
               Phân bổ trên tất cả mùa giải
-            </span>
-          </Card>
-
-          <Card className="hud-glow-gold p-5 space-y-2">
-            <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
-              Hội Đồng Giám Khảo &amp; Cố Vấn
-            </span>
-            <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--accent-judge)]">
-                18
-              </span>
-              <Users className="w-5 h-5 text-[var(--accent-judge)] opacity-60" />
-            </div>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
-              12 Giám khảo | 6 Cố vấn
-            </span>
-          </Card>
-
-          <Card className="hud-glow-team p-5 space-y-2">
-            <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
-              Tổng Số Đội Thi Đã Đăng Ký
-            </span>
-            <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--accent-team)]">
-                42
-              </span>
-              <Calendar className="w-5 h-5 text-[var(--accent-team)] opacity-60" />
-            </div>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
-              Trên tất cả các Hạng mục Track
             </span>
           </Card>
         </div>
@@ -122,44 +106,74 @@ export const CoordinatorDashboardView: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {eventsList.map((ev) => (
-              <div
-                key={ev.id}
-                className="bg-[var(--bg-panel)] border border-[var(--border-muted)] p-6 hud-clipped flex flex-col justify-between space-y-4 hover:border-[var(--accent-coordinator)]/50 transition-all"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-[var(--accent-coordinator)] font-bold">
-                      {ev.season}
-                    </span>
-                    <Badge tone="success">
-                      {ev.status || "ĐANG MỞ"}
-                    </Badge>
-                  </div>
-                  <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">
-                    {ev.eventName}
-                  </h3>
-                  <p className="text-xs text-[var(--text-muted)] line-clamp-2">
-                    {ev.description}
-                  </p>
-                </div>
-
-                <div className="border-t border-[var(--border-muted)] pt-4 flex items-center justify-between text-xs font-mono">
-                  <span className="text-[var(--text-muted)]">
-                    {ev.rounds?.length || 3} Vòng thi | {ev.tracks?.length || 4} Tracks
-                  </span>
-                  <Link
-                    href={`/events/${ev.id}`}
-                    className="text-[var(--accent-coordinator)] font-bold hover:underline flex items-center gap-1"
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <svg className="w-12 h-12 animate-spin" viewBox="0 0 100 100">
+                <polygon
+                  points="50,5 91,27.5 91,72.5 50,95 9,72.5 9,27.5"
+                  fill="none"
+                  stroke="var(--accent-coordinator)"
+                  strokeWidth="2"
+                  strokeDasharray="240"
+                  strokeDashoffset="60"
+                />
+              </svg>
+            </div>
+          ) : eventsList.length === 0 ? (
+            <Card className="p-16 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)] text-center flex flex-col items-center gap-4">
+              <CalendarPlus className="w-10 h-10 text-[var(--text-muted)] opacity-50" />
+              <p className="font-mono text-sm text-[var(--text-muted)] tracking-wide">
+                Bạn chưa quản lý sự kiện nào
+              </p>
+              <Link href="/coordinator/events/new">
+                <Button variant="primary" accent="coordinator" className="text-xs">
+                  <Settings className="w-4 h-4" /> TẠO SỰ KIỆN ĐẦU TIÊN
+                </Button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {eventsList.map((ev) => {
+                const status = computeEventStatus(toEventDates(ev) as MockEvent, now);
+                const id = ev.id || ev.eventId || ev.EventId;
+                return (
+                  <div
+                    key={id}
+                    className="bg-[var(--bg-panel)] border border-[var(--border-muted)] p-6 hud-clipped flex flex-col justify-between space-y-4 hover:border-[var(--accent-coordinator)]/50 transition-all"
+                    style={{ borderTop: `3px solid ${STATUS_DOT_VAR[status]}` }}
                   >
-                    <span>Quản lý</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-[var(--accent-coordinator)] font-bold">
+                          {ev.season || ev.Season}
+                        </span>
+                        <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
+                      </div>
+                      <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">
+                        {ev.eventName || ev.EventName || ev.name}
+                      </h3>
+                      <p className="text-xs text-[var(--text-muted)] line-clamp-2">
+                        {ev.description || ev.Description}
+                      </p>
+                    </div>
+
+                    <div className="border-t border-[var(--border-muted)] pt-4 flex items-center justify-between text-xs font-mono">
+                      <span className="text-[var(--text-muted)]">
+                        {ev.rounds?.length ?? 0} Vòng thi | {ev.tracks?.length ?? 0} Tracks
+                      </span>
+                      <Link
+                        href={`/events/${id}`}
+                        className="text-[var(--accent-coordinator)] font-bold hover:underline flex items-center gap-1"
+                      >
+                        <span>Quản lý</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </div>
