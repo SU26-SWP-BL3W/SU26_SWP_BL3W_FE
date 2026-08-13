@@ -24,83 +24,85 @@ export function LandingPortalView() {
   return (
     <main className="hud-lattice flex flex-1 flex-col overflow-hidden">
       {/* ─────────────────────────────────────────────────────────────
-          SECTION 1: TACTICAL CYBER HERO (ASYMMETRICAL HUD LAYOUT)
+          SECTION 1: TACTICAL CYBER HERO & QUICK PROTOCOL BAR (SYMMETRICAL)
          ───────────────────────────────────────────────────────────── */}
-      <section className="relative px-4 py-12 md:py-20 overflow-hidden">
-        {/* Asymmetrical Radial Glow Backdrop */}
-        <div className="hud-pulse pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-[500px] w-[500px] md:h-[650px] md:w-[650px] rounded-full bg-[radial-gradient(circle,rgba(0,217,255,0.15)_0%,rgba(7,11,20,0)_70%)] blur-3xl" aria-hidden="true" />
+      <section className="relative flex flex-col items-center justify-center gap-6 px-4 py-16 md:py-24 text-center overflow-hidden">
+        {/* Symmetrical Radial Glow Center Backdrop */}
+        <div className="hud-pulse pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] md:h-[650px] md:w-[650px] rounded-full bg-[radial-gradient(circle,rgba(0,217,255,0.18)_0%,rgba(7,11,20,0)_68%)] blur-3xl" aria-hidden="true" />
 
-        <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+        {/* Symmetrical Stationary Geometric Background Seal Shield */}
+        <div className="hud-pulse pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[420px] w-[420px] md:h-[560px] md:w-[560px] opacity-20 text-[var(--accent-primary)] drop-shadow-[0_0_40px_rgba(0,217,255,0.35)]">
+          <SealShield className="h-full w-full" />
+        </div>
 
-          {/* Left Column: Asymmetrical Heading & CTAs (col-span-7) */}
-          <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6">
+        {/* Symmetrical Hexagon Ring Frame */}
+        <svg className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[580px] w-[580px] md:h-[750px] md:w-[750px] opacity-15 text-[var(--accent-primary)]" viewBox="0 0 100 100">
+          <polygon points="50,1 95,25 95,75 50,99 5,75 5,25" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" />
+        </svg>
 
-            {/* Status Tag Line */}
-            <div className="flex items-center gap-2 bg-[var(--bg-panel)]/90 border border-[var(--accent-primary)]/30 px-3.5 py-1 hud-clipped backdrop-blur-sm font-mono text-xs text-[var(--accent-primary)] tracking-wider uppercase">
+        {/* Foreground Content (High Z-Index & Symmetrical Layout) */}
+        <div className="relative z-10 flex flex-col items-center gap-6 max-w-4xl w-full">
+
+          {/* Central Shield Logo with Symmetrical Outer Ring */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-[var(--accent-primary)]/10 blur-xl animate-pulse" />
+            <div className="relative border border-[var(--accent-primary)]/40 bg-[var(--bg-panel)]/90 p-4 hud-clipped shadow-[0_0_30px_rgba(0,217,255,0.3)]">
+              <SealShield className="h-20 w-20 md:h-28 md:w-28 text-[var(--accent-primary)]" />
+            </div>
+          </div>
+
+          {/* Symmetrical Status Tag Line with Flanking Accent Lines */}
+          <div className="flex items-center gap-3 font-mono text-xs text-[var(--accent-primary)] tracking-widest uppercase">
+            <span className="h-px w-8 md:w-16 bg-gradient-to-r from-transparent to-[var(--accent-primary)]" />
+            <div className="flex items-center gap-2 bg-[var(--bg-panel)]/90 border border-[var(--accent-primary)]/30 px-3.5 py-1 hud-clipped backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-[var(--accent-primary)] animate-ping" />
               <span>SYSTEM OPERATIONAL // SEAL HACKATHON PLATFORM</span>
             </div>
-
-            {/* Main Asymmetrical Heading */}
-            <h1 className="font-display text-[clamp(2rem,5vw,3.75rem)] font-extrabold uppercase leading-[1.08] text-[var(--text-primary)] drop-shadow-md">
-              NƠI Ý TƯỞNG CÔNG NGHỆ
-              <br />
-              <span className="text-[var(--accent-primary)] drop-shadow-[0_0_20px_rgba(0,217,255,0.6)]">
-                BỨT PHÁ GIỚI HẠN
-              </span>
-            </h1>
-
-            {/* Subtitle */}
-            <p className="max-w-xl font-sans text-sm text-[var(--text-muted)] md:text-base leading-relaxed">
-              Đấu trường hackathon dành cho sinh viên toàn quốc — tranh tài xây dựng sản phẩm thực tế,
-              nhận tư vấn từ Mentor và nhận đánh giá minh bạch theo chuẩn khoa học RBL.
-            </p>
-
-            {/* Main Button Group */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link href="/events">
-                <button className="hud-clipped relative px-8 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] focus:outline-none min-w-[200px] cursor-pointer">
-                  {"// "}KHÁM PHÁ SỰ KIỆN &gt;
-                </button>
-              </Link>
-              <Link href="/register">
-                <button className="hud-clipped px-8 py-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] text-[var(--text-primary)] hover:text-white hover:border-[var(--accent-primary)] hover:bg-[rgba(0,217,255,0.12)] font-mono text-sm tracking-wider uppercase transition-all duration-200 min-w-[200px] cursor-pointer">
-                  [ ĐĂNG KÝ THAM GIA ]
-                </button>
-              </Link>
-            </div>
-
-            {/* Quick Access Protocol (Single Accent Cyan Theme) */}
-            <div className="pt-4 flex flex-wrap items-center gap-3 font-mono text-xs border-t border-[var(--border-muted)]/60 w-full max-w-lg">
-              <span className="text-[var(--text-muted)] text-[11px] font-bold">TRUY CẬP NHANH:</span>
-              <Link href="/my-team" className="border border-[var(--accent-primary)]/30 bg-[var(--bg-panel)] px-3 py-1 text-[var(--text-primary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)] transition-colors hud-clipped">
-                [ ĐỘI THI ]
-              </Link>
-              <Link href="/judge/scoring" className="border border-[var(--accent-primary)]/30 bg-[var(--bg-panel)] px-3 py-1 text-[var(--text-primary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)] transition-colors hud-clipped">
-                [ GIÁM KHẢO ]
-              </Link>
-              <Link href="/coordinator/dashboard" className="border border-[var(--accent-primary)]/30 bg-[var(--bg-panel)] px-3 py-1 text-[var(--text-primary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)] transition-colors hud-clipped">
-                [ BAN TỔ CHỨC ]
-              </Link>
-            </div>
+            <span className="h-px w-8 md:w-16 bg-gradient-to-l from-transparent to-[var(--accent-primary)]" />
           </div>
 
-          {/* Right Column: Hero Shield & Geometric Hexagon Ring (col-span-5) */}
-          <div className="lg:col-span-5 relative flex items-center justify-center min-h-[320px] md:min-h-[420px]">
-            {/* Hexagon Ring Frame */}
-            <svg className="pointer-events-none absolute h-[360px] w-[360px] md:h-[460px] md:w-[460px] opacity-25 text-[var(--accent-primary)] animate-spin-slow" viewBox="0 0 100 100">
-              <polygon points="50,1 95,25 95,75 50,99 5,75 5,25" fill="none" stroke="currentColor" strokeWidth="0.6" strokeDasharray="4 4" />
-            </svg>
+          {/* Main Symmetrical Heading */}
+          <h1 className="font-display text-[clamp(1.75rem,6vw,3.75rem)] font-extrabold uppercase leading-[1.1] text-[var(--text-primary)] drop-shadow-md break-words w-full text-center">
+            NƠI Ý TƯỞNG CÔNG NGHỆ
+            <br />
+            <span className="text-[var(--accent-primary)] drop-shadow-[0_0_20px_rgba(0,217,255,0.6)]">
+              BỨT PHÁ GIỚI HẠN
+            </span>
+          </h1>
 
-            {/* Glowing Backdrop Circle */}
-            <div className="absolute h-64 w-64 md:h-80 md:w-80 rounded-full bg-[var(--accent-primary)]/10 blur-2xl animate-pulse" />
+          {/* Subtitle */}
+          <p className="max-w-2xl w-full font-sans text-sm text-[var(--text-muted)] md:text-base leading-relaxed break-words text-center">
+            Đấu trường hackathon dành cho sinh viên toàn quốc — tranh tài xây dựng sản phẩm thực tế,
+            nhận tư vấn từ Mentor và nhận đánh giá minh bạch theo chuẩn khoa học RBL.
+          </p>
 
-            {/* Clean Shield Emblem without Extra Box Layers */}
-            <div className="relative text-[var(--accent-primary)] drop-shadow-[0_0_50px_rgba(0,217,255,0.45)]">
-              <SealShield className="h-44 w-44 md:h-64 md:w-64" />
-            </div>
+          {/* Symmetrical Button Group */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <Link href="/events">
+              <button className="hud-clipped relative px-8 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] focus:outline-none min-w-[200px]">
+                {"// "}KHÁM PHÁ SỰ KIỆN &gt;
+              </button>
+            </Link>
+            <Link href="/register">
+              <button className="hud-clipped px-8 py-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] text-[var(--text-primary)] hover:text-white hover:border-[var(--accent-primary)] hover:bg-[rgba(0,217,255,0.12)] font-mono text-sm tracking-wider uppercase transition-all duration-200 min-w-[200px]">
+                [ ĐĂNG KÝ THAM GIA ]
+              </button>
+            </Link>
           </div>
 
+          {/* Symmetrical Quick Access Protocol */}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs border-t border-[var(--border-muted)]/60 pt-4 w-full max-w-xl">
+            <span className="text-[var(--text-muted)]">TRUY CẬP NHANH:</span>
+            <Link href="/my-team" className="border border-[var(--accent-team)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/20 transition-colors hud-clipped">
+              [ ĐỘI THI ]
+            </Link>
+            <Link href="/judge/scoring" className="border border-[var(--accent-judge)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)]/20 transition-colors hud-clipped">
+              [ GIÁM KHẢO ]
+            </Link>
+            <Link href="/coordinator/dashboard" className="border border-[var(--accent-coordinator)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/20 transition-colors hud-clipped">
+              [ BAN TỔ CHỨC ]
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -294,8 +296,8 @@ function LatestEventSpotlight({ event }: { event: EventCardData }) {
                 {/* Compact single-row countdown */}
                 <div className="flex items-center justify-between gap-1" suppressHydrationWarning>
                   {[
-                    { value: countdown.days,    label: "ngày" },
-                    { value: countdown.hours,   label: "giờ"  },
+                    { value: countdown.days, label: "ngày" },
+                    { value: countdown.hours, label: "giờ" },
                     { value: countdown.minutes, label: "phút" },
                     { value: countdown.seconds, label: "giây" },
                   ].map((u, i) => (
@@ -511,9 +513,8 @@ function LandingFaqSection() {
             return (
               <div
                 key={idx}
-                className={`hud-clipped border transition-all bg-[var(--bg-panel)] overflow-hidden ${
-                  isOpen ? "border-[var(--accent-primary)] shadow-sm" : "border-[var(--border-muted)]"
-                }`}
+                className={`hud-clipped border transition-all bg-[var(--bg-panel)] overflow-hidden ${isOpen ? "border-[var(--accent-primary)] shadow-sm" : "border-[var(--border-muted)]"
+                  }`}
               >
                 <button
                   onClick={() => setOpenIdx(isOpen ? null : idx)}
