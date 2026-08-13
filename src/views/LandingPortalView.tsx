@@ -96,7 +96,7 @@ export function LandingPortalView() {
             <Link href="/my-team" className="border border-[var(--accent-team)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/20 transition-colors hud-clipped">
               [ ĐỘI THI ]
             </Link>
-            <Link href="/judge/events" className="border border-[var(--accent-judge)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)]/20 transition-colors hud-clipped">
+            <Link href="/judge/scoring" className="border border-[var(--accent-judge)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)]/20 transition-colors hud-clipped">
               [ GIÁM KHẢO ]
             </Link>
             <Link href="/coordinator/dashboard" className="border border-[var(--accent-coordinator)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/20 transition-colors hud-clipped">
@@ -296,8 +296,8 @@ function LatestEventSpotlight({ event }: { event: EventCardData }) {
                 {/* Compact single-row countdown */}
                 <div className="flex items-center justify-between gap-1" suppressHydrationWarning>
                   {[
-                    { value: countdown.days,    label: "ngày" },
-                    { value: countdown.hours,   label: "giờ"  },
+                    { value: countdown.days, label: "ngày" },
+                    { value: countdown.hours, label: "giờ" },
                     { value: countdown.minutes, label: "phút" },
                     { value: countdown.seconds, label: "giây" },
                   ].map((u, i) => (
@@ -380,6 +380,9 @@ function PreviewSection({
   events: EventCardData[];
   showAllHref?: string;
 }) {
+  const featuredEvent = events[0];
+  const sideEvents = events.slice(1, 3);
+
   return (
     <section className="border-t border-[var(--border-muted)] px-[var(--space-xl)] py-[calc(var(--space-xl)*1.2)]">
       <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-[var(--space-lg)]">
@@ -395,10 +398,44 @@ function PreviewSection({
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-[var(--space-lg)] sm:grid-cols-3">
-          {events.map((ev) => (
-            <PreviewCard key={ev.id} event={ev} />
-          ))}
+        {/* Bố cục bất đối xứng Cyberpunk HUD: 1 Card Lớn bên trái + 2 Card Nhỏ xếp dọc bên phải */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[var(--space-lg)]">
+          {featuredEvent && (
+            <Link
+              href={`/events/${featuredEvent.id}`}
+              className="hud-clipped group flex flex-col justify-between border border-[var(--border-muted)] bg-[var(--bg-panel)] p-6 transition-all hover:border-[var(--accent-primary)]/70 hover:shadow-lg"
+              style={{ borderTop: `4px solid ${STATUS_DOT_VAR[featuredEvent.status]}` }}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Badge tone={STATUS_TONE[featuredEvent.status]}>{STATUS_LABEL[featuredEvent.status]}</Badge>
+                  <span className="font-mono text-xs font-bold text-[var(--accent-primary)] uppercase">
+                    FEATURED HIGHLIGHT // {featuredEvent.season} {featuredEvent.year}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="font-display text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-primary)] transition-colors">
+                    {featuredEvent.eventName}
+                  </h3>
+                  <p className="mt-2 text-sm text-[color:var(--text-muted)] line-clamp-3">
+                    {featuredEvent.tagline}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-[var(--border-muted)] pt-4 flex items-center justify-between font-mono text-xs text-[color:var(--text-muted)]">
+                <span>{featuredEvent.teamCount} Đội Thi Đã Đăng Ký</span>
+                <span className="font-bold text-[var(--accent-judge)] text-sm">{formatVnd(featuredEvent.totalPrizeVnd)}</span>
+              </div>
+            </Link>
+          )}
+
+          <div className="flex flex-col gap-[var(--space-lg)] justify-between">
+            {sideEvents.map((ev) => (
+              <PreviewCard key={ev.id} event={ev} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -409,7 +446,7 @@ function PreviewCard({ event }: { event: EventCardData }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="hud-clipped group flex flex-col justify-between border border-[var(--border-muted)] bg-[var(--bg-panel)] p-[var(--space-lg)] transition-all hover:-translate-y-1 hover:border-[var(--accent-primary)]/50"
+      className="hud-clipped group flex flex-col justify-between border border-[var(--border-muted)] bg-[var(--bg-panel)] p-4 transition-all hover:-translate-y-0.5 hover:border-[var(--accent-primary)]/50"
       style={{ borderTop: `3px solid ${STATUS_DOT_VAR[event.status]}` }}
     >
       <div>
@@ -418,13 +455,13 @@ function PreviewCard({ event }: { event: EventCardData }) {
           <span className="font-mono text-[10px] text-[var(--text-muted)]">{event.season} {event.year}</span>
         </div>
 
-        <h3 className="mt-[var(--space-sm)] font-display text-lg font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-primary)] transition-colors">
+        <h3 className="mt-2 font-display text-base font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-primary)] transition-colors">
           {event.eventName}
         </h3>
         <p className="mt-1 line-clamp-2 text-xs text-[color:var(--text-muted)]">{event.tagline}</p>
       </div>
 
-      <div className="mt-4 border-t border-[var(--border-muted)] pt-3 flex items-center justify-between font-mono text-xs text-[color:var(--text-muted)]">
+      <div className="mt-3 border-t border-[var(--border-muted)] pt-2.5 flex items-center justify-between font-mono text-xs text-[color:var(--text-muted)]">
         <span>{event.teamCount} Đội thi</span>
         <span className="font-bold text-[var(--accent-judge)]">{formatVnd(event.totalPrizeVnd)}</span>
       </div>
@@ -433,7 +470,7 @@ function PreviewCard({ event }: { event: EventCardData }) {
 }
 
 {/* ────────────────────────────────────────────────────────────────
-    SECTION 7: FAQ HUD ACCORDION COMPONENT
+    SECTION 7: FAQ TERMINAL LOG ACCORDION COMPONENT
    ──────────────────────────────────────────────────────────────── */}
 function LandingFaqSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
@@ -462,7 +499,7 @@ function LandingFaqSection() {
       <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-[var(--space-xl)]">
         <div className="flex flex-col items-center text-center gap-2">
           <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
-            KNOWLEDGE BASE // FAQ
+            KNOWLEDGE BASE // TERMINAL FAQ LOGS
           </span>
           <h2 className="font-display text-2xl font-bold uppercase text-[var(--text-primary)] md:text-4xl">
             CÂU HỎI THƯỜNG GẶP
@@ -472,17 +509,24 @@ function LandingFaqSection() {
         <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
           {FAQS.map((faq, idx) => {
             const isOpen = openIdx === idx;
+            const logNumber = `[Q.0${idx + 1}]`;
             return (
               <div
                 key={idx}
-                className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] overflow-hidden transition-all"
+                className={`hud-clipped border transition-all bg-[var(--bg-panel)] overflow-hidden ${isOpen ? "border-[var(--accent-primary)] shadow-sm" : "border-[var(--border-muted)]"
+                  }`}
               >
                 <button
                   onClick={() => setOpenIdx(isOpen ? null : idx)}
                   className="w-full p-4 text-left font-display text-sm font-bold text-[var(--text-primary)] flex items-center justify-between hover:text-[var(--accent-primary)] transition-colors"
                 >
-                  <span>{faq.q}</span>
-                  <span className="font-mono text-lg text-[var(--accent-primary)]">{isOpen ? "−" : "+"}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs font-bold text-[var(--accent-primary)] bg-[var(--bg-input)] px-2 py-1 border border-[var(--accent-primary)]/30">
+                      {logNumber}
+                    </span>
+                    <span>{faq.q}</span>
+                  </div>
+                  <span className="font-mono text-sm text-[var(--accent-primary)] font-bold">{isOpen ? "[ - ]" : "[ + ]"}</span>
                 </button>
                 {isOpen && (
                   <div className="px-4 pb-4 font-sans text-xs leading-relaxed text-[var(--text-muted)] border-t border-[var(--border-muted)] pt-3">

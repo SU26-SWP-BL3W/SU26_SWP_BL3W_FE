@@ -33,7 +33,7 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
             Bước 3: Tạo Hạng Mục Thi (Tracks)
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Actor: Event Coordinator (POST /api/Tracks). Gán từng Hạng mục (Track) thuộc Vòng thi tương ứng và chọn Mẫu tiêu chí (Template).
+            Gán từng Hạng mục (Track) thuộc Vòng thi tương ứng và cấu hình nội dung chuyên môn.
           </p>
         </div>
         <Button variant="ghost" onClick={onAddTrack} className="flex items-center gap-1 text-xs">

@@ -1,5 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
+import type { BaseResponse, PagedResult } from "@/models/types";
+
+export interface TeamListItem {
+  id?: string;
+  Id?: string;
+  name?: string;
+  Name?: string;
+  eventId?: string;
+  EventId?: string;
+}
+
+/** Danh sách đội thi theo sự kiện (GET /api/Teams?EventId=...) — dùng để tra tên đội theo TeamId. */
+export function useGetTeamsByEvent(eventId?: string) {
+  return useQuery({
+    queryKey: ["teams-by-event", eventId],
+    queryFn: async () => {
+      const res = await apiClient.get<BaseResponse<PagedResult<TeamListItem>>>("/Teams", {
+        params: { EventId: eventId, PageSize: 200 },
+      });
+      return res.data.data?.data ?? [];
+    },
+    enabled: !!eventId,
+  });
+}
 
 export interface Team {
   TeamId: string;
@@ -153,7 +177,7 @@ export function useTransferLeadership() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ teamId, targetUserId }: { teamId: string; targetUserId: string }) => {
-      const res = await apiClient.post(`/Teams/${teamId}/transfer-leadership`, { targetUserId });
+      const res = await apiClient.post(`/Teams/${teamId}/transfer-leader`, { targetUserId });
       return res.data;
     },
     onSuccess: () => {

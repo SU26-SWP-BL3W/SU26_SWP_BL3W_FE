@@ -9,8 +9,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
-            retry: 1,
+            staleTime: 60_000,
+            // retry: 1 lam moi query hong ton GAP DOI thoi gian cho (timeout
+            // 6s x2 = 12s). Backend chet thi thu lai cung vo ich — fallback
+            // mock/empty ngay de giao dien khong dung hinh.
+            retry: 0,
+            // Doi tab roi quay lai khong nen ban lai loat request (moi lan lai
+            // cho timeout neu backend dang sap).
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
           },
         },
       }),

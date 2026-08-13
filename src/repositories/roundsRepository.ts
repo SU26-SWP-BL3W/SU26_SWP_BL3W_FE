@@ -17,7 +17,7 @@ export const roundsRepository = {
    */
   async createRound(payload: CreateRoundPayload): Promise<BaseResponse<RoundEntity>> {
     try {
-      const res = await apiClient.post<BaseResponse<RoundEntity>>("/api/Rounds", payload);
+      const res = await apiClient.post<BaseResponse<RoundEntity>>("/Rounds", payload);
       return res.data;
     } catch (err: any) {
       const mockCreated: any = {
@@ -43,7 +43,7 @@ export const roundsRepository = {
    */
   async getRoundsByEventId(eventId: string): Promise<BaseResponse<RoundEntity[]>> {
     try {
-      const res = await apiClient.get<BaseResponse<RoundEntity[]>>(`/api/Rounds/event/${eventId}`);
+      const res = await apiClient.get<BaseResponse<RoundEntity[]>>(`/Rounds/event/${eventId}`);
       return res.data;
     } catch (err: any) {
       return {

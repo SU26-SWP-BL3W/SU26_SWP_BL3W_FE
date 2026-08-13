@@ -48,7 +48,10 @@ interface AuthContextType {
   activeRole: EventRole | null;
   isInitialized: boolean;
   login: (roleName?: string) => string;
-  loginWithRole: (roleName: "Admin" | "Coordinator" | "Judge" | "TeamLeader" | "Mentor" | "TeamMember") => string;
+  // Kiểu string (khớp đúng phần thân hàm bên dưới) — trước đây khai literal
+  // union rồi cast "as any" ở chỗ Provider value để né lỗi kiểu, tức là
+  // TypeScript coi như không check gì cả. Giờ khai đúng kiểu thật, bỏ "as any".
+  loginWithRole: (roleName: string) => string;
   loginWithEmail: (email: string) => string;
   logout: () => void;
 }
@@ -130,6 +133,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         EventRoleId: "er-ec-100",
         UserId: "usr-ec-01",
         RoleName: "Coordinator",
+        // hasEventPermission() không còn fallback ngầm — role mock phải tự
+        // khai rõ mình được gán event nào, không để hàm check quyền tự đoán.
+        assignedEventIds: ["event-seal-2026"],
+        AssignedEventIds: ["event-seal-2026"],
       };
       targetPath = "/coordinator/dashboard";
     } else if (roleName === "Mentor") {
@@ -153,6 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         EventRoleId: "er-mentor-101",
         UserId: "usr-mentor-01",
         RoleName: "Mentor",
+        assignedEventIds: ["event-seal-2026"],
+        AssignedEventIds: ["event-seal-2026"],
       };
       targetPath = "/mentor/tracks";
     } else if (roleName === "Judge") {
@@ -176,6 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         EventRoleId: "er-judge-200",
         UserId: "usr-judge-01",
         RoleName: "Judge",
+        assignedEventIds: ["event-seal-2026"],
+        AssignedEventIds: ["event-seal-2026"],
       };
       targetPath = "/events";
     } else {
@@ -231,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, activeRole, isInitialized, login, loginWithRole: loginWithRole as any, loginWithEmail, logout }}>
+    <AuthContext.Provider value={{ user, activeRole, isInitialized, login, loginWithRole, loginWithEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

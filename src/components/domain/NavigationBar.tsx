@@ -1,25 +1,32 @@
 "use client";
 
+import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { Link } from "@/i18n/routing";
 import { getMockTeam } from "@/viewModels/mockTeamData";
-import { SealShield } from "./SealShield";
-import { NotificationBell } from "./NotificationBell";
-import { hasEventPermission } from "@/lib/permissions";
+import { SealShield } from "@/components/domain/SealShield";
+import { NotificationBell } from "@/components/domain/NotificationBell";
+import { hasEventPermission, getRoleName } from "@/lib/permissions";
+import { ChevronDown, Wrench, LogOut, UserCheck } from "lucide-react";
 
 export function NavigationBar() {
   const pathname = usePathname() || "";
-  const { user, activeRole, login, logout } = useAuth();
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const { user, activeRole, login, loginWithRole, logout } = useAuth();
+  const roleName = getRoleName(activeRole) || (user?.isAdmin || user?.IsAdmin ? "Admin" : "Guest");
   const team = getMockTeam();
   const currentEventId = team?.eventId || "event-seal-2026";
+
+  const [showDevMenu, setShowDevMenu] = useState(false);
+  const handleRoleSwitch = (role: string) => {
+    loginWithRole(role);
+    setShowDevMenu(false);
+  };
 
   // XÁC ĐỊNH NGHIỆP VỤ RENDER THANH NAVBAR DỌC HOẶC NGANG
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
   const isJudgeRoute = pathname.includes("/judge");
-  const isAdminRoute = pathname.includes("/admin");
   const isEventDetailRoute = pathname.includes("/events/") && (pathname.split("/events/")[1] || "").length > 0;
   const isEventInnerRoute =
     isEventDetailRoute ||
@@ -38,7 +45,6 @@ export function NavigationBar() {
   const showJudgeSidebar = isJudgeRoute || (isEventInnerRoute && isJudgeRole);
   const showParticipantSidebar = isEventInnerRoute && isCandidateRole;
 
-  // ─────────────────────────────────────────────────────────────
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
   // ─────────────────────────────────────────────────────────────
   if (showCoordinatorSidebar) {
@@ -85,57 +91,52 @@ export function NavigationBar() {
 
             <Link
               href="/coordinator/dashboard"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname === "/coordinator/dashboard"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname === "/coordinator/dashboard"
                   ? "bg-[#a855f7] text-white shadow-sm"
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-              }`}
+                }`}
             >
-              <span>🎯</span> Control Center BTC
+              <span>Control Center BTC</span>
             </Link>
 
             <Link
               href="/coordinator/events/new"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/events/new")
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/events/new")
                   ? "bg-[var(--accent-primary)] text-white shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
-              }`}
+                }`}
             >
-              <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
+              <span>Tạo Sự Kiện Mới (Wizard)</span>
             </Link>
 
             <Link
               href="/coordinator/profiles"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/profiles")
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/profiles")
                   ? "bg-[var(--accent-team)] text-black shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
-              }`}
+                }`}
             >
-              <span>🪪</span> Duyệt Thẻ Sinh Viên
+              <span>Duyệt Thẻ Sinh Viên</span>
             </Link>
 
             <Link
               href="/coordinator/calibration"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/calibration")
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/calibration")
                   ? "bg-[var(--accent-judge)] text-black shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-              }`}
+                }`}
             >
-              <span>📐</span> Kho Tiêu Chí RBL
+              <span>Kho Tiêu Chí RBL</span>
             </Link>
 
             <Link
               href={`/events/${currentEventId}/leaderboard`}
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes("/leaderboard")
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                   ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-              }`}
+                }`}
             >
-              <span>🏆</span> Bảng Xếp Hạng Giải
+              <span>Bảng Xếp Hạng Giải</span>
             </Link>
           </nav>
         </div>
@@ -203,12 +204,10 @@ export function NavigationBar() {
           </div>
 
           {/* Mentor Profile Card */}
-          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
-            isAuthorizedMentor ? "border-[#2dd4bf]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
-          }`}>
-            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
-              isAuthorizedMentor ? "text-[#2dd4bf]" : "text-[var(--color-warning)]"
+          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${isAuthorizedMentor ? "border-[#2dd4bf]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
             }`}>
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${isAuthorizedMentor ? "text-[#2dd4bf]" : "text-[var(--color-warning)]"
+              }`}>
               {isAuthorizedMentor ? "MENTOR CỐ VẤN" : "CHƯA PHÂN CÔNG CỐ VẤN"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
@@ -229,22 +228,20 @@ export function NavigationBar() {
               <>
                 <Link
                   href="/mentor/tracks"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/mentor")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/mentor")
                       ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🎯</span> Bàn Làm Việc Cố Vấn
                 </Link>
 
                 <Link
                   href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🏆</span> Bảng Xếp Hạng Track
                 </Link>
@@ -253,22 +250,20 @@ export function NavigationBar() {
               <>
                 <Link
                   href={`/events/${activeViewEventId}`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
                       ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
                 </Link>
 
                 <Link
                   href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🏆</span> Bảng Xếp Hạng
                 </Link>
@@ -342,12 +337,10 @@ export function NavigationBar() {
           </div>
 
           {/* Judge Profile Card */}
-          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
-            isAuthorizedJudge ? "border-[var(--accent-judge)]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
-          }`}>
-            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
-              isAuthorizedJudge ? "text-[var(--accent-judge)]" : "text-[var(--color-warning)]"
+          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${isAuthorizedJudge ? "border-[var(--accent-judge)]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
             }`}>
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${isAuthorizedJudge ? "text-[var(--accent-judge)]" : "text-[var(--color-warning)]"
+              }`}>
               {isAuthorizedJudge ? "GIÁM KHẢO CHẤM ĐIỂM" : "CHƯA PHÂN CÔNG GIÁM KHẢO"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
@@ -368,22 +361,20 @@ export function NavigationBar() {
               <>
                 <Link
                   href="/judge/scoring"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/judge")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/judge")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>⚖</span> Bàn Chấm Điểm Giám Khảo
                 </Link>
 
                 <Link
                   href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🏆</span> Bảng Xếp Hạng Kết Quả
                 </Link>
@@ -392,22 +383,20 @@ export function NavigationBar() {
               <>
                 <Link
                   href={`/events/${activeViewEventId}`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
                       ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
                 </Link>
 
                 <Link
                   href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🏆</span> Bảng Xếp Hạng
                 </Link>
@@ -483,12 +472,10 @@ export function NavigationBar() {
           </div>
 
           {/* Event Status Banner */}
-          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
-            isJoinedThisEvent ? "border-[var(--border-muted)]" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
-          }`}>
-            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
-              isJoinedThisEvent ? "text-[var(--accent-primary)]" : "text-[var(--color-warning)]"
+          <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${isJoinedThisEvent ? "border-[var(--border-muted)]" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
             }`}>
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${isJoinedThisEvent ? "text-[var(--accent-primary)]" : "text-[var(--color-warning)]"
+              }`}>
               {isJoinedThisEvent ? "ĐANG THI ĐẤU" : "SỰ KIỆN CHƯA THAM GIA"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
@@ -507,11 +494,10 @@ export function NavigationBar() {
 
             <Link
               href={`/events/${activeViewEventId}`}
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes(`/events/${activeViewEventId}`) && !pathname.includes(`/leaderboard`)
                   ? "bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-              }`}
+                }`}
             >
               <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
             </Link>
@@ -521,33 +507,30 @@ export function NavigationBar() {
               <>
                 <Link
                   href="/my-team"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/my-team")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/my-team")
                       ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>👥</span> {roleName === "TeamLeader" ? "Quản Lý Đội Thi" : "Xem Đội Thi Của Tôi"}
                 </Link>
 
                 <Link
                   href="/my-submissions"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/my-submissions") || pathname.includes("/submissions/")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/my-submissions") || pathname.includes("/submissions/")
                       ? "bg-[var(--accent-team)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>📤</span> {roleName === "TeamLeader" ? "Bài Nộp Của Đội" : "Xem Bài Nộp Của Đội"}
                 </Link>
 
                 <Link
                   href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🏆</span> Bảng Xếp Hạng
                 </Link>
@@ -555,11 +538,10 @@ export function NavigationBar() {
                 {roleName === "TeamLeader" && (
                   <Link
                     href="/appeals"
-                    className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                      pathname.includes("/appeals")
+                    className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/appeals")
                         ? "bg-[var(--accent-coordinator)] text-[var(--bg-base)] shadow-sm"
                         : "text-[var(--text-muted)] hover:text-[var(--accent-coordinator)] hover:bg-[var(--bg-input)]"
-                    }`}
+                      }`}
                   >
                     <span>⚖</span> Phúc Khảo & Khiếu Nại
                   </Link>
@@ -579,11 +561,10 @@ export function NavigationBar() {
 
                 <Link
                   href={`/events/${activeViewEventId}/leaderboard`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/leaderboard")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/leaderboard")
                       ? "bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
-                  }`}
+                    }`}
                 >
                   <span>🏆</span> Bảng Xếp Hạng
                 </Link>
@@ -612,21 +593,17 @@ export function NavigationBar() {
       </aside>
     );
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // CHẾ ĐỘ 2: NAVBAR NGANG (HORIZONTAL TOPBAR) - MỌI VAI TRÒ Ở TRANG NGOÀI
-  // ─────────────────────────────────────────────────────────────
   return (
-    <nav className="w-full h-16 border-b border-[var(--border-muted)] bg-[var(--bg-panel)] flex items-center justify-between px-6 shrink-0 z-30 shadow-sm">
+    <nav className="w-full h-16 border-b border-[var(--border-muted)] bg-[var(--bg-panel)] flex items-center justify-between px-6 shrink-0 z-30 shadow-sm relative font-sans">
       
-      {/* Left: Brand & Main Navigation Links */}
-      <div className="flex items-center gap-6 md:gap-8">
+      {/* Left: Brand Logo & Navigation Links */}
+      <div className="flex items-center gap-8">
         <Link href="/" className="font-display font-bold text-lg text-[var(--accent-primary)] tracking-widest uppercase hover:opacity-80 flex items-center gap-2">
           <SealShield className="h-6 w-6 text-[var(--accent-primary)]" />
           <span>SEAL</span>
         </Link>
 
-        <div className="hidden md:flex gap-5 items-center font-mono text-xs">
+        <div className="hidden md:flex gap-6 items-center font-mono text-xs">
           <Link
             href="/"
             className={`transition-colors ${
@@ -649,53 +626,33 @@ export function NavigationBar() {
             Khám phá Sự kiện
           </Link>
 
-          {/* Quick Access Links for Coordinator */}
+          {/* Unified Single Workspace Link per Role */}
           {roleName === "Coordinator" && (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/coordinator/events/new"
-                className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-2.5 py-1 hud-clipped text-xs"
-              >
-                <span>➕ Tạo Sự Kiện</span>
-              </Link>
-              <Link
-                href="/coordinator/profiles"
-                className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-2.5 py-1 hud-clipped text-xs"
-              >
-                <span>🪪 Duyệt Thẻ SV</span>
-              </Link>
-              <Link
-                href="/coordinator/calibration"
-                className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-2.5 py-1 hud-clipped text-xs"
-              >
-                <span>📐 Kho Tiêu Chí RBL</span>
-              </Link>
-              <Link
-                href="/coordinator/dashboard"
-                className="text-[#a855f7] font-bold hover:underline flex items-center gap-1 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped text-xs"
-              >
-                <span>🎯 Control Center BTC</span>
-                <span className="text-[10px]">➔</span>
-              </Link>
-            </div>
+            <Link
+              href="/coordinator/dashboard"
+              className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-3 py-1.5 hud-clipped text-xs"
+            >
+              <span>CONTROL CENTER BTC</span>
+              <span className="text-[10px]">➔</span>
+            </Link>
           )}
 
           {roleName === "Mentor" && (
             <Link
               href="/mentor/tracks"
-              className="text-[#2dd4bf] font-bold hover:underline flex items-center gap-1 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1 hud-clipped"
+              className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-3 py-1.5 hud-clipped text-xs"
             >
-              <span>💼 Bàn Làm Việc Mentor</span>
+              <span>BÀN LÀM VIỆC MENTOR</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
 
           {roleName === "Judge" && (
             <Link
-              href="/judge/scoring"
-              className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped"
+              href="/judge/tracks"
+              className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-3 py-1.5 hud-clipped text-xs"
             >
-              <span>⚖ Bàn Chấm Giám Khảo</span>
+              <span>HẠNG MỤC CHẤM ĐIỂM</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
@@ -703,9 +660,9 @@ export function NavigationBar() {
           {roleName === "Admin" && (
             <Link
               href="/admin/dashboard"
-              className="text-[var(--color-danger)] font-bold hover:underline flex items-center gap-1 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-1 hud-clipped"
+              className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-3 py-1.5 hud-clipped text-xs"
             >
-              <span>👑 Bảng Điều Hành Admin</span>
+              <span>BẢNG ĐIỀU HÀNH ADMIN</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
@@ -713,42 +670,91 @@ export function NavigationBar() {
           {(roleName === "TeamLeader" || roleName === "TeamMember") && (
             <Link
               href="/my-team"
-              className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-3 py-1 hud-clipped"
+              className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-3 py-1.5 hud-clipped text-xs"
             >
-              <span>👥 Đội Thi Của Tôi</span>
+              <span>ĐỘI THI CỦA TÔI</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
         </div>
       </div>
       
-      {/* Right: Notification & Role Switcher */}
+      {/* Right: Notifications, Compact Dev Role Menu & Auth */}
       <div className="flex items-center gap-4">
         <NotificationBell align="right" />
 
-        {/* Role Switcher Demo Control Bar */}
-        <div className="hidden lg:flex items-center gap-1.5 border border-[var(--border-muted)] px-2 py-1 bg-[var(--bg-input)] font-mono text-[10px] hud-clipped">
-          <span className="text-[var(--text-muted)] font-bold">Role:</span>
-          <button onClick={() => login("Admin")} className={`hover:underline ${roleName === "Admin" ? "text-[var(--color-danger)] font-bold" : "text-[var(--text-muted)]"}`}>Admin</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("TeamLeader")} className={`hover:underline ${roleName === "TeamLeader" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Leader</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("TeamMember")} className={`hover:underline ${roleName === "TeamMember" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Member</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Mentor")} className={`hover:underline ${roleName === "Mentor" ? "text-[#2dd4bf] font-bold" : "text-[var(--text-muted)]"}`}>Mentor</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Judge")} className={`hover:underline ${roleName === "Judge" ? "text-[var(--accent-judge)] font-bold" : "text-[var(--text-muted)]"}`}>Judge</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Coordinator")} className={`hover:underline ${roleName === "Coordinator" ? "text-[#a855f7] font-bold" : "text-[var(--text-muted)]"}`}>Coord</button>
+        {/* Compact Dev Role Switcher Popover */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowDevMenu(!showDevMenu)}
+            className="flex items-center gap-1.5 border border-[var(--border-muted)] px-3 py-1 bg-[var(--bg-input)] font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/40 hud-clipped transition-all cursor-pointer"
+          >
+            <Wrench className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            <span className="font-bold">ROLE:</span>
+            <span className="text-[var(--accent-primary)] font-extrabold uppercase">{roleName}</span>
+            <ChevronDown className="w-3 h-3 ml-0.5" />
+          </button>
+
+          {showDevMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 shadow-xl hud-clipped p-2 z-50 animate-fadeIn space-y-1 font-mono text-xs">
+              <div className="text-[10px] text-[var(--text-muted)] px-2 py-1 uppercase tracking-wider border-b border-[var(--border-muted)] mb-1">
+                DEV TEST SWITCHER
+              </div>
+              <button
+                onClick={() => handleRoleSwitch("Admin")}
+                className={`w-full text-left px-2.5 py-1.5 hover:bg-[var(--accent-primary)]/10 flex items-center justify-between hud-clipped cursor-pointer ${roleName === "Admin" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"}`}
+              >
+                <span>Admin</span>
+                {roleName === "Admin" && <UserCheck className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => handleRoleSwitch("TeamLeader")}
+                className={`w-full text-left px-2.5 py-1.5 hover:bg-[var(--accent-primary)]/10 flex items-center justify-between hud-clipped cursor-pointer ${roleName === "TeamLeader" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"}`}
+              >
+                <span>Team Leader</span>
+                {roleName === "TeamLeader" && <UserCheck className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => handleRoleSwitch("TeamMember")}
+                className={`w-full text-left px-2.5 py-1.5 hover:bg-[var(--accent-primary)]/10 flex items-center justify-between hud-clipped cursor-pointer ${roleName === "TeamMember" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"}`}
+              >
+                <span>Team Member</span>
+                {roleName === "TeamMember" && <UserCheck className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => handleRoleSwitch("Mentor")}
+                className={`w-full text-left px-2.5 py-1.5 hover:bg-[var(--accent-primary)]/10 flex items-center justify-between hud-clipped cursor-pointer ${roleName === "Mentor" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"}`}
+              >
+                <span>Mentor</span>
+                {roleName === "Mentor" && <UserCheck className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => handleRoleSwitch("Judge")}
+                className={`w-full text-left px-2.5 py-1.5 hover:bg-[var(--accent-primary)]/10 flex items-center justify-between hud-clipped cursor-pointer ${roleName === "Judge" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"}`}
+              >
+                <span>Judge</span>
+                {roleName === "Judge" && <UserCheck className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => handleRoleSwitch("Coordinator")}
+                className={`w-full text-left px-2.5 py-1.5 hover:bg-[var(--accent-primary)]/10 flex items-center justify-between hud-clipped cursor-pointer ${roleName === "Coordinator" ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"}`}
+              >
+                <span>Coordinator (BTC)</span>
+                {roleName === "Coordinator" && <UserCheck className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          )}
         </div>
 
         {user ? (
           <div className="flex items-center gap-3">
             <button
               onClick={logout}
-              className="font-mono text-xs text-[var(--color-danger)] hover:underline border border-[var(--color-danger)]/30 px-2.5 py-1 hud-clipped cursor-pointer"
+              className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/50 border border-[var(--border-muted)] px-3 py-1 hud-clipped transition-all cursor-pointer flex items-center gap-1.5"
             >
-              Đăng xuất
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Đăng xuất</span>
             </button>
           </div>
         ) : (

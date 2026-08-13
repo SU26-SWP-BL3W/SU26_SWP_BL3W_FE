@@ -1,5 +1,5 @@
-import { CoordinatorWorkspaceView } from "@/views/CoordinatorWorkspaceView";
+import { redirect } from "next/navigation";
 
 export default function CoordinatorResultsPage() {
-  return <CoordinatorWorkspaceView />;
+  redirect("/coordinator/publish-results");
 }

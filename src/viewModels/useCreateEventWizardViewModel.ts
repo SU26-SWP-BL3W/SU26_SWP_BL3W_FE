@@ -290,34 +290,93 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Sự kiện cần ít nhất 1 Vòng thi (Round)!");
         return;
       }
-      setCurrentStep(3);
+      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
+      if (!realEventId) {
+        setErrorMessage("Vui lòng hoàn thành Bước 1 để khởi tạo Sự kiện trước!");
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        for (const rnd of rounds) {
+          await roundsRepository.createRound({
+            eventId: realEventId,
+            roundName: rnd.roundName,
+            roundNumber: rnd.roundNumber,
+            startDate: rnd.startDate,
+            endDate: rnd.endDate,
+            advancementRule: rnd.advancementRule,
+          });
+        }
+        setCurrentStep(3);
+      } catch {
+        setErrorMessage("Lỗi khi khởi tạo danh sách Vòng thi!");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else if (currentStep === 3) {
       if (tracks.length === 0) {
         setErrorMessage("Vui lòng cấu hình ít nhất 1 Hạng mục thi (Track)!");
         return;
       }
-      setCurrentStep(4);
+      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
+
+      setIsSubmitting(true);
+      try {
+        for (const trk of tracks) {
+          await tracksRepository.createTrack({
+            roundId: trk.roundId || "rnd-1",
+            trackName: trk.trackName,
+            description: trk.description,
+          });
+        }
+        setCurrentStep(4);
+      } catch {
+        setErrorMessage("Lỗi khi khởi tạo Hạng mục thi (Track)!");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else if (currentStep === 4) {
       if (!isValidWeight100) {
         setErrorMessage(`Tổng trọng số tiêu chí phải đạt ĐÚNG 100%! Hiện tại là ${totalWeight}%.`);
         return;
       }
-      setCurrentStep(5);
-    } else if (currentStep === 5) {
-      // Final Finish Step
+
       setIsSubmitting(true);
       try {
-        // Send invitations for all judges and mentors
+        const resTpl = await templatesRepository.createTemplate({
+          templateName: templateName || "Mẫu Tiêu Chí Đánh Giá RBL Standard",
+          description: "Mẫu tiêu chí tổng hợp 100% trọng số",
+        });
+        const templateId = (resTpl.data as any)?.id || (resTpl.data as any)?.Id || resTpl.data?.TemplateId || "tpl-1";
+        for (const crit of criterias) {
+          await templatesRepository.addCriteriaToTemplate({
+            templateId,
+            criteriaId: crit.criteriaId,
+            weight: crit.weight,
+            maxScore: crit.maxScore,
+          });
+        }
+        setCurrentStep(5);
+      } catch {
+        setErrorMessage("Lỗi khi lưu Mẫu tiêu chí đánh giá RBL!");
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else if (currentStep === 5) {
+      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
+      setIsSubmitting(true);
+      try {
         for (const staff of staffInvites) {
           if (staff.roleName === "Judge") {
             await staffRepository.inviteJudge({
-              eventId: createdEvent?.EventId || "ev-mock-1",
+              eventId: realEventId || "ev-1",
               trackId: staff.trackId,
               email: staff.email,
             });
           } else {
             await staffRepository.inviteMentor({
-              eventId: createdEvent?.EventId || "ev-mock-1",
+              eventId: realEventId || "ev-1",
               trackId: staff.trackId,
               email: staff.email,
             });
