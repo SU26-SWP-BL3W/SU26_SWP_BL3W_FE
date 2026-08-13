@@ -28,6 +28,8 @@ export function useAppeals(teamId?: string) {
   });
 }
 
+export const useGetAppeals = useAppeals;
+
 export function useCreateAppeal() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -72,10 +72,25 @@ export function useCancelInvitation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ teamId, invitationId }: { teamId: string; invitationId: string }) => {
-      const res = await apiClient.delete(`/Teams/${teamId}/invitations/${invitationId}`);
+      await apiClient.delete(`/Teams/${teamId}/invitations/${invitationId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export const useRespondInvitation = useCancelInvitation;
+
+export function useAcceptOrDeclineInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invitationId, isAccepted }: { invitationId: string; isAccepted: boolean }) => {
+      const res = await apiClient.post(`/Teams/invitations/${invitationId}/respond`, { isAccepted });
       return res.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-invitations"] });
       queryClient.invalidateQueries({ queryKey: ["my-team"] });
     },
   });
@@ -90,6 +105,46 @@ export function useConfirmRegistration() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
+  });
+}
+
+export function useGetPendingTeams() {
+  return useQuery({
+    queryKey: ["pending-teams"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<Team[]>("/Teams/pending");
+        return res.data;
+      } catch {
+        return [];
+      }
+    },
+  });
+}
+
+export function useApproveTeamRegistration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      const res = await apiClient.post(`/Teams/${teamId}/approve-registration`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-teams"] });
+    },
+  });
+}
+
+export function useRejectTeamRegistration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, reason }: { teamId: string; reason?: string }) => {
+      const res = await apiClient.post(`/Teams/${teamId}/reject-registration`, { reason });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-teams"] });
     },
   });
 }

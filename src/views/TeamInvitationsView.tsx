@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
-import { useRespondInvitation } from "@/repositories/teamsRepository";
+import { useAcceptOrDeclineInvitation } from "@/repositories/teamsRepository";
 import { Button, Card, Badge } from "@/components/ui";
 import { Mail, CheckCircle2, XCircle, RefreshCw, Shield } from "lucide-react";
 import type { TeamInvitation, BaseResponse } from "@/models/entities";
@@ -16,7 +16,7 @@ export function TeamInvitationsView() {
     },
   });
 
-  const { mutateAsync: respond, isPending } = useRespondInvitation();
+  const { mutateAsync: respond, isPending } = useAcceptOrDeclineInvitation();
 
   const handleRespond = async (invitationId: string, isAccepted: boolean) => {
     try {

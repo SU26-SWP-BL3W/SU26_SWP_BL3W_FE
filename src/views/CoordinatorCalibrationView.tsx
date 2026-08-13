@@ -138,7 +138,7 @@ export function CoordinatorCalibrationView() {
                 { judgeId: "j-1", judgeName: "Giám khảo Nguyễn Văn A", submitResultId: "sub-1", teamName: "Cyber_Knights", totalScore: 8.5, isAccepted: true, isSubmitted: true },
                 { judgeId: "j-2", judgeName: "Giám khảo Trần Thị B", submitResultId: "sub-1", teamName: "Cyber_Knights", totalScore: 9.0, isAccepted: true, isSubmitted: true },
                 { judgeId: "j-1", judgeName: "Giám khảo Nguyễn Văn A", submitResultId: "sub-2", teamName: "Dev_Dragons", totalScore: 7.2, isAccepted: true, isSubmitted: false },
-              ]).map((item, idx) => (
+              ]).map((item: any, idx: number) => (
                 <TableRow key={idx}>
                   <TableCell>
                     <span className="font-mono text-xs font-bold text-[var(--text-primary)]">

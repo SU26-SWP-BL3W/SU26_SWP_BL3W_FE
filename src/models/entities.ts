@@ -33,13 +33,36 @@ export interface UserDTO {
 }
 
 export interface EventRole {
+  id?: string;
   eventRoleId?: string;
   userId?: string;
+  eventId?: string;
+  teamId?: string;
+  trackId?: string;
   roleName?: string;
   EventRoleId?: string;
   UserId?: string;
   RoleName?: string;
+  EventId?: string;
+  TeamId?: string;
+  TrackId?: string;
 }
+
+export type EventEntity = Event;
+export type RoundEntity = Round;
+export type TrackEntity = Track;
+export type TemplateEntity = Template;
+export type TemplateCriteriaEntity = Criteria;
+export type CriteriaEntity = Criteria;
+export type TeamEntity = Team;
+export type EventRoleInvitationEntity = any;
+export type Prize = any;
+export type SaveScoreRequest = any;
+export type Score = any;
+export type ScoreBreakdownModel = any;
+export type CalibrationModel = any;
+export type FinalResult = any;
+export type AppealStatus = AppealStatusType;
 
 export interface EventDTO {
   eventId: string;
@@ -136,7 +159,8 @@ export interface LoginResponse {
 
 export interface RegisterRequest {
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
+  password?: string;
   fullName: string;
 }
 
@@ -144,12 +168,16 @@ export interface UpdateStudentProfileRequest {
   schoolId?: string;
   studentCode?: string;
   photoStudentCardUrl?: string;
+  isFpt?: boolean;
 }
 
 export interface FptStudentResponse {
-  isFptStudent: boolean;
+  isFptStudent?: boolean;
+  isValid?: boolean;
   studentCode?: string;
   fullName?: string;
+  major?: string;
+  enrollYear?: number;
 }
 
 export interface UserRejection {
@@ -157,6 +185,7 @@ export interface UserRejection {
   userId?: string;
   reason?: string;
   rejectedTime?: string;
+  isActive?: boolean;
 }
 
 // ─── School ──────────────────────────────────────────────────
@@ -165,6 +194,7 @@ export interface School {
   id: string;
   code: string;
   name: string;
+  schoolName?: string;
   isFpt: boolean;
 }
 
@@ -172,12 +202,36 @@ export interface School {
 
 export interface Event {
   id?: string;
+  eventId?: string;
+  EventId?: string;
   name?: string;
+  eventName?: string;
+  EventName?: string;
   season?: string;
+  Season?: string;
   year?: number;
+  Year?: number;
+  tagline?: string;
+  Tagline?: string;
   description?: string | null;
+  Description?: string | null;
   startDate?: string;
+  StartDate?: string;
   endDate?: string;
+  EndDate?: string;
+  registrationStartDate?: string;
+  RegistrationStartDate?: string;
+  registrationEndDate?: string;
+  RegistrationEndDate?: string;
+  maxTeams?: number;
+  MaxTeams?: number;
+  teamCount?: number;
+  TeamCount?: number;
+  totalPrizeVnd?: number;
+  TotalPrizeVnd?: number;
+  success?: boolean;
+  data?: any;
+  message?: string | null;
   createdTime?: string;
   lastUpdatedTime?: string;
 }
@@ -186,12 +240,20 @@ export interface Event {
 
 export interface Round {
   id?: string;
+  roundId?: string;
+  RoundId?: string;
   eventId?: string;
+  EventId?: string;
   name?: string;
+  roundName?: string;
+  RoundName?: string;
+  roundNumber?: number;
+  RoundNumber?: number;
   orderNumber?: number;
   startDate?: string;
   endDate?: string;
   submissionDeadline?: string;
+  SubmissionDeadline?: string;
   isFinal?: boolean;
 }
 
@@ -199,25 +261,49 @@ export interface Round {
 
 export interface Track {
   id?: string;
+  trackId?: string;
+  TrackId?: string;
   roundId?: string;
+  RoundId?: string;
   name?: string;
+  trackName?: string;
+  TrackName?: string;
   description?: string | null;
+  Description?: string | null;
+  submissionRuleDescription?: string | null;
+  SubmissionRuleDescription?: string | null;
   maxTeams?: number;
   templateId?: string | null;
+  TemplateId?: string | null;
 }
 
 // ─── Template & Criteria ─────────────────────────────────────
 
 export interface Criteria {
   id?: string;
+  criteriaId?: string;
+  CriteriaId?: string;
   name?: string;
+  criterionName?: string;
+  CriterionName?: string;
+  criteriaName?: string;
   description?: string | null;
+  Description?: string | null;
   weight?: number;
+  Weight?: number;
+  maxScore?: number;
+  MaxScore?: number;
+  TemplateId?: string;
+  IsActive?: boolean;
 }
 
 export interface Template {
   id?: string;
+  templateId?: string;
+  TemplateId?: string;
   name?: string;
+  templateName?: string;
+  TemplateName?: string;
   description?: string | null;
   criterias?: Criteria[];
   totalWeight?: number;
@@ -227,11 +313,19 @@ export interface Template {
 
 export interface Team {
   id?: string;
+  teamId?: string;
+  TeamId?: string;
   eventId?: string;
+  EventId?: string;
   name?: string;
+  teamName?: string;
+  TeamName?: string;
   trackId?: string | null;
   leaderUserId?: string;
   isApproved?: boolean;
+  status?: string;
+  Status?: string;
+  members?: TeamMember[];
   createdTime?: string;
 }
 
@@ -240,6 +334,10 @@ export interface TeamMember {
   teamId?: string;
   userId?: string;
   role?: string;
+  roleName?: string;
+  fullName?: string;
+  email?: string;
+  isApproved?: boolean;
   joinedTime?: string;
   user?: User;
 }

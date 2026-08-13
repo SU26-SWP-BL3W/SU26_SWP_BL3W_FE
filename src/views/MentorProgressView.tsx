@@ -102,7 +102,7 @@ export function MentorProgressView() {
                 PHÂN RÃ ĐIỂM SỐ THEO TIÊU CHÍ (CRITERIA BREAKDOWN)
               </h3>
 
-              {scoreBreakdown.details?.map((item) => (
+              {scoreBreakdown.details?.map((item: any) => (
                 <div
                   key={item.criteriaId}
                   className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2"

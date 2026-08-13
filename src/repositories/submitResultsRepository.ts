@@ -25,6 +25,8 @@ export function useMySubmissions(teamId?: string) {
   });
 }
 
+export const useGetJudgeSubmissions = useMySubmissions;
+
 export function useCreateSubmission() {
   const queryClient = useQueryClient();
   return useMutation({

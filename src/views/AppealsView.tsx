@@ -54,7 +54,7 @@ export function AppealsView() {
     if (!reason.trim()) return;
 
     try {
-      await createAppeal({ submitResultId, reason: reason.trim() });
+      await createAppeal({ SubmissionId: submitResultId, Reason: reason.trim() });
       alert("✓ Đã gửi Đơn Phúc Khảo thành công! Ban Tổ Chức sẽ phản hồi sớm.");
       setReason("");
     } catch {
@@ -63,15 +63,15 @@ export function AppealsView() {
     }
   };
 
-  const handleRespondConfirm = async (status: AppealStatus) => {
+  const handleRespondConfirm = async (status: string) => {
     if (!respondModal || !respondModal.id) return;
     if (!responseText.trim()) return;
 
     try {
       await respondAppeal({
         appealId: respondModal.id,
-        status,
-        response: responseText.trim(),
+        status: status as any,
+        responseReason: responseText.trim(),
       });
       alert("✓ Đã xử lý phản hồi Đơn Phúc Khảo!");
       setRespondModal(null);
@@ -197,11 +197,14 @@ export function AppealsView() {
                   const isPending = statusNum === 0;
                   const isApproved = statusNum === 1;
 
+                  const appealItem = item as any;
+                  const teamNameText = appealItem.teamName || appealItem.TeamName || `Đội #${appealItem.teamId || appealItem.TeamId || "TM"}`;
+
                   return (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id || appealItem.AppealId}>
                       <TableCell>
                         <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
-                          {item.teamName || `Đội #${item.teamId || "TM"}`}
+                          {teamNameText}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -264,7 +267,7 @@ export function AppealsView() {
             </h3>
 
             <p className="text-xs font-mono text-[var(--text-muted)] mb-3">
-              Đội thi: <strong className="text-[var(--text-primary)]">{respondModal.teamName || respondModal.teamId}</strong>
+              Đội thi: <strong className="text-[var(--text-primary)]">{(respondModal as any).teamName || (respondModal as any).TeamName || (respondModal as any).teamId || "Đội thi"}</strong>
             </p>
 
             <div className="space-y-1.5 mb-4">
@@ -283,14 +286,14 @@ export function AppealsView() {
             <div className="flex gap-3">
               <Button
                 disabled={!responseText.trim() || isResponding}
-                onClick={() => handleRespondConfirm(1)}
+                onClick={() => handleRespondConfirm("Approved")}
                 className="flex-1 bg-[var(--color-success)] text-white font-mono text-xs font-bold justify-center"
               >
                 ✓ CHẤP NHẬN
               </Button>
               <Button
                 disabled={!responseText.trim() || isResponding}
-                onClick={() => handleRespondConfirm(2)}
+                onClick={() => handleRespondConfirm("Rejected")}
                 className="flex-1 bg-[var(--color-danger)] text-white font-mono text-xs font-bold justify-center"
               >
                 ✕ TỪ CHỐI

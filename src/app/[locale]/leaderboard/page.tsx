@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function LeaderboardPage() {
-  return <LeaderboardView />;
+  return <LeaderboardView eventId="event-seal-2026" />;
 }

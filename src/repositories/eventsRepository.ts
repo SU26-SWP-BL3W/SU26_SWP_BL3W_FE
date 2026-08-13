@@ -3,6 +3,19 @@ import apiClient from "@/models/apiClient";
 import type { Event, Round } from "@/models/entities";
 import type { MockRound } from "@/viewModels/mockEventsData";
 
+export const eventsRepository = {
+  getEvents: async () => {
+    const res = await apiClient.get<Event[]>("/Events");
+    return res.data;
+  },
+  getEventById: async (id: string) => {
+    const res = await apiClient.get<Event>(`/Events/${id}`);
+    return res.data;
+  },
+  createEvent,
+  updateEvent,
+};
+
 export interface EventDTO {
   EventId?: string;
   EventName?: string;
