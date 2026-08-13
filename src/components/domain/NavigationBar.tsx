@@ -37,6 +37,128 @@ export function NavigationBar() {
   const showMentorSidebar = isMentorRoute || (isEventInnerRoute && isMentorRole);
   const showJudgeSidebar = isJudgeRoute || (isEventInnerRoute && isJudgeRole);
   const showParticipantSidebar = isEventInnerRoute && isCandidateRole;
+  const showAdminSidebar = isAdminRoute;
+
+  // ─────────────────────────────────────────────────────────────
+  // CHẾ ĐỘ 10: NAVBAR DỌC DÀNH RIÊNG CHO SYSTEM ADMIN (ADMIN WORKSPACE)
+  // ─────────────────────────────────────────────────────────────
+  if (showAdminSidebar) {
+    return (
+      <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[var(--color-danger)]/40 flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
+        <div className="flex flex-col gap-6">
+          {/* Brand Logo & Notification Bell */}
+          <div className="flex flex-col gap-3 pb-4 border-b border-[var(--border-muted)]">
+            <div className="flex items-center justify-between">
+              <Link href="/admin/dashboard" className="font-display font-bold text-lg text-[var(--color-danger)] tracking-widest uppercase flex items-center gap-2">
+                <SealShield className="h-6 w-6 text-[var(--color-danger)]" />
+                <span>ADMIN PANEL</span>
+              </Link>
+              <NotificationBell align="left" />
+            </div>
+            <Link
+              href="/"
+              className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--color-danger)] flex items-center gap-1.5 transition-colors"
+            >
+              <span>←</span> Quay lại trang chủ
+            </Link>
+          </div>
+
+          {/* Admin Profile Card */}
+          <div className="p-3 bg-[var(--bg-input)] border border-[var(--color-danger)]/40 hud-clipped flex flex-col gap-1">
+            <span className="font-mono text-[9px] text-[var(--color-danger)] font-bold uppercase tracking-widest flex items-center gap-1">
+              👑 SYSTEM ADMIN
+            </span>
+            <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
+              {user?.fullName || user?.FullName || "Quản Trị Viên Hệ Thống"}
+            </span>
+            <span className="font-mono text-[10px] text-[var(--text-muted)] truncate">
+              {user?.email || "admin.system@seal.edu.vn"}
+            </span>
+          </div>
+
+          {/* Vertical Navigation Menu */}
+          <nav className="flex flex-col gap-1.5 font-mono text-xs">
+            <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
+              MENU QUẢN TRỊ ADMIN
+            </span>
+
+            <Link
+              href="/admin/dashboard"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname === "/admin/dashboard"
+                  ? "bg-[var(--color-danger)] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🌐</span> Tổng Quan Sự Kiện
+            </Link>
+
+            <Link
+              href="/admin/users"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/admin/users")
+                  ? "bg-[var(--color-danger)] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>👥</span> Quản Lý Tài Khoản
+            </Link>
+
+            <Link
+              href="/admin/schools"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/admin/schools")
+                  ? "bg-[var(--color-danger)] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <span>🏫</span> Danh Mục Trường Học
+            </Link>
+
+            <Link
+              href="/admin/events/new"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold mt-2 border border-[var(--color-danger)]/40 ${
+                pathname.includes("/admin/events/new")
+                  ? "bg-[var(--color-danger)] text-white"
+                  : "text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+              }`}
+            >
+              <span>➕</span> Tạo Event Mới (Wizard)
+            </Link>
+          </nav>
+        </div>
+
+        {/* Bottom User Info & Role Switcher */}
+        <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-muted)]">
+          <div className="flex items-center justify-between font-mono text-xs">
+            <span className="text-[var(--text-muted)]">Vai trò:</span>
+            <span className="text-[var(--color-danger)] font-bold">System Admin</span>
+          </div>
+
+          {/* Role Switcher Bar */}
+          <div className="flex items-center justify-between gap-1 p-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-[10px]">
+            <button onClick={() => login("Admin")} className="text-[var(--color-danger)] font-bold hover:underline" title="Admin">Admin</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("TeamLeader")} className="text-[var(--accent-team)] hover:underline" title="Đội Trưởng">Leader</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("TeamMember")} className="text-[var(--accent-team)] hover:underline" title="Thành Viên">Member</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("Judge")} className="text-[var(--accent-judge)] hover:underline" title="Giám Khảo">Judge</button>
+            <span className="text-[var(--border-muted)]">|</span>
+            <button onClick={() => login("Coordinator")} className="text-[var(--accent-coordinator)] hover:underline" title="Ban Tổ Chức">Coord</button>
+          </div>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
+          >
+            🚪 ĐĂNG XUẤT
+          </button>
+        </div>
+      </aside>
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
@@ -649,41 +771,21 @@ export function NavigationBar() {
             Khám phá Sự kiện
           </Link>
 
-          {/* Quick Access Links for Coordinator */}
+          {/* Single Workspace Access Link for Coordinator */}
           {roleName === "Coordinator" && (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/coordinator/events/new"
-                className="text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-2.5 py-1 hud-clipped text-xs"
-              >
-                <span>➕ Tạo Sự Kiện</span>
-              </Link>
-              <Link
-                href="/coordinator/profiles"
-                className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-2.5 py-1 hud-clipped text-xs"
-              >
-                <span>🪪 Duyệt Thẻ SV</span>
-              </Link>
-              <Link
-                href="/coordinator/calibration"
-                className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-2.5 py-1 hud-clipped text-xs"
-              >
-                <span>📐 Kho Tiêu Chí RBL</span>
-              </Link>
-              <Link
-                href="/coordinator/dashboard"
-                className="text-[#a855f7] font-bold hover:underline flex items-center gap-1 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped text-xs"
-              >
-                <span>🎯 Control Center BTC</span>
-                <span className="text-[10px]">➔</span>
-              </Link>
-            </div>
+            <Link
+              href="/coordinator/dashboard"
+              className="text-[#a855f7] font-bold hover:underline flex items-center gap-1 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped text-xs"
+            >
+              <span>🎯 Control Center BTC</span>
+              <span className="text-[10px]">➔</span>
+            </Link>
           )}
 
           {roleName === "Mentor" && (
             <Link
               href="/mentor/tracks"
-              className="text-[#2dd4bf] font-bold hover:underline flex items-center gap-1 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1 hud-clipped"
+              className="text-[#2dd4bf] font-bold hover:underline flex items-center gap-1 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1 hud-clipped text-xs"
             >
               <span>💼 Bàn Làm Việc Mentor</span>
               <span className="text-[10px]">➔</span>
@@ -693,17 +795,18 @@ export function NavigationBar() {
           {roleName === "Judge" && (
             <Link
               href="/judge/scoring"
-              className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped"
+              className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped text-xs"
             >
               <span>⚖ Bàn Chấm Giám Khảo</span>
               <span className="text-[10px]">➔</span>
             </Link>
           )}
 
+          {/* Single Workspace Access Link for System Admin */}
           {roleName === "Admin" && (
             <Link
               href="/admin/dashboard"
-              className="text-[var(--color-danger)] font-bold hover:underline flex items-center gap-1 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-1 hud-clipped"
+              className="text-[var(--color-danger)] font-bold hover:underline flex items-center gap-1 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-1 hud-clipped text-xs"
             >
               <span>👑 Bảng Điều Hành Admin</span>
               <span className="text-[10px]">➔</span>
