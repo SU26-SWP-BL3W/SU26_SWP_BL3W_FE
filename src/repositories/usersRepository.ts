@@ -30,6 +30,46 @@ export function useUpdateUserProfile() {
   });
 }
 
+// ─── My Invitations (chuông thông báo) ───────────────────────
+// GET /api/Users/my-invitations — gộp SẴN lời mời vào đội (TEAM) và lời mời
+// vai trò sự kiện (EVENT_ROLE: Judge/Mentor/EventCoordinator) trong 1 lần
+// gọi. Đây là endpoint ĐÚNG cho màn "Lời mời của tôi" — KHÔNG dùng
+// /Teams/{teamId}/my-invitation (đó là API khác: BE bên đó bắt buộc biết
+// trước teamId, chỉ dùng khi đã ở trong ngữ cảnh 1 đội cụ thể).
+
+export type MyInvitationType = "TEAM" | "EVENT_ROLE";
+export type MyInvitationStatus = "PendingAccept" | "Accepted" | "Declined";
+
+export interface MyInvitationItem {
+  invitationId: string;
+  type: MyInvitationType;
+  /** Tên đội (TEAM) hoặc tên sự kiện (EVENT_ROLE). */
+  targetName: string;
+  inviterName: string;
+  role: string;
+  /** Chỉ có với Judge/Mentor theo hạng mục; null với EC/lời mời đội. */
+  trackName?: string | null;
+  status: MyInvitationStatus;
+  respondedAt?: string | null;
+  expiresAt: string;
+}
+
+export interface MyInvitationsResponse {
+  totalPending: number;
+  invitations: MyInvitationItem[];
+}
+
+/** GET /api/Users/my-invitations — Lấy toàn bộ lời mời (đội + vai trò sự kiện) của user hiện tại */
+export function useMyInvitations() {
+  return useQuery({
+    queryKey: ["my-invitations"],
+    queryFn: async () => {
+      const res = await apiClient.get<BaseResponse<MyInvitationsResponse>>("/Users/my-invitations");
+      return res.data.data ?? { totalPending: 0, invitations: [] };
+    },
+  });
+}
+
 // ─── User Rejections ─────────────────────────────────────────
 
 /** GET /api/UserRejections/user/{userId} — Lấy lịch sử từ chối hồ sơ */
