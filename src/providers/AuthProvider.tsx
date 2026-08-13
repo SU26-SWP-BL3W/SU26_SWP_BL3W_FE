@@ -19,19 +19,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Mock login để thuận tiện phát triển giao diện trước khi nối API
   const login = (mockRole: string = "TeamLeader") => {
     setUser({
+      userId: "mock-user-1",
+      email: "mock@fpt.edu.vn",
+      fullName: "Nguyễn Văn Thí Sinh",
+      isAdmin: mockRole === "Admin",
       UserID: "mock-user-1",
-      Email: "mock@fpt.edu.vn",
-      FullName: "Mock User",
+      FullName: "Nguyễn Văn Thí Sinh",
       IsAdmin: mockRole === "Admin",
-      IsApproved: true,
-      IsFpt: true,
     });
 
     if (mockRole !== "Admin") {
       setActiveRole({
+        eventRoleId: "er1",
+        userId: "mock-user-1",
+        roleName: mockRole,
         EventRoleId: "er1",
         UserId: "mock-user-1",
-        EventId: "event-1",
         RoleName: mockRole,
       });
     } else {

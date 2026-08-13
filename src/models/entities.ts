@@ -16,6 +16,23 @@ export interface UserDTO {
   studentId?: string;
   avatarUrl?: string;
   isAdmin: boolean;
+  // Aliases for compatibility
+  UserID?: string;
+  FullName?: string;
+  StudentId?: string;
+  IsAdmin?: boolean;
+}
+
+export type User = UserDTO;
+
+export interface EventRole {
+  eventRoleId: string;
+  userId: string;
+  roleName: string;
+  // Aliases for compatibility
+  EventRoleId?: string;
+  UserId?: string;
+  RoleName?: string;
 }
 
 export interface EventDTO {
