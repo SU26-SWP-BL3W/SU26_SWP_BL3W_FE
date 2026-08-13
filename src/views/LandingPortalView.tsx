@@ -48,9 +48,6 @@ export function LandingPortalView() {
             <div className="absolute inset-0 rounded-full bg-[var(--accent-primary)]/10 blur-xl animate-pulse" />
             <div className="relative border border-[var(--accent-primary)]/40 bg-[var(--bg-panel)]/90 p-4 hud-clipped shadow-[0_0_30px_rgba(0,217,255,0.3)]">
               <SealShield className="h-20 w-20 md:h-28 md:w-28 text-[var(--accent-primary)]" />
-              <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 border border-[var(--accent-primary)] bg-[var(--bg-base)] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-[var(--accent-primary)] hud-clipped shadow-md">
-                COMMAND DECK
-              </span>
             </div>
           </div>
 
@@ -65,7 +62,7 @@ export function LandingPortalView() {
           </div>
 
           {/* Main Symmetrical Heading */}
-          <h1 className="font-display text-4xl font-extrabold uppercase leading-[1.1] text-[var(--text-primary)] md:text-6xl drop-shadow-md">
+          <h1 className="font-display text-[clamp(1.75rem,6vw,3.75rem)] font-extrabold uppercase leading-[1.1] text-[var(--text-primary)] drop-shadow-md break-words w-full text-center">
             NƠI Ý TƯỞNG CÔNG NGHỆ
             <br />
             <span className="text-[var(--accent-primary)] drop-shadow-[0_0_20px_rgba(0,217,255,0.6)]">
@@ -74,7 +71,7 @@ export function LandingPortalView() {
           </h1>
 
           {/* Subtitle */}
-          <p className="max-w-2xl font-sans text-base text-[var(--text-muted)] md:text-lg leading-relaxed">
+          <p className="max-w-2xl w-full font-sans text-sm text-[var(--text-muted)] md:text-base leading-relaxed break-words text-center">
             Đấu trường hackathon dành cho sinh viên toàn quốc — tranh tài xây dựng sản phẩm thực tế,
             nhận tư vấn từ Mentor và nhận đánh giá minh bạch theo chuẩn khoa học RBL.
           </p>
@@ -286,66 +283,77 @@ function LatestEventSpotlight({ event }: { event: EventCardData }) {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: High-Tech Digital Countdown HUD Clock */}
+            {/* RIGHT COLUMN: Compact Countdown + Round Timeline */}
             {!countdown.isPast && (
-              <div className="hud-clipped border border-[var(--accent-primary)]/40 bg-[var(--bg-base)]/90 p-6 flex flex-col items-center justify-center gap-4 shadow-[0_0_20px_rgba(0,217,255,0.1)] relative">
-                <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-[var(--accent-primary)]">
-                  <span className="h-2 w-2 rounded-full bg-[var(--accent-primary)] animate-ping" />
-                  [ {countdownLabel} ]
+              <div className="flex flex-col gap-4 border border-[var(--border-muted)]/60 bg-[var(--bg-base)]/70 p-5">
+
+                {/* Label */}
+                <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                  <span className={`h-1.5 w-1.5 rounded-full ${countdown.isUrgent ? "bg-[var(--color-danger)] animate-ping" : "bg-[var(--accent-primary)]"}`} />
+                  {countdownLabel}
                 </div>
 
-                {/* Digital Clock Grid */}
-                <div
-                  className={`grid grid-cols-4 gap-2 w-full font-mono text-center ${countdown.isUrgent ? "text-[var(--color-danger)]" : "text-[var(--text-primary)]"
-                    }`}
-                  suppressHydrationWarning
-                >
+                {/* Compact single-row countdown */}
+                <div className="flex items-center justify-between gap-1" suppressHydrationWarning>
                   {[
-                    { value: countdown.days, label: "NGÀY" },
-                    { value: countdown.hours, label: "GIỜ" },
-                    { value: countdown.minutes, label: "PHÚT" },
-                    { value: countdown.seconds, label: "GIÂY" },
-                  ].map((u) => (
-                    <div
-                      key={u.label}
-                      className="border border-[var(--border-muted)] bg-[var(--bg-panel)] py-3 px-1 hud-clipped flex flex-col items-center justify-center shadow-inner"
-                      suppressHydrationWarning
-                    >
+                    { value: countdown.days,    label: "ngày" },
+                    { value: countdown.hours,   label: "giờ"  },
+                    { value: countdown.minutes, label: "phút" },
+                    { value: countdown.seconds, label: "giây" },
+                  ].map((u, i) => (
+                    <div key={u.label} className="flex items-baseline gap-1" suppressHydrationWarning>
                       <span
-                        className="font-mono text-2xl font-extrabold tabular-nums md:text-3xl tracking-tight text-[var(--accent-primary)]"
+                        className={`font-mono font-bold tabular-nums text-2xl tracking-tight ${countdown.isUrgent ? "text-[var(--color-danger)]" : "text-[var(--accent-primary)]"}`}
                         suppressHydrationWarning
                       >
                         {String(u.value).padStart(2, "0")}
                       </span>
-                      <span className="text-[9px] font-bold tracking-wider text-[var(--text-muted)] mt-1">
-                        {u.label}
-                      </span>
+                      <span className="font-mono text-[10px] text-[var(--text-muted)]">{u.label}</span>
+                      {i < 3 && <span className="font-mono text-[var(--border-muted)] ml-1">:</span>}
                     </div>
                   ))}
                 </div>
 
-                {/* Event Schedule Rounds Summary */}
+                {/* Round Timeline */}
                 {event.rounds && event.rounds.length > 0 && (
-                  <div className="w-full border-t border-[var(--border-muted)] pt-3 mt-1 flex flex-col gap-1.5 font-mono text-xs">
-                    <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
-                      LỊCH TRÌNH VÒNG THI (ROUNDS):
+                  <div className="flex flex-col gap-0 border-t border-[var(--border-muted)]/50 pt-3 mt-1">
+                    <span className="font-mono text-[9px] text-[var(--text-muted)] uppercase tracking-widest mb-2">
+                      Lịch vòng thi
                     </span>
-                    {event.rounds.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between text-[11px] bg-[var(--bg-panel)]/60 px-2.5 py-1 border border-[var(--border-muted)]">
-                        <span className="font-bold text-[var(--accent-team)]">VÒNG {r.roundNumber}: {r.roundName.toUpperCase()}</span>
-                        <span className="text-[var(--text-muted)]">{formatShortDate(r.startDate)}</span>
-                      </div>
-                    ))}
+                    {event.rounds.map((r, idx) => {
+                      const isPast = new Date(r.startDate) < new Date();
+                      return (
+                        <div key={r.id} className="flex items-center gap-3 py-1.5 group">
+                          {/* Timeline dot + line */}
+                          <div className="flex flex-col items-center shrink-0 w-3">
+                            <span className={`w-2 h-2 rounded-full border ${isPast ? "bg-[var(--text-muted)]/30 border-[var(--border-muted)]" : "bg-[var(--accent-primary)]/80 border-[var(--accent-primary)]"}`} />
+                            {idx < event.rounds.length - 1 && (
+                              <span className="w-px flex-1 bg-[var(--border-muted)]/50 h-3 mt-0.5" />
+                            )}
+                          </div>
+                          {/* Content */}
+                          <div className="flex-1 flex items-center justify-between min-w-0">
+                            <span className={`font-mono text-[11px] font-medium ${isPast ? "text-[var(--text-muted)]/50 line-through" : "text-[var(--text-primary)]"}`}>
+                              {r.roundName}
+                            </span>
+                            <span className="font-mono text-[10px] text-[var(--text-muted)] shrink-0 ml-2">
+                              {formatShortDate(r.startDate)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {countdown.isUrgent && (
-                  <span className="font-mono text-[11px] font-bold text-[var(--color-danger)] uppercase tracking-wider animate-pulse text-center">
-                    ⚠ SẮP ĐÓNG CỔNG - HÃY NỘP BÀI NGAY!
+                  <span className="font-mono text-[10px] font-bold text-[var(--color-danger)] uppercase tracking-wider animate-pulse text-center border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/5 py-1">
+                    ⚠ Sắp đóng cổng — Nộp bài ngay!
                   </span>
                 )}
               </div>
             )}
+
           </div>
         </div>
       </div>
