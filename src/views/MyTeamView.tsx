@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   getMockTeam,
   getMockMembers,
@@ -259,6 +260,10 @@ function NoTeamState() {
 
 // ─── Main View ────────────────────────────────────────────────────────────────
 export function MyTeamView() {
+  const { user, activeRole } = useAuth();
+  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const isLeader = roleName === "TeamLeader";
+
   const team = getMockTeam();
   const members = getMockMembers();
   const invitations = getMockInvitations();
@@ -273,10 +278,6 @@ export function MyTeamView() {
 
   // State 1: Chưa có đội
   if (!team) return <NoTeamState />;
-
-  const isLeader = members.find(
-    (m) => m.userId === MOCK_CURRENT_USER.userId
-  )?.roleName === "TeamLeader";
 
   const unapprovedMembers = members.filter((m) => !m.isApproved);
   const memberCount = members.length;
@@ -414,6 +415,54 @@ export function MyTeamView() {
     </div>
   );
 
+  if (!team) {
+    return (
+      <div className="hud-lattice min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped p-8 sm:p-12 flex flex-col items-center text-center gap-6 shadow-[0_0_30px_rgba(56,189,248,0.06)]">
+          
+          {/* Hologram Icon */}
+          <div className="w-20 h-20 hud-clipped bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/40 flex items-center justify-center text-[var(--accent-primary)] text-3xl font-mono font-bold">
+            🛡
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="font-mono text-xs font-bold text-[var(--accent-primary)] tracking-widest uppercase">
+              SEAL HACKATHON — TEAM HUB
+            </span>
+            <h1 className="font-display text-3xl font-extrabold uppercase text-[var(--text-primary)]">
+              Bạn Chưa Tham Gia Đội Thi Nào
+            </h1>
+            <p className="font-sans text-sm text-[var(--text-muted)] max-w-lg leading-relaxed mt-1">
+              Bạn hiện chưa có Đội thi chính thức nào trong mùa giải năm nay. Hãy chọn một Sự kiện đang mở đăng ký để tạo Đội mới hoặc chấp nhận lời mời từ đồng đội!
+            </p>
+          </div>
+
+          {/* 3 Step Guidance Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full my-2 text-left font-mono text-xs">
+            <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)]">
+              <span className="text-[var(--accent-primary)] font-bold">01.</span> Duyệt sự kiện đang diễn ra
+            </div>
+            <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)]">
+              <span className="text-[var(--accent-team)] font-bold">02.</span> Tìm đồng đội & Tạo Đội thi
+            </div>
+            <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)]">
+              <span className="text-[var(--accent-judge)] font-bold">03.</span> Ghi danh & Nộp sản phẩm
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <Link href="/events">
+              <button className="hud-clipped px-6 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md">
+                🔍 KHÁM PHÁ SỰ KIỆN ĐANG MỞ ĐĂNG KÝ →
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="hud-lattice min-h-[calc(100vh-4rem)]">
       {/* Confirm Registration Modal */}
@@ -462,9 +511,24 @@ export function MyTeamView() {
                 title={!canConfirm ? "Kiểm tra điều kiện bên dưới" : "Xác nhận đăng ký với BTC"}
                 className="hud-clipped px-6 py-3 bg-[var(--accent-team)] text-[var(--bg-base)] font-mono font-bold tracking-wider uppercase text-xs transition-all duration-200 hover:bg-white hover:shadow-[0_0_15px_rgba(56,189,248,0.5)] disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
               >
-                {"// GHI DANH VỚI BTC >"}
+                GHI DANH VỚI BTC →
               </button>
             )}
+
+            {!isLeader && teamStatus === "Forming" && (
+              <button
+                onClick={() => {
+                  if (confirm("Bạn có chắc chắn muốn rời khỏi đội thi này không?")) {
+                    alert("Bạn đã rời khỏi đội thành công.");
+                    window.location.reload();
+                  }
+                }}
+                className="hud-clipped px-5 py-2.5 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase tracking-wider hover:bg-[var(--color-danger)]/10 transition-all focus:outline-none"
+              >
+                🚪 RỜI ĐỘI THI
+              </button>
+            )}
+
             {teamStatus === "Registered" && (
               <Link href="/submissions/new">
                 <button
@@ -584,7 +648,11 @@ export function MyTeamView() {
                   <MemberRow
                     key={m.userId}
                     member={m}
-                    isCurrentUser={m.userId === MOCK_CURRENT_USER.userId}
+                    isCurrentUser={
+                      isLeader
+                        ? m.roleName === "TeamLeader"
+                        : m.roleName === "TeamMember" && m.userId === "usr-002"
+                    }
                     isLeader={isLeader}
                     onTransfer={handleTransfer}
                   />

@@ -6,8 +6,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
-import { NavigationBar } from "@/components/domain/NavigationBar";
-import { Footer } from "@/components/domain/Footer";
+import { AppLayoutWrapper } from "@/components/domain/AppLayoutWrapper";
 import "@/styles/tokens.css";
 import "../globals.css";
 
@@ -53,15 +52,11 @@ export default async function RootLayout({
       lang={locale}
       className={`${chakraPetch.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-[var(--bg-base)] text-[var(--text-primary)]">
+      <body className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
-              <NavigationBar />
-              <main className="flex-1 flex flex-col w-full min-h-0">
-                {children}
-              </main>
-              <Footer />
+              <AppLayoutWrapper>{children}</AppLayoutWrapper>
             </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>

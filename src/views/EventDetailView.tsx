@@ -26,7 +26,6 @@ export function EventDetailView({ eventId }: { eventId: string }) {
     deadlineRoundName,
   } = useEventDetailViewModel(eventId);
   const countdown = useCountdown(deadline);
-  const [activeTab, setActiveTab] = useState<"overview" | "schedule" | "tracks">("overview");
 
   if (notFound) {
     return (
@@ -40,7 +39,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <main className="hud-lattice flex flex-1 flex-col">
+    <main className="hud-lattice flex flex-1 flex-col pb-16">
       {/* ── Breadcrumb Bar ── */}
       <div className="border-b border-[var(--border-muted)] bg-[var(--bg-panel)]/40 px-6 py-3">
         <div className="mx-auto flex max-w-[var(--container-max)] items-center justify-between font-mono text-xs text-[var(--text-muted)]">
@@ -53,173 +52,73 @@ export function EventDetailView({ eventId }: { eventId: string }) {
         </div>
       </div>
 
-      {/* ── Main Layout: Vertical Sidebar + Content Workspace ── */}
-      <div className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8 flex flex-col md:flex-row gap-8 flex-1">
+      {/* ── Main Full-Width Workspace Container ── */}
+      <div className="mx-auto w-full max-w-[var(--container-max)] px-6 py-8 flex flex-col gap-10 flex-1">
         
-        {/* ─────────────────────────────────────────────────────────────
-            LEFT COLUMN: DYNAMIC EVENT VERTICAL SIDEBAR (DOCK DỌC CỦA SỰ KIỆN)
-           ───────────────────────────────────────────────────────────── */}
-        <aside className="w-full md:w-64 shrink-0 flex flex-col gap-6">
-          <div className="sticky top-6 p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-6 shadow-[0_0_20px_rgba(56,189,248,0.05)]">
-            
-            {/* Event Header in Sidebar */}
-            <div className="flex flex-col gap-2 pb-4 border-b border-[var(--border-muted)]">
-              <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-primary)] tracking-widest uppercase">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+        {/* ── Section Overview Banner ── */}
+        <section className="p-8 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col md:flex-row justify-between gap-8 shadow-[0_0_30px_rgba(56,189,248,0.06)]">
+          <div className="flex flex-col gap-4 flex-1">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs font-bold text-[var(--accent-primary)] tracking-widest uppercase border border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/10 px-3 py-1">
                 {season} {year}
-              </div>
-              <h3 className="font-display text-lg font-bold text-[var(--text-primary)] leading-tight">
-                {eventName}
-              </h3>
-              <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                {teamCount}/{maxTeams} đội đăng ký
+              </span>
+              <span className="font-mono text-xs text-[var(--text-muted)]">
+                {teamCount}/{maxTeams} đội thi đã đăng ký
               </span>
             </div>
 
-            {/* Vertical Menu Links */}
-            <nav className="flex flex-col gap-1.5 font-mono text-xs">
-              <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
-                MENU SỰ KIỆN
-              </span>
+            <h1 className="font-display text-4xl font-extrabold uppercase tracking-wide text-[var(--text-primary)] md:text-5xl">
+              {eventName}
+            </h1>
+            
+            <p className="font-mono text-sm text-[var(--accent-primary)]">{tagline}</p>
+            <p className="font-sans text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">{description}</p>
 
-              <a
-                href="#overview"
-                onClick={() => setActiveTab("overview")}
-                className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all ${
-                  activeTab === "overview"
-                    ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-bold"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-                }`}
-              >
-                <span>📌</span> Tổng quan & Thể lệ
-              </a>
+            <div className="flex flex-wrap items-center gap-6 pt-3 border-t border-[var(--border-muted)] mt-2 font-mono text-xs">
+              <span>Tổng giải thưởng: <strong className="text-[var(--accent-judge)] font-bold text-base">{formatVnd(totalPrizeVnd)}</strong></span>
+              <span>·</span>
+              <span>Số hạng mục: <strong className="text-[var(--text-primary)] font-bold">{tracks.length} Tracks</strong></span>
+            </div>
 
-              <a
-                href="#schedule"
-                onClick={() => setActiveTab("schedule")}
-                className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all ${
-                  activeTab === "schedule"
-                    ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-bold"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-                }`}
-              >
-                <span>🗓</span> Lịch trình các vòng thi
-              </a>
-
-              <a
-                href="#tracks"
-                onClick={() => setActiveTab("tracks")}
-                className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all ${
-                  activeTab === "tracks"
-                    ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-bold"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
-                }`}
-              >
-                <span>🎯</span> Hạng mục thi ({tracks.length})
-              </a>
-
-              <div className="my-2 border-t border-[var(--border-muted)]" />
-
-              <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase mb-1">
-                HOẠT ĐỘNG & BẢNG ĐIỂM
-              </span>
-
-              <Link
-                href={`/events/${eventId}/leaderboard`}
-                className="flex items-center gap-2.5 px-3 py-2.5 border border-[var(--accent-judge)]/40 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)]/20 transition-all"
-              >
-                <span>🏆</span> Bảng Xếp Hạng
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap items-center gap-4 pt-4">
+              <Link href="/register">
+                <button className="hud-clipped px-6 py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md">
+                  🚀 ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
+                </button>
               </Link>
-
-              <Link
-                href="/submissions/new"
-                className="flex items-center gap-2.5 px-3 py-2.5 border border-[var(--accent-team)]/40 bg-[var(--accent-team)]/10 text-[var(--accent-team)] font-bold hover:bg-[var(--accent-team)]/20 transition-all"
-              >
-                <span>🚀</span> Nộp Bài Thi Của Đội
+              <Link href={`/events/${eventId}/leaderboard`}>
+                <button className="hud-clipped px-5 py-3 border border-[var(--accent-judge)]/50 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all">
+                  🏆 XEM BẢNG XẾP HẠNG
+                </button>
               </Link>
-
-              <Link
-                href="/appeals"
-                className="flex items-center gap-2.5 px-3 py-2.5 border border-[var(--accent-coordinator)]/40 bg-[var(--accent-coordinator)]/10 text-[var(--accent-coordinator)] font-bold hover:bg-[var(--accent-coordinator)]/20 transition-all"
-              >
-                <span>⚖</span> Gửi Phúc Khảo / Khiếu Nại
-              </Link>
-            </nav>
-
-            {/* CTA Register Button in Sidebar */}
-            <div className="pt-2 border-t border-[var(--border-muted)]">
-              <Link href="/register" className="w-full">
-                <button className="hud-clipped w-full py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md">
-                  ĐĂNG KÝ THAM GIA
+              <Link href="/submissions/new">
+                <button className="hud-clipped px-5 py-3 border border-[var(--accent-team)]/50 bg-[var(--accent-team)]/10 text-[var(--accent-team)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-team)]/20 transition-all">
+                  📤 NỘP BÀI THI
                 </button>
               </Link>
             </div>
-
           </div>
-        </aside>
 
-        {/* ─────────────────────────────────────────────────────────────
-            RIGHT COLUMN: EVENT CONTENT WORKSPACE
-           ───────────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 flex flex-col gap-10">
-
-          {/* Section Overview */}
-          <section id="overview" className="p-8 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col md:flex-row justify-between gap-8">
-            <div className="flex flex-col gap-4 flex-1">
-              <span className="font-mono text-xs font-bold text-[var(--accent-primary)] tracking-widest uppercase">
-                [ {season} {year} ]
-              </span>
-              <h1 className="font-display text-4xl font-bold uppercase tracking-wide text-[var(--text-primary)]">
-                {eventName}
-              </h1>
-              <p className="font-mono text-sm text-[var(--accent-primary)]">{tagline}</p>
-              <p className="font-sans text-sm text-[var(--text-muted)] leading-relaxed">{description}</p>
-
-              <div className="flex flex-wrap items-center gap-6 pt-2 font-mono text-xs text-[var(--text-muted)] border-t border-[var(--border-muted)] mt-2">
-                <span>Số đội: <strong className="text-[var(--text-primary)]">{teamCount}/{maxTeams}</strong></span>
-                {totalPrizeVnd > 0 && (
-                  <span>Tổng giải thưởng: <strong className="text-[var(--accent-judge)]">{formatVnd(totalPrizeVnd)}</strong></span>
-                )}
+          {/* Right Logo Shield & Deadline Clock */}
+          <div className="flex flex-col items-center justify-between gap-6 shrink-0 md:w-64 border-t md:border-t-0 md:border-l border-[var(--border-muted)] pt-6 md:pt-0 md:pl-8">
+            <SealShield className="h-28 w-28 text-[var(--accent-primary)] drop-shadow-[0_0_20px_rgba(56,189,248,0.3)]" />
+            {deadlineRoundName && !countdown.isPast && (
+              <div className="hud-clipped w-full border border-[var(--border-muted)] bg-[var(--bg-input)] p-4 text-center">
+                <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-bold">
+                  Hạn nộp bài — {deadlineRoundName}
+                </p>
+                <CountdownClock {...countdown} />
               </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-4">
-                <Link href="/register">
-                  <button className="hud-clipped px-6 py-3 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-md">
-                    🚀 ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
-                  </button>
-                </Link>
-                <Link href={`/events/${eventId}/leaderboard`}>
-                  <button className="hud-clipped px-5 py-3 border border-[var(--accent-judge)]/50 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all">
-                    🏆 BẢNG XẾP HẠNG SỰ KIỆN
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center justify-between gap-6 shrink-0 md:w-64 border-t md:border-t-0 md:border-l border-[var(--border-muted)] pt-6 md:pt-0 md:pl-8">
-              <SealShield className="h-24 w-24 text-[var(--accent-primary)]" />
-              {deadlineRoundName && !countdown.isPast && (
-                <div className="hud-clipped w-full border border-[var(--border-muted)] bg-[var(--bg-input)] p-4">
-                  <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-                    Hạn nộp bài — {deadlineRoundName}
-                  </p>
-                  <CountdownClock {...countdown} />
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Section Schedule */}
-          <div id="schedule">
-            <ScheduleSection rounds={rounds} />
+            )}
           </div>
+        </section>
 
-          {/* Section Tracks */}
-          <div id="tracks">
-            <TracksSection tracks={tracks} />
-          </div>
+        {/* ── Section Schedule Horizontal Timeline ── */}
+        <ScheduleSection rounds={rounds} />
 
-        </div>
+        {/* ── Section Tracks ── */}
+        <TracksSection tracks={tracks} />
 
       </div>
     </main>
@@ -242,7 +141,7 @@ function CountdownClock({
 
   return (
     <div
-      className={`flex items-end gap-2 font-mono ${
+      className={`flex items-center justify-center gap-2 font-mono ${
         isUrgent ? "text-[color:var(--color-danger)]" : "text-[color:var(--accent-primary)]"
       }`}
     >
@@ -305,7 +204,7 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
       {/* ── Section Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-muted)]">
         <div>
-          <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-primary)] uppercase tracking-widest">
+          <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-primary)] uppercase tracking-widest font-bold">
             <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
             TIMELINE TIẾN TRÌNH VÒNG THI
           </div>
@@ -333,12 +232,17 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
       </div>
 
       {/* ── Active Round Info Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[var(--bg-input)]/60 border border-[var(--border-muted)] hud-clipped">
-        <div>
-          <span className="font-mono text-[10px] text-[var(--accent-primary)] font-bold uppercase tracking-wider">
-            VÒNG {currentRound.roundNumber}: {currentRound.roundName.toUpperCase()}
-          </span>
-          <p className="font-sans text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[var(--bg-input)]/60 border border-[var(--border-muted)] hud-clipped">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-mono text-[11px] text-[var(--accent-primary)] font-bold uppercase tracking-wider">
+              VÒNG {currentRound.roundNumber}: {currentRound.roundName.toUpperCase()}
+            </span>
+            <span className="font-mono text-xs font-bold text-[var(--accent-team)] bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-2.5 py-0.5">
+              🗓 THỜI GIAN VÒNG: {formatDateTime(currentRound.startDate)} — {formatDateTime(currentRound.endDate)}
+            </span>
+          </div>
+          <p className="font-sans text-xs text-[var(--text-muted)] leading-relaxed">
             {currentRound.description}
           </p>
         </div>
@@ -395,11 +299,11 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
 
 function TracksSection({ tracks }: { tracks: string[] }) {
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-5">
       <div className="flex items-center gap-2 pb-2 border-b border-[var(--border-muted)]">
         <span className="w-1.5 h-4 bg-[var(--accent-primary)] inline-block" />
         <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-[color:var(--text-primary)]">
-          Hạng mục thi đấu
+          Hạng mục thi đấu ({tracks.length})
         </h2>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -408,7 +312,7 @@ function TracksSection({ tracks }: { tracks: string[] }) {
           return (
             <div
               key={track}
-              className="border p-5 bg-[var(--bg-panel)] hud-clipped flex flex-col gap-3"
+              className="border p-6 bg-[var(--bg-panel)] hud-clipped flex flex-col gap-3 shadow-sm hover:border-[var(--accent-primary)]/50 transition-all"
               style={{ borderColor: "var(--border-muted)", borderLeft: `3px solid ${meta.accent}` }}
             >
               <div className="flex items-center justify-between">
@@ -418,8 +322,8 @@ function TracksSection({ tracks }: { tracks: string[] }) {
                 >
                   <TrackIcon icon={meta.icon} color={meta.accent} />
                 </div>
-                <span className="font-mono text-[10px] text-[color:var(--text-muted)]">
-                  TRACK_{String(i + 1).padStart(2, "0")}
+                <span className="font-mono text-[10px] font-bold text-[color:var(--text-muted)] border border-[var(--border-muted)] px-2 py-0.5">
+                  TRACK {String(i + 1).padStart(2, "0")}
                 </span>
               </div>
               <h3 className="font-display text-base font-bold text-[color:var(--text-primary)]">
@@ -458,6 +362,13 @@ function formatVnd(val: number): string {
 
 function formatShortDate(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  const dateStr = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const timeStr = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  return `${dateStr} ${timeStr}`;
 }
 
 function TrackIcon({ icon, color }: { icon: TrackIconKey; color: string }) {

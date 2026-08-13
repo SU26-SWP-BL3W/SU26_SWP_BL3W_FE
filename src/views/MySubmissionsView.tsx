@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   getMockSubmissions,
   getMockDeliverables,
@@ -245,6 +246,10 @@ function EditModal({
 
 // ─── Main View ────────────────────────────────────────────────────────────────
 export function MySubmissionsView() {
+  const { user, activeRole } = useAuth();
+  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const isLeader = roleName === "TeamLeader";
+
   const team = getMockTeam();
   const isRegistered = team?.status === "Registered";
 
@@ -439,7 +444,19 @@ export function MySubmissionsView() {
                     <button
                       id={`edit-sub-${sub.id}`}
                       onClick={() => setEditingSub(sub)}
-                      className="font-mono text-[10px] px-2 py-1 border border-[var(--accent-team)]/40 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/10 transition-colors uppercase flex items-center gap-1"
+                      disabled={!isRegistered || !isLeader}
+                      title={
+                        !isRegistered
+                          ? "Đội thi cần được BTC duyệt đăng ký mới được phép sửa bài"
+                          : !isLeader
+                          ? "Chỉ Trưởng đội thi mới có quyền chỉnh sửa bài nộp"
+                          : "Chỉnh sửa nội dung bài nộp"
+                      }
+                      className={`font-mono text-[10px] px-2 py-1 border transition-colors uppercase flex items-center gap-1 ${
+                        isRegistered && isLeader
+                          ? "border-[var(--accent-team)]/40 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/10 cursor-pointer"
+                          : "border-[var(--border-muted)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
+                      }`}
                     >
                       ✏ SỬA BÀI
                     </button>
