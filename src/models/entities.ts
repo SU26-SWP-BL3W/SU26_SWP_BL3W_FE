@@ -379,6 +379,15 @@ export interface Appeal {
   createdTime?: string;
 }
 
+export interface UserRejection {
+  id?: string;
+  userId?: string;
+  reason?: string;
+  isActive?: boolean;
+  rejectedByUserId?: string;
+  createdTime?: string;
+}
+
 // ─── Pagination ──────────────────────────────────────────────
 
 export interface PagedResult<T> {

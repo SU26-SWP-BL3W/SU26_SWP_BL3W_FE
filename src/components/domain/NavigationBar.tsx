@@ -26,6 +26,7 @@ import {
   Send,
   UserPlus,
   Compass,
+  User,
 } from "lucide-react";
 
 export function NavigationBar() {
@@ -870,10 +871,27 @@ export function NavigationBar() {
         </div>
 
         {user ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 font-mono text-xs">
+            {!user.isApproved && (
+              <Link
+                href="/profile"
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/40 font-bold hover:bg-[var(--color-warning)] hover:text-black transition-all hud-clipped"
+                title="Hồ sơ chưa duyệt — Cập nhật thẻ sinh viên"
+              >
+                ⚠️ Chưa duyệt thẻ SV ➔
+              </Link>
+            )}
+
+            <Link
+              href="/profile"
+              className="text-[var(--text-primary)] hover:text-[var(--accent-primary)] font-bold flex items-center gap-1.5 border border-[var(--border-muted)] px-2.5 py-1 bg-[var(--bg-input)] hud-clipped"
+            >
+              <User className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> Hồ sơ cá nhân
+            </Link>
+
             <button
               onClick={logout}
-              className="font-mono text-xs text-[var(--color-danger)] hover:underline border border-[var(--color-danger)]/30 px-2.5 py-1 hud-clipped cursor-pointer flex items-center gap-1"
+              className="text-[var(--color-danger)] hover:underline border border-[var(--color-danger)]/30 px-2.5 py-1 hud-clipped cursor-pointer flex items-center gap-1"
             >
               <LogOut className="w-3.5 h-3.5" /> Đăng xuất
             </button>

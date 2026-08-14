@@ -14,6 +14,7 @@ export interface EventFormState {
   endDate: string;
   registrationStartDate: string;
   registrationEndDate: string;
+  maxTeams: number;
   description: string;
 }
 
@@ -65,6 +66,7 @@ export function useCreateEventWizardViewModel() {
     endDate: "2026-09-20",
     registrationStartDate: "2026-06-01",
     registrationEndDate: "2026-07-10",
+    maxTeams: 50,
     description: "Đấu trường công nghệ dành cho sinh viên toàn quốc quy mô lớn nhất trong năm của SEAL.",
   });
 
@@ -273,6 +275,10 @@ export function useCreateEventWizardViewModel() {
       }
       if (new Date(eventData.startDate) > new Date(eventData.endDate)) {
         setErrorMessage("Ngày bắt đầu sự kiện phải diễn ra trước ngày kết thúc!");
+        return;
+      }
+      if (!eventData.maxTeams || eventData.maxTeams <= 0) {
+        setErrorMessage("Số lượng đội thi tối đa phải lớn hơn 0!");
         return;
       }
       // Call API create event

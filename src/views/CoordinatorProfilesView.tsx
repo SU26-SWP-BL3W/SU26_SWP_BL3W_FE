@@ -26,7 +26,10 @@ export function CoordinatorProfilesView() {
     refetch,
   } = useGetUsers({ isApproved: false, pageNumber: 1, pageSize: 50 });
 
-  const pendingUsers = usersData?.data?.filter((u) => !u.isRejected && !u.isTemporary) ?? [];
+  // Chỉ lấy Thí sinh (isStudent) có trạng thái chưa duyệt (isApproved === false)
+  const pendingUsers = (usersData?.data ?? []).filter(
+    (u) => !u.isAdmin && u.isStudent !== false && !u.isApproved && !u.isRejected
+  );
 
   const { mutateAsync: approveUser, isPending: isApproving } = useApproveUser();
   const { mutateAsync: rejectUser, isPending: isRejecting } = useRejectUser();
