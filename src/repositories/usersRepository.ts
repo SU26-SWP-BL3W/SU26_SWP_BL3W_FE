@@ -252,12 +252,8 @@ export function useApproveUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      try {
-        const res = await apiClient.post(`/Users/${userId}/approve`);
-        return res.data;
-      } catch {
-        return { success: true, message: "Duyệt hồ sơ user thành công (Mock Mode)" };
-      }
+      const res = await apiClient.post(`/Users/${userId}/approve`);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -270,14 +266,10 @@ export function useRejectUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: { userId: string; reason: string }) => {
-      try {
-        const res = await apiClient.post(`/Users/${params.userId}/reject`, {
-          reason: params.reason,
-        });
-        return res.data;
-      } catch {
-        return { success: true, message: "Từ chối hồ sơ user (Mock Mode)" };
-      }
+      const res = await apiClient.post(`/Users/${params.userId}/reject`, {
+        reason: params.reason,
+      });
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
