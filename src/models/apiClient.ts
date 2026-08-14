@@ -112,6 +112,11 @@ function forceLogout(): void {
 // ─── Response: unwrap BaseResponse envelope, handle 401 ───────────────────────
 apiClient.interceptors.response.use(
   (response: AxiosResponse<BaseResponse<unknown>>) => {
+    // Backend tra loi duoc = con song: dong breaker ngay. Phai dat TRUOC nhanh
+    // envelope ben duoi, neu khong response binh thuong se khong bao gio reset.
+    consecutiveNetworkFailures = 0;
+    breakerOpenUntil = 0;
+
     const env = response.data;
     // Tolerate non-enveloped responses (defensive).
     if (env && typeof env === "object" && "success" in env && "data" in env) {
@@ -129,8 +134,6 @@ apiClient.interceptors.response.use(
       }
       return { ...response, data: env.data };
     }
-    consecutiveNetworkFailures = 0;
-    breakerOpenUntil = 0;
     return response;
   },
   async (error: AxiosError<BaseResponse<unknown> | ApiError>) => {
