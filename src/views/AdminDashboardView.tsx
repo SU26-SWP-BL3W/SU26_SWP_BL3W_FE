@@ -55,21 +55,33 @@ export const AdminDashboardView: React.FC = () => {
     const eventName = selectedEvent.eventName || selectedEvent.EventName || "Sự kiện";
 
     const foundUser = await usersRepository.findUserByEmail(ecEmail.trim());
-    const realUserId = foundUser?.id || (foundUser as any)?.Id || (foundUser as any)?.userId || (foundUser as any)?.UserId || "usr-ec-01";
+    if (!foundUser) {
+      setIsSubmitting(false);
+      alert(`Không tìm thấy tài khoản người dùng với email "${ecEmail}". Vui lòng kiểm tra lại chính tả.`);
+      return;
+    }
 
-    const res = await staffRepository.assignRoleDirectly({
-      userId: realUserId,
-      eventId: eventId,
-      roleName: "EventCoordinator",
-    });
-    setIsSubmitting(false);
+    const realUserId = foundUser.id || (foundUser as any).Id || (foundUser as any).userId || (foundUser as any).UserId;
 
-    if (res && res.success !== false) {
-      setAssignSuccessMessage(`Đã phân công ${ecEmail} làm Event Coordinator cho sự kiện "${eventName}" thành công!`);
-      setTimeout(() => {
-        setSelectedEvent(null);
-        setAssignSuccessMessage(null);
-      }, 2000);
+    try {
+      const res = await staffRepository.assignRoleDirectly({
+        userId: realUserId,
+        eventId: eventId,
+        roleName: "EventCoordinator",
+      });
+      setIsSubmitting(false);
+
+      if (res && res.success !== false) {
+        setAssignSuccessMessage(`Đã phân công ${ecEmail} làm Event Coordinator cho sự kiện "${eventName}" thành công!`);
+        setTimeout(() => {
+          setSelectedEvent(null);
+          setAssignSuccessMessage(null);
+        }, 2000);
+      }
+    } catch (err: any) {
+      setIsSubmitting(false);
+      const msg = err.response?.data?.message || err.message || "Phân công vai trò thất bại. Vui lòng kiểm tra quyền Admin.";
+      alert(`Lỗi phân công EC: ${msg}`);
     }
   };
 

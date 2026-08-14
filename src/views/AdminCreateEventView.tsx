@@ -64,13 +64,20 @@ export const AdminCreateEventView: React.FC = () => {
       const eventId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId || "";
       if (form.coordinatorEmail.trim()) {
         const foundUser = await usersRepository.findUserByEmail(form.coordinatorEmail.trim());
-        const realUserId = foundUser?.id || (foundUser as any)?.Id || (foundUser as any)?.userId || (foundUser as any)?.UserId || "usr-ec-01";
-
-        await staffRepository.assignRoleDirectly({
-          userId: realUserId,
-          eventId: eventId,
-          roleName: "EventCoordinator",
-        });
+        if (foundUser) {
+          const realUserId = foundUser.id || (foundUser as any).Id || (foundUser as any).userId || (foundUser as any).UserId;
+          try {
+            await staffRepository.assignRoleDirectly({
+              userId: realUserId,
+              eventId: eventId,
+              roleName: "EventCoordinator",
+            });
+          } catch (err: any) {
+            console.error("Lỗi phân công EC:", err);
+          }
+        } else {
+          alert(`Cảnh báo: Đã tạo thành công Sự kiện, nhưng không tìm thấy tài khoản với email "${form.coordinatorEmail}". Bạn có thể phân công lại EC ở danh sách sự kiện.`);
+        }
       }
       setSuccessEventId(eventId);
     } else {

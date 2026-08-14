@@ -35,94 +35,57 @@ export function useGetEventRoles(eventId?: string) {
   });
 }
 
+export interface InviteCoordinatorPayload {
+  eventId: string;
+  email: string;
+  fullName?: string;
+  notes?: string;
+}
+
 export const staffRepository = {
+  /**
+   * Mời Điều phối viên (Event Coordinator) qua Email (POST /api/EventCoordinators/invite)
+   */
+  async inviteCoordinator(payload: InviteCoordinatorPayload): Promise<BaseResponse<EventRoleInvitationEntity>> {
+    const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/EventCoordinators/invite", {
+      eventId: payload.eventId,
+      coordinatorEmail: payload.email,
+      coordinatorFullName: payload.fullName || payload.email.split("@")[0],
+      notes: payload.notes,
+    });
+    return res.data;
+  },
+
   /**
    * Mời Giám khảo (Judge) tham gia Track/Event qua Email (POST /api/Judges/invite)
    * Tự động tạo tài khoản tạm nếu chưa có + gửi email xác thực kèm token 24h.
    */
   async inviteJudge(payload: InviteStaffPayload): Promise<BaseResponse<EventRoleInvitationEntity>> {
-    try {
-      const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/Judges/invite", payload);
-      return res.data;
-    } catch (err: any) {
-      const mockInv: EventRoleInvitationEntity = {
-        InvitationId: `inv-j-${Date.now()}`,
-        EventId: payload.eventId,
-        TrackId: payload.trackId,
-        Email: payload.email,
-        RoleName: "Judge",
-        Status: "Pending",
-        ExpiredAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-      return {
-        data: mockInv,
-        message: `Đã gửi email mời Giám khảo (${payload.email}) thành công (Mock Mode)`,
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/Judges/invite", payload);
+    return res.data;
   },
 
   /**
    * Mời Cố vấn (Mentor) tham gia Track/Event qua Email (POST /api/Mentors/invite)
    */
   async inviteMentor(payload: InviteStaffPayload): Promise<BaseResponse<EventRoleInvitationEntity>> {
-    try {
-      const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/Mentors/invite", payload);
-      return res.data;
-    } catch (err: any) {
-      const mockInv: EventRoleInvitationEntity = {
-        InvitationId: `inv-m-${Date.now()}`,
-        EventId: payload.eventId,
-        TrackId: payload.trackId,
-        Email: payload.email,
-        RoleName: "Mentor",
-        Status: "Pending",
-        ExpiredAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-      return {
-        data: mockInv,
-        message: `Đã gửi email mời Cố vấn (${payload.email}) thành công (Mock Mode)`,
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<EventRoleInvitationEntity>>("/Mentors/invite", payload);
+    return res.data;
   },
 
   /**
    * Gán vai trò trực tiếp không qua email mời (POST /api/EventRoles/assign)
    */
   async assignRoleDirectly(payload: AssignRolePayload): Promise<BaseResponse<EventRole>> {
-    try {
-      const res = await apiClient.post<BaseResponse<EventRole>>("/EventRoles/assign", payload);
-      return res.data;
-    } catch (err: any) {
-      const mockRole: EventRole = {
-        EventRoleId: `er-${Date.now()}`,
-        UserId: payload.userId,
-        EventId: payload.eventId,
-        TrackId: payload.trackId,
-        TeamId: payload.teamId,
-        RoleName: payload.roleName,
-      };
-      return {
-        data: mockRole,
-        message: `Đã gán trực tiếp vai trò ${payload.roleName} thành công (Mock Mode)`,
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<EventRole>>("/EventRoles/assign", payload);
+    return res.data;
   },
 
   /**
    * Gỡ vai trò nhân sự khỏi sự kiện (DELETE /api/EventRoles/{id})
    */
   async removeEventRole(roleId: string): Promise<boolean> {
-    try {
-      const res = await apiClient.delete(`/EventRoles/${roleId}`);
-      return res.status === 200 || res.status === 204;
-    } catch {
-      return true;
-    }
+    const res = await apiClient.delete(`/EventRoles/${roleId}`);
+    return res.status === 200 || res.status === 204;
   },
 };

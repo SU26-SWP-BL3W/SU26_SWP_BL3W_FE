@@ -44,6 +44,9 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
   const { data: realCriteriaBank = [] } = useGetCriterias();
   const criteriaPresetList = realCriteriaBank.length > 0 ? realCriteriaBank : MOCK_DEFAULT_CRITERIAS;
 
+  const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = React.useState<Record<string, boolean>>({});
+
   // Render per-track cards if tracks exist
   const hasMultipleTracks = tracks.length > 0;
 
@@ -92,6 +95,13 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
           )}
         </div>
       </div>
+
+      {syncMessage && (
+        <div className="p-3 bg-[rgba(6,182,212,0.1)] border border-cyan-500/40 text-cyan-300 font-mono text-xs rounded flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span>{syncMessage}</span>
+        </div>
+      )}
 
       {/* Preset Pickers */}
       <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-2">
@@ -210,16 +220,34 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                       </Button>
                     )}
 
-                    {onApplyToAllTracks && (
+                    {onApplyToAllTracks && tracks.length > 1 && (
                       <Button
                         variant="ghost"
-                        onClick={() => onApplyToAllTracks(trackCriterias)}
-                        className="text-xs font-mono"
-                        title="Sao chép tiêu chí hạng mục này cho tất cả các hạng mục còn lại"
+                        onClick={() => {
+                          onApplyToAllTracks(trackCriterias);
+                          setSyncMessage(`Đã sao chép toàn bộ tiêu chí của "${trk.trackName}" sang ${tracks.length - 1} Hạng mục còn lại!`);
+                          setTimeout(() => setSyncMessage(null), 4000);
+                        }}
+                        className="text-xs font-mono text-cyan-400 hover:text-cyan-300 border border-cyan-500/30"
+                        title="Tự động sao chép bộ tiêu chí đang thiết lập này sang cho tất cả các Hạng mục còn lại trong sự kiện"
                       >
-                        Áp dụng cho tất cả
+                        📋 Đồng bộ cho mọi Hạng mục
                       </Button>
                     )}
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        onUpdateTrackCriterias?.(trk.id, trackCriterias);
+                        setSaveStatus((prev) => ({ ...prev, [trk.id]: true }));
+                        setTimeout(() => {
+                          setSaveStatus((prev) => ({ ...prev, [trk.id]: false }));
+                        }, 3000);
+                      }}
+                      className="text-xs font-mono text-[var(--color-success)] border border-[var(--color-success)]/40 hover:bg-[var(--color-success)]/10"
+                    >
+                      {saveStatus[trk.id] ? "✅ Đã lưu cấu hình!" : "💾 Lưu tiêu chí hạng mục"}
+                    </Button>
                   </div>
                 </div>
 
@@ -447,18 +475,33 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-4 border-t border-[var(--border-muted)]">
-        <Button variant="ghost" onClick={onPrev} className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[var(--border-muted)]">
+        <Button variant="ghost" onClick={onPrev} className="flex items-center gap-2 text-xs font-mono">
           <ArrowLeft className="w-4 h-4" /> &lt; Quay Lại Bước 3
         </Button>
-        <Button
-          variant="primary"
-          onClick={onNext}
-          disabled={!isAllTracksValid}
-          className="flex items-center gap-2"
-        >
-          {!isAllTracksValid ? "Yêu Cầu Đủ 100% Cho Mọi Hạng Mục" : "Tiếp Tục Phân Công Nhân Sự >"}
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setSyncMessage("✅ Đã lưu tạm cấu hình Mẫu tiêu chí thành công!");
+              setTimeout(() => setSyncMessage(null), 4000);
+            }}
+            disabled={!isAllTracksValid}
+            className="text-xs font-mono flex items-center gap-1.5"
+          >
+            💾 Lưu Tạm Cấu Hình
+          </Button>
+
+          <Button
+            variant="primary"
+            onClick={onNext}
+            disabled={!isAllTracksValid}
+            className="flex items-center gap-2 text-xs font-mono"
+          >
+            {!isAllTracksValid ? "Yêu Cầu Đủ 100% Cho Mọi Hạng Mục" : "💾 Lưu & Sang Bước 5: Phân Công Nhân Sự >"}
+          </Button>
+        </div>
       </div>
     </Card>
   );

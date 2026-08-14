@@ -28,12 +28,56 @@ export const CoordinatorStaffView: React.FC = () => {
   const [judgeTrackId, setJudgeTrackId] = useState("");
   const [mentorEmail, setMentorEmail] = useState("");
   const [mentorTrackId, setMentorTrackId] = useState("");
+  const [coordinatorEmail, setCoordinatorEmail] = useState("");
+  const [coordinatorFullName, setCoordinatorFullName] = useState("");
   const [staffSearch, setStaffSearch] = useState("");
   
   const [judgeMessage, setJudgeMessage] = useState<{ text: string; isError: boolean } | null>(null);
   const [mentorMessage, setMentorMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [coordinatorMessage, setCoordinatorMessage] = useState<{ text: string; isError: boolean } | null>(null);
   const [isSubmittingJudge, setIsSubmittingJudge] = useState(false);
   const [isSubmittingMentor, setIsSubmittingMentor] = useState(false);
+  const [isSubmittingCoordinator, setIsSubmittingCoordinator] = useState(false);
+
+  const handleInviteCoordinator = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!coordinatorEmail.trim() || !selectedEventId) return;
+
+    setIsSubmittingCoordinator(true);
+    setCoordinatorMessage(null);
+
+    try {
+      const res = await staffRepository.inviteCoordinator({
+        eventId: selectedEventId,
+        email: coordinatorEmail.trim(),
+        fullName: coordinatorFullName.trim() || undefined,
+      });
+
+      setIsSubmittingCoordinator(false);
+
+      if (res.success) {
+        setCoordinatorMessage({
+          text: res.message || `Đã gửi email mời Điều phối viên (${coordinatorEmail}) thành công!`,
+          isError: false,
+        });
+        setCoordinatorEmail("");
+        setCoordinatorFullName("");
+        await refetchRoles();
+      } else {
+        setCoordinatorMessage({
+          text: res.message || "Gửi lời mời Điều phối viên thất bại.",
+          isError: true,
+        });
+      }
+    } catch (err: any) {
+      setIsSubmittingCoordinator(false);
+      const msg = err.response?.data?.message || err.message || "Gửi lời mời thất bại. Bạn phải là Event Coordinator của sự kiện này.";
+      setCoordinatorMessage({
+        text: msg,
+        isError: true,
+      });
+    }
+  };
 
   const handleInviteJudge = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +183,7 @@ export const CoordinatorStaffView: React.FC = () => {
 
   const filteredRoles = eventRoles.filter((er: any) => {
     const roleName = er.roleName || er.RoleName || "";
-    const isStaff = roleName === "Judge" || roleName === "Mentor";
+    const isStaff = roleName === "Judge" || roleName === "Mentor" || roleName === "EventCoordinator";
     if (!isStaff) return false;
     if (!staffSearch.trim()) return true;
     const query = staffSearch.toLowerCase();
@@ -221,8 +265,77 @@ export const CoordinatorStaffView: React.FC = () => {
           </div>
         </div>
 
-        {/* 2 Invitation Form Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* 3 Invitation Form Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Card Form 1: Invite Coordinator */}
+          <div className="bg-[var(--bg-panel)] border border-[var(--border-muted)] p-6 hud-clipped flex flex-col justify-between space-y-6">
+            <div>
+              <div className="flex items-center gap-3 border-b border-[var(--border-muted)] pb-4 mb-6">
+                <div className="w-10 h-10 bg-[var(--accent-coordinator)]/10 border border-[var(--accent-coordinator)]/30 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-[var(--accent-coordinator)]" />
+                </div>
+                <div>
+                  <h2 className="font-display font-bold text-base text-[var(--text-primary)] uppercase tracking-wide">
+                    Mời Điều Phối Viên (EC)
+                  </h2>
+                  <p className="text-xs font-mono text-[var(--text-muted)]">
+                    Mời thêm Điều phối viên cùng đồng quản lý sự kiện này.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleInviteCoordinator} className="space-y-4">
+                <div>
+                  <label className="block font-mono text-xs text-[var(--text-muted)] uppercase mb-1">
+                    Email Điều Phối Viên *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={coordinatorEmail}
+                    onChange={(e) => setCoordinatorEmail(e.target.value)}
+                    placeholder="ec.co-organizer@fpt.edu.vn"
+                    className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-coordinator)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-mono text-xs text-[var(--text-muted)] uppercase mb-1">
+                    Họ Và Tên (Tùy chọn)
+                  </label>
+                  <input
+                    type="text"
+                    value={coordinatorFullName}
+                    onChange={(e) => setCoordinatorFullName(e.target.value)}
+                    placeholder="Nguyễn Văn A"
+                    className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-coordinator)]"
+                  />
+                </div>
+
+                {coordinatorMessage && (
+                  <div
+                    className={`p-3 font-mono text-xs border hud-clipped flex items-center gap-2 ${
+                      coordinatorMessage.isError
+                        ? "bg-[var(--color-danger)]/10 border-[var(--color-danger)]/30 text-[var(--color-danger)]"
+                        : "bg-[var(--accent-coordinator)]/10 border-[var(--accent-coordinator)]/30 text-[var(--accent-coordinator)]"
+                    }`}
+                  >
+                    {coordinatorMessage.isError ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                    <span>{coordinatorMessage.text}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingCoordinator}
+                  className="w-full py-2.5 bg-[var(--accent-coordinator)] text-black font-mono text-xs font-bold uppercase tracking-wider hud-clipped flex items-center justify-center gap-2 hover:opacity-90 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{isSubmittingCoordinator ? "Đang Gửi Lời Mời..." : "Gửi Lời Mời Điều Phối Viên"}</span>
+                </button>
+              </form>
+            </div>
+          </div>
           {/* Card Form 1: Invite Judge */}
           <div className="bg-[var(--bg-panel)] border border-[var(--border-muted)] p-6 hud-clipped flex flex-col justify-between space-y-6">
             <div>
