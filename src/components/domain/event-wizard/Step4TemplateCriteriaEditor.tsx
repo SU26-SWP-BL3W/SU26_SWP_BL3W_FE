@@ -3,7 +3,7 @@
 import React from "react";
 import { Button, Input, Card } from "@/components/ui";
 import { TemplateCriteriaFormState } from "@/viewModels/useCreateEventWizardViewModel";
-import { MOCK_DEFAULT_CRITERIAS } from "@/repositories/templatesRepository";
+import { MOCK_DEFAULT_CRITERIAS, useGetCriterias } from "@/repositories/templatesRepository";
 import { Sliders, Plus, Trash2, ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Award } from "lucide-react";
 
 interface Step4TemplateCriteriaEditorProps {
@@ -31,6 +31,8 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
   onNext,
   onPrev,
 }) => {
+  const { data: realCriteriaBank = [] } = useGetCriterias();
+  const criteriaPresetList = realCriteriaBank.length > 0 ? realCriteriaBank : MOCK_DEFAULT_CRITERIAS;
   return (
     <Card className="hud-glow-amber p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
@@ -106,25 +108,33 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
           Chọn mẫu tiêu chí gợi ý từ ngân hàng tiêu chí SEAL:
         </span>
         <div className="flex flex-wrap gap-2">
-          {MOCK_DEFAULT_CRITERIAS.map((item) => (
-            <button
-              key={item.CriteriaId}
-              type="button"
-              onClick={() =>
-                onAddCriteria({
-                  criteriaId: item.CriteriaId,
-                  criterionName: item.CriterionName,
-                  description: item.Description ?? undefined,
-                  weight: item.Weight,
-                  maxScore: item.MaxScore,
-                })
-              }
-              className="px-3 py-1 bg-[var(--bg-input)] hover:bg-[var(--accent-judge)]/10 text-[var(--text-primary)] hover:text-[var(--accent-judge)] border border-[var(--border-muted)] hover:border-[var(--accent-judge)] font-mono text-xs transition-colors hud-clipped flex items-center gap-1"
-            >
-              <Plus className="w-3 h-3 text-[var(--accent-judge)]" />
-              + {item.CriterionName} ({item.Weight}%)
-            </button>
-          ))}
+          {criteriaPresetList.map((item: any, idx: number) => {
+            const cId = item.id || item.Id || item.criteriaId || item.CriteriaId || `crit-bank-${idx}`;
+            const cName = item.criterionName || item.CriterionName || item.criteriaName || item.CriteriaName || "Tiêu chí";
+            const cDesc = item.description || item.Description;
+            const cWeight = item.weight || item.Weight || 20;
+            const cMaxScore = item.maxScore || item.MaxScore || 10;
+
+            return (
+              <button
+                key={cId}
+                type="button"
+                onClick={() =>
+                  onAddCriteria({
+                    criteriaId: cId,
+                    criterionName: cName,
+                    description: cDesc,
+                    weight: cWeight,
+                    maxScore: cMaxScore,
+                  })
+                }
+                className="px-3 py-1 bg-[var(--bg-input)] hover:bg-[var(--accent-judge)]/10 text-[var(--text-primary)] hover:text-[var(--accent-judge)] border border-[var(--border-muted)] hover:border-[var(--accent-judge)] font-mono text-xs transition-colors hud-clipped flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3 text-[var(--accent-judge)]" />
+                + {cName} ({cWeight}%)
+              </button>
+            );
+          })}
         </div>
       </div>
 

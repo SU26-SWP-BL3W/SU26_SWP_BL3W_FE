@@ -437,12 +437,27 @@ export function useCreateEventWizardViewModel() {
         const templateId = (resTpl.data as any)?.id || (resTpl.data as any)?.Id || resTpl.data?.TemplateId;
         if (templateId) {
           for (const crit of criterias) {
-            await templatesRepository.addCriteriaToTemplate({
-              templateId,
-              criteriaId: crit.criteriaId,
-              weight: crit.weight,
-              maxScore: crit.maxScore,
-            });
+            let targetCriteriaId = crit.criteriaId;
+
+            // If criteriaId is missing or a client dummy ID (crit-1, crit-timestamp, etc.), create a real Criteria in DB first!
+            if (!targetCriteriaId || targetCriteriaId.startsWith("crit-") || targetCriteriaId.length < 20) {
+              const resCrit = await templatesRepository.createCriteria({
+                criterionName: crit.criterionName,
+                description: crit.description || "",
+                maxScore: crit.maxScore || 10,
+              });
+              const createdCritObj: any = resCrit?.data || resCrit;
+              targetCriteriaId = createdCritObj?.id || createdCritObj?.Id || createdCritObj?.criteriaId || createdCritObj?.CriteriaId;
+            }
+
+            if (targetCriteriaId) {
+              await templatesRepository.addCriteriaToTemplate({
+                templateId,
+                criteriaId: targetCriteriaId,
+                weight: crit.weight,
+                maxScore: crit.maxScore,
+              });
+            }
           }
 
           // Assign newly created template to tracks that chose __custom__

@@ -100,10 +100,10 @@ export const templatesRepository = {
     try {
       const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
       return res.data;
-    } catch (err: any) {
+    } catch {
       return {
         data: MOCK_DEFAULT_CRITERIAS,
-        message: "Lấy danh sách tiêu chí mẫu (Mock Mode)",
+        message: "Lấy danh sách tiêu chí mẫu",
         statusCode: 200,
         success: true,
       };
@@ -111,67 +111,20 @@ export const templatesRepository = {
   },
 
   async createCriteria(payload: { criterionName: string; description?: string; maxScore?: number }): Promise<BaseResponse<CriteriaEntity>> {
-    try {
-      const res = await apiClient.post<BaseResponse<CriteriaEntity>>("/Criterias", payload);
-      return res.data;
-    } catch {
-      return {
-        data: {
-          CriteriaId: `crit-${Date.now()}`,
-          CriterionName: payload.criterionName,
-          Description: payload.description,
-          MaxScore: payload.maxScore || 10,
-          IsActive: true,
-        },
-        message: "Tạo tiêu chí thành công (Mock)",
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<CriteriaEntity>>("/Criterias", payload);
+    return res.data;
   },
 
   async createTemplate(payload: CreateTemplatePayload): Promise<BaseResponse<TemplateEntity>> {
-    try {
-      const res = await apiClient.post<BaseResponse<TemplateEntity>>("/Templates", payload);
-      return res.data;
-    } catch (err: any) {
-      const mockCreated: any = {
-        TemplateId: `tpl-${Date.now()}`,
-        TemplateName: payload.templateName,
-        Description: payload.description,
-      };
-      return {
-        data: mockCreated,
-        message: "Tạo template thành công (Mock Mode)",
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<TemplateEntity>>("/Templates", payload);
+    return res.data;
   },
 
   async addCriteriaToTemplate(payload: AddCriteriaToTemplatePayload): Promise<BaseResponse<TemplateCriteriaEntity>> {
-    try {
-      const res = await apiClient.post<BaseResponse<TemplateCriteriaEntity>>(
-        `/Templates/${payload.templateId}/criteria`,
-        payload
-      );
-      return res.data;
-    } catch (err: any) {
-      const criteriaObj = MOCK_DEFAULT_CRITERIAS.find((c) => c.CriteriaId === payload.criteriaId);
-      const mockItem: TemplateCriteriaEntity = {
-        TemplateId: payload.templateId,
-        CriteriaId: payload.criteriaId,
-        CriterionName: criteriaObj?.CriterionName || "Tiêu chí chấm điểm",
-        Description: criteriaObj?.Description || "",
-        Weight: payload.weight,
-        MaxScore: payload.maxScore,
-      };
-      return {
-        data: mockItem,
-        message: "Thêm tiêu chí vào mẫu thành công (Mock Mode)",
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<TemplateCriteriaEntity>>(
+      `/Templates/${payload.templateId}/criteria`,
+      payload
+    );
+    return res.data;
   },
 };
