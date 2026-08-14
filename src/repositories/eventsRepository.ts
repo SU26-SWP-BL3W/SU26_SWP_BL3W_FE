@@ -70,15 +70,39 @@ export interface EventDTO {
 
 import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
 
-let locallyCreatedEvents: any[] = [];
-let eventsCacheStore: any[] = [...MOCK_EVENTS];
+const STORAGE_KEY = "seal_created_events";
+
+function getStoredEvents(): any[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredEvents(list: any[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // ignore
+  }
+}
 
 function mergeCreatedWithDb(dbList: any[]) {
-  if (!Array.isArray(dbList)) return locallyCreatedEvents;
+  const localList = getStoredEvents();
+  if (!Array.isArray(dbList) || dbList.length === 0) {
+    const dbIds = new Set(localList.map((e) => e.id || e.Id || e.eventId || e.EventId).filter(Boolean));
+    const fallbackMocks = MOCK_EVENTS.filter((m) => !dbIds.has(m.id));
+    return [...localList, ...fallbackMocks];
+  }
+
   const dbIds = new Set(
     dbList.map((e) => e.id || e.Id || e.eventId || e.EventId).filter(Boolean)
   );
-  const unpersistedLocal = locallyCreatedEvents.filter((loc) => {
+  const unpersistedLocal = localList.filter((loc) => {
     const id = loc.id || loc.Id || loc.eventId || loc.EventId;
     return id && !dbIds.has(id);
   });
@@ -98,7 +122,7 @@ export function useEvents() {
       } catch {
         // Fallback to cache store
       }
-      return mergeCreatedWithDb(eventsCacheStore) as Event[];
+      return mergeCreatedWithDb([]) as Event[];
     },
   });
 }
@@ -127,7 +151,7 @@ export function useMyEvents() {
       } catch {
         // ignore
       }
-      return mergeCreatedWithDb(eventsCacheStore) as MyEventModel[];
+      return mergeCreatedWithDb([]) as MyEventModel[];
     },
   });
 }
@@ -140,7 +164,8 @@ export function useEventDetail(eventId: string) {
         const res = await apiClient.get<Event>(`/Events/${eventId}`);
         return res.data;
       } catch {
-        const cached = eventsCacheStore.find(
+        const allLocal = mergeCreatedWithDb([]);
+        const cached = allLocal.find(
           (e) => (e.id || e.Id || e.eventId || e.EventId) === eventId
         );
         return cached || null;
@@ -200,8 +225,10 @@ export async function createEvent(data: Partial<Event>): Promise<any> {
 
   const innerData = createdResult.data || createdResult;
   if (innerData) {
-    locallyCreatedEvents = [innerData, ...locallyCreatedEvents];
-    eventsCacheStore = [innerData, ...eventsCacheStore];
+    const currentStored = getStoredEvents();
+    const targetId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId;
+    const updated = [innerData, ...currentStored.filter((e) => (e.id || e.Id || e.eventId || e.EventId) !== targetId)];
+    saveStoredEvents(updated);
   }
 
   return createdResult;
@@ -213,12 +240,11 @@ export async function deleteEvent(id: string): Promise<any> {
   } catch {
     // Ignore network error in mock mode
   }
-  locallyCreatedEvents = locallyCreatedEvents.filter(
+  const currentStored = getStoredEvents();
+  const updated = currentStored.filter(
     (e) => (e.id || e.Id || e.eventId || e.EventId) !== id
   );
-  eventsCacheStore = eventsCacheStore.filter(
-    (e) => (e.id || e.Id || e.eventId || e.EventId) !== id
-  );
+  saveStoredEvents(updated);
   return { success: true };
 }
 
