@@ -346,7 +346,7 @@ export const CoordinatorStaffView: React.FC = () => {
                 Danh Sách Nhân Sự Đã Phân Công ({filteredRoles.length})
               </h3>
               <p className="text-xs text-[var(--text-muted)] font-sans">
-                Danh sách Giám khảo và Cố vấn được phân công vào sự kiện từ API GET /EventRoles/event.
+                Danh sách Giám khảo và Cố vấn được phân công quản lý và hỗ trợ các Hạng mục trong sự kiện.
               </p>
             </div>
 

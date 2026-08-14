@@ -90,14 +90,179 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const [newRoundName, setNewRoundName] = useState("");
   const [newRuleType, setNewRuleType] = useState<"top" | "percent" | "minscore">("top");
   const [newRuleValue, setNewRuleValue] = useState<number>(10);
+  const [roundStartDate, setRoundStartDate] = useState("");
+  const [roundEndDate, setRoundEndDate] = useState("");
+  const [roundScoringStartDate, setRoundScoringStartDate] = useState("");
+  const [roundScoringEndDate, setRoundScoringEndDate] = useState("");
+  const [roundAppealStartDate, setRoundAppealStartDate] = useState("");
+  const [roundAppealEndDate, setRoundAppealEndDate] = useState("");
 
   const newRoundNumber = (rounds?.length || 0) + 1;
 
-  // Track Creation State
+  const handleRuleTypeChange = (type: "top" | "percent" | "minscore", isEdit = false) => {
+    if (isEdit) {
+      setEditRuleType(type);
+      if (type === "top") setEditRuleValue(10);
+      else if (type === "percent") setEditRuleValue(50);
+      else if (type === "minscore") setEditRuleValue(7.0);
+    } else {
+      setNewRuleType(type);
+      if (type === "top") setNewRuleValue(10);
+      else if (type === "percent") setNewRuleValue(50);
+      else if (type === "minscore") setNewRuleValue(7.0);
+    }
+  };
+
+  const validateRoundTimeline = (
+    rStart: string,
+    rEnd: string,
+    sStart: string,
+    sEnd: string,
+    aStart?: string,
+    aEnd?: string,
+    currentRoundNum?: number
+  ): string | null => {
+    if (!rStart || !rEnd || !sStart || !sEnd) {
+      return "Vui lòng nhập đầy đủ các mốc thời gian bắt buộc (Mở nộp bài, Hạn chót nộp, Bắt đầu chấm, Hạn chót chấm).";
+    }
+
+    const dRStart = new Date(rStart).getTime();
+    const dREnd = new Date(rEnd).getTime();
+    const dSStart = new Date(sStart).getTime();
+    const dSEnd = new Date(sEnd).getTime();
+    const dAStart = aStart ? new Date(aStart).getTime() : null;
+    const dAEnd = aEnd ? new Date(aEnd).getTime() : null;
+
+    if (dRStart >= dREnd) return "Hạn chót nộp bài phải sau ngày Mở nộp bài.";
+    if (dSStart < dREnd) return "Thời gian Bắt đầu chấm bài không được trước Hạn chót nộp bài.";
+    if (dSEnd <= dSStart) return "Hạn chót chấm điểm phải sau thời gian Bắt đầu chấm.";
+    if (dAStart && dAStart < dSEnd) return "Thời gian Mở phúc khảo không được trước Hạn chót chấm điểm.";
+    if (dAEnd && dAStart && dAEnd <= dAStart) return "Hạn chót phúc khảo phải sau ngày Mở phúc khảo.";
+
+    const num = currentRoundNum || newRoundNumber;
+    if (num > 1 && Array.isArray(rounds)) {
+      const prevRound = rounds.find((r: any) => (r.roundNumber || r.RoundNumber) === num - 1);
+      if (prevRound) {
+        const prevEndStr = prevRound.scoringEndDate || prevRound.ScoringEndDate || prevRound.endDate || prevRound.EndDate;
+        if (prevEndStr) {
+          const prevEndTime = new Date(prevEndStr).getTime();
+          if (dRStart < prevEndTime) {
+            return `Vòng ${num} mở nộp bài (${rStart}) không được trước khi Vòng ${num - 1} hoàn tất chấm/phúc khảo.`;
+          }
+        }
+      }
+    }
+
+    return null;
+  };
+
+  // Edit Round State
+  const [editingRoundId, setEditingRoundId] = useState<string | null>(null);
+  const [editRoundName, setEditRoundName] = useState("");
+  const [editRuleType, setEditRuleType] = useState<"top" | "percent" | "minscore">("top");
+  const [editRuleValue, setEditRuleValue] = useState<number>(10);
+  const [editRoundStartDate, setEditRoundStartDate] = useState("");
+  const [editRoundEndDate, setEditRoundEndDate] = useState("");
+  const [editRoundScoringStartDate, setEditRoundScoringStartDate] = useState("");
+  const [editRoundScoringEndDate, setEditRoundScoringEndDate] = useState("");
+  const [editRoundAppealStartDate, setEditRoundAppealStartDate] = useState("");
+  const [editRoundAppealEndDate, setEditRoundAppealEndDate] = useState("");
+
+  const startEditRound = (rnd: any) => {
+    const rId = rnd.id || rnd.Id || rnd.roundId || rnd.RoundId;
+    setEditingRoundId(rId);
+    setEditRoundName(rnd.roundName || rnd.RoundName || "");
+
+    const ruleStr = rnd.advancementRule || rnd.AdvancementRule || "top:10";
+    const parts = ruleStr.split(":");
+    const type = (parts[0] || "top").toLowerCase() as any;
+    const val = Number(parts[1]) || 10;
+    setEditRuleType(type === "percent" || type === "minscore" ? type : "top");
+    setEditRuleValue(val);
+
+    setEditRoundStartDate(rnd.startDate ? rnd.startDate.split("T")[0] : rnd.StartDate ? rnd.StartDate.split("T")[0] : "");
+    setEditRoundEndDate(rnd.endDate ? rnd.endDate.split("T")[0] : rnd.EndDate ? rnd.EndDate.split("T")[0] : "");
+    setEditRoundScoringStartDate(rnd.scoringStartDate ? rnd.scoringStartDate.split("T")[0] : rnd.ScoringStartDate ? rnd.ScoringStartDate.split("T")[0] : "");
+    setEditRoundScoringEndDate(rnd.scoringEndDate ? rnd.scoringEndDate.split("T")[0] : rnd.ScoringEndDate ? rnd.ScoringEndDate.split("T")[0] : "");
+    setEditRoundAppealStartDate(rnd.appealStartDate ? rnd.appealStartDate.split("T")[0] : rnd.AppealStartDate ? rnd.AppealStartDate.split("T")[0] : "");
+    setEditRoundAppealEndDate(rnd.appealEndDate ? rnd.appealEndDate.split("T")[0] : rnd.AppealEndDate ? rnd.AppealEndDate.split("T")[0] : "");
+  };
+
+  const handleSaveEditRound = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRoundId) return;
+
+    const timelineErr = validateRoundTimeline(
+      editRoundStartDate,
+      editRoundEndDate,
+      editRoundScoringStartDate,
+      editRoundScoringEndDate,
+      editRoundAppealStartDate,
+      editRoundAppealEndDate
+    );
+    if (timelineErr) {
+      alert(`Lỗi cấu hình mốc thời gian: ${timelineErr}`);
+      return;
+    }
+
+    try {
+      await roundsRepository.updateRound(editingRoundId, {
+        roundName: editRoundName,
+        advancementRule: `${editRuleType}:${editRuleValue}`,
+        startDate: new Date(editRoundStartDate).toISOString(),
+        endDate: new Date(editRoundEndDate).toISOString(),
+        scoringStartDate: new Date(editRoundScoringStartDate).toISOString(),
+        scoringEndDate: new Date(editRoundScoringEndDate).toISOString(),
+        appealStartDate: editRoundAppealStartDate ? new Date(editRoundAppealStartDate).toISOString() : undefined,
+        appealEndDate: editRoundAppealEndDate ? new Date(editRoundAppealEndDate).toISOString() : undefined,
+      });
+      setEditingRoundId(null);
+      await refetchRounds();
+      alert("Cập nhật Vòng thi thành công!");
+    } catch (err: any) {
+      alert(`Cập nhật Vòng thi thất bại: ${err?.response?.data?.message || err?.message}`);
+    }
+  };
+
+  // Track Creation & Edit State
   const [newTrackName, setNewTrackName] = useState("");
   const [newTrackDesc, setNewTrackDesc] = useState("");
   const [newSubmissionRuleDesc, setNewSubmissionRuleDesc] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+
+  const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
+  const [editTrackName, setEditTrackName] = useState("");
+  const [editTrackDesc, setEditTrackDesc] = useState("");
+  const [editSubmissionRuleDesc, setEditSubmissionRuleDesc] = useState("");
+  const [editTemplateId, setEditTemplateId] = useState("");
+
+  const startEditTrack = (trk: any) => {
+    const tId = trk.id || trk.Id || trk.trackId;
+    setEditingTrackId(tId);
+    setEditTrackName(trk.trackName || trk.TrackName || "");
+    setEditTrackDesc(trk.description || trk.Description || "");
+    setEditSubmissionRuleDesc(trk.submissionRuleDescription || trk.SubmissionRuleDescription || "");
+    setEditTemplateId(trk.templateId || trk.TemplateId || "");
+  };
+
+  const handleSaveEditTrack = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTrackId) return;
+
+    try {
+      await tracksRepository.updateTrack(editingTrackId, {
+        trackName: editTrackName,
+        description: editTrackDesc,
+        submissionRuleDescription: editSubmissionRuleDesc,
+        templateId: editTemplateId || undefined,
+      });
+      setEditingTrackId(null);
+      await refetchTracks();
+      alert("Cập nhật Hạng mục thành công!");
+    } catch (err: any) {
+      alert(`Cập nhật Hạng mục thất bại: ${err?.response?.data?.message || err?.message}`);
+    }
+  };
 
   const handleUpdateGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,20 +299,42 @@ export const CoordinatorEventDetailView: React.FC = () => {
     e.preventDefault();
     if (!newRoundName.trim()) return;
 
+    const timelineErr = validateRoundTimeline(
+      roundStartDate,
+      roundEndDate,
+      roundScoringStartDate,
+      roundScoringEndDate,
+      roundAppealStartDate,
+      roundAppealEndDate
+    );
+
+    if (timelineErr) {
+      alert(`Lỗi cấu hình mốc thời gian: ${timelineErr}`);
+      return;
+    }
+
     const formattedAdvancementRule = `${newRuleType}:${newRuleValue}`;
 
     try {
-      const nowIso = new Date().toISOString();
-      const nextWeekIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       await roundsRepository.createRound({
         eventId,
         roundName: newRoundName,
         roundNumber: newRoundNumber,
-        startDate: nowIso,
-        endDate: nextWeekIso,
+        startDate: new Date(roundStartDate).toISOString(),
+        endDate: new Date(roundEndDate).toISOString(),
+        scoringStartDate: new Date(roundScoringStartDate).toISOString(),
+        scoringEndDate: new Date(roundScoringEndDate).toISOString(),
+        appealStartDate: roundAppealStartDate ? new Date(roundAppealStartDate).toISOString() : undefined,
+        appealEndDate: roundAppealEndDate ? new Date(roundAppealEndDate).toISOString() : undefined,
         advancementRule: formattedAdvancementRule,
       });
       setNewRoundName("");
+      setRoundStartDate("");
+      setRoundEndDate("");
+      setRoundScoringStartDate("");
+      setRoundScoringEndDate("");
+      setRoundAppealStartDate("");
+      setRoundAppealEndDate("");
       await refetchRounds();
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || "Khởi tạo Vòng thi thất bại.";
@@ -569,7 +756,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
               </h3>
 
               <form onSubmit={handleCreateRound} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
                   {/* Cột 1: Tên vòng thi */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-muted)]">Tên Vòng Thi *</label>
@@ -590,28 +777,72 @@ export const CoordinatorEventDetailView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Cột 3 & 4: Điều kiện thăng vòng */}
+                  {/* Cột 3 & 4: Điều kiện qua vòng */}
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-medium text-[var(--text-muted)]">Điều Kiện Thăng Vòng (`AdvancementRule`)</label>
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Điều Kiện Qua Vòng *</label>
                     <div className="grid grid-cols-2 gap-2">
                       <select
                         value={newRuleType}
-                        onChange={(e) => setNewRuleType(e.target.value as any)}
+                        onChange={(e) => handleRuleTypeChange(e.target.value as any)}
                         className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
                       >
-                        <option value="top">Top N đội cao điểm nhất (top:N)</option>
-                        <option value="percent">Top N% số đội (percent:P)</option>
-                        <option value="minscore">Điểm tối thiểu N (minscore:X)</option>
+                        <option value="top">Top N đội cao điểm nhất</option>
+                        <option value="percent">Top N% số đội</option>
+                        <option value="minscore">Điểm tối thiểu N</option>
                       </select>
-                      <Input
-                        type="number"
-                        step={newRuleType === "minscore" ? "0.1" : "1"}
-                        min="1"
-                        value={newRuleValue}
-                        onChange={(e) => setNewRuleValue(Number(e.target.value))}
-                        placeholder={newRuleType === "top" ? "Số đội (VD: 10)" : newRuleType === "percent" ? "Tỷ lệ % (VD: 50)" : "Điểm (VD: 7.5)"}
-                        required
-                      />
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          step={newRuleType === "minscore" ? "0.1" : "1"}
+                          min={newRuleType === "minscore" ? "0" : "1"}
+                          max={newRuleType === "minscore" ? "10" : "100"}
+                          value={newRuleValue}
+                          onChange={(e) => setNewRuleValue(Number(e.target.value))}
+                          className="flex-1 font-mono text-xs"
+                          required
+                        />
+                        <span className="px-2 py-1.5 bg-[var(--bg-base)] border border-[var(--border-muted)] text-xs font-mono font-bold text-[var(--accent-coordinator)]">
+                          {newRuleType === "top" ? "đội" : newRuleType === "percent" ? "%" : "điểm"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6 Ô Chọn Ngày Đầy Đủ */}
+                <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-3">
+                  <div className="text-xs font-mono font-bold text-[var(--accent-coordinator)] border-b border-[var(--border-muted)] pb-2">
+                    Khung Thời Gian Vòng Thi (Timeline Lifecycle)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                      <label className="text-[11px] font-bold text-amber-400">1. Mở Nộp Bài *</label>
+                      <Input type="date" value={roundStartDate} onChange={(e) => setRoundStartDate(e.target.value)} required />
+                    </div>
+
+                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                      <label className="text-[11px] font-bold text-amber-400">2. Hạn Chót Nộp Bài *</label>
+                      <Input type="date" value={roundEndDate} onChange={(e) => setRoundEndDate(e.target.value)} required />
+                    </div>
+
+                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                      <label className="text-[11px] font-bold text-cyan-400">3. Bắt Đầu Chấm *</label>
+                      <Input type="date" value={roundScoringStartDate} onChange={(e) => setRoundScoringStartDate(e.target.value)} required />
+                    </div>
+
+                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                      <label className="text-[11px] font-bold text-cyan-400">4. Kết Thúc Chấm *</label>
+                      <Input type="date" value={roundScoringEndDate} onChange={(e) => setRoundScoringEndDate(e.target.value)} required />
+                    </div>
+
+                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                      <label className="text-[11px] font-bold text-purple-400">5. Mở Phúc Khảo (Tùy chọn)</label>
+                      <Input type="date" value={roundAppealStartDate} onChange={(e) => setRoundAppealStartDate(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                      <label className="text-[11px] font-bold text-purple-400">6. Đóng Phúc Khảo (Tùy chọn)</label>
+                      <Input type="date" value={roundAppealEndDate} onChange={(e) => setRoundAppealEndDate(e.target.value)} />
                     </div>
                   </div>
                 </div>
@@ -624,61 +855,145 @@ export const CoordinatorEventDetailView: React.FC = () => {
               </form>
             </Card>
 
+            {/* List Rounds & Edit Mode */}
             <div className="space-y-4">
               {rounds.map((rnd: any, index: number) => {
                 const roundId = rnd.id || rnd.Id || rnd.roundId || rnd.RoundId || `rnd-${index}`;
                 const isLastRound = index === rounds.length - 1;
+                const isEditing = editingRoundId === roundId;
 
                 return (
                   <Card key={roundId} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Badge tone="info">Vòng {rnd.roundNumber || rnd.RoundNumber || index + 1}</Badge>
-                          <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">{rnd.roundName || rnd.RoundName}</h4>
+                    {!isEditing ? (
+                      <>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge tone="info">Vòng {rnd.roundNumber || rnd.RoundNumber || index + 1}</Badge>
+                              <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">{rnd.roundName || rnd.RoundName}</h4>
+                            </div>
+                            <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
+                              {!isLastRound ? (
+                                `Quy tắc qua vòng: ${rnd.advancementRule || rnd.AdvancementRule || "top:10"}`
+                              ) : (
+                                "Vòng cuối — kết quả dùng để xếp hạng và trao giải, không thăng vòng."
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" onClick={() => startEditRound(rnd)} className="text-xs font-mono text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10">
+                              <Edit3 className="w-3.5 h-3.5 mr-1" /> Sửa vòng
+                            </Button>
+                            <Button variant="ghost" onClick={() => handleDeleteRound(roundId)} className="text-xs font-mono text-[var(--color-danger)] hover:bg-red-500/10">
+                              <Trash2 className="w-3.5 h-3.5 mr-1" /> Xóa vòng
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
-                          {!isLastRound ? (
-                            `Quy tắc qua vòng: ${rnd.advancementRule || rnd.AdvancementRule || "top 10"}`
-                          ) : (
-                            "Vòng cuối — kết quả dùng để xếp hạng và trao giải, không thăng vòng."
-                          )}
-                        </p>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" onClick={() => handleDeleteRound(roundId)} className="text-xs font-mono text-[var(--color-danger)] hover:bg-red-500/10">
-                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Xóa vòng
-                        </Button>
-                      </div>
-                    </div>
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 font-mono text-[11px]">
+                          <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                            <div className="text-[var(--text-muted)]">Mở nộp bài</div>
+                            <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.startDate?.split("T")[0] || rnd.StartDate?.split("T")[0] || "Chưa đặt"}</div>
+                          </div>
+                          <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                            <div className="text-[var(--text-muted)]">Hạn nộp bài</div>
+                            <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.endDate?.split("T")[0] || rnd.EndDate?.split("T")[0] || "Chưa đặt"}</div>
+                          </div>
+                          <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                            <div className="text-[var(--text-muted)]">Bắt đầu chấm</div>
+                            <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.scoringStartDate?.split("T")[0] || rnd.ScoringStartDate?.split("T")[0] || "Chưa đặt"}</div>
+                          </div>
+                          <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                            <div className="text-[var(--text-muted)]">Kết thúc chấm</div>
+                            <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.scoringEndDate?.split("T")[0] || rnd.ScoringEndDate?.split("T")[0] || "Chưa đặt"}</div>
+                          </div>
+                          <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                            <div className="text-[var(--text-muted)]">Mở phúc khảo</div>
+                            <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.appealStartDate?.split("T")[0] || rnd.AppealStartDate?.split("T")[0] || "Chưa đặt"}</div>
+                          </div>
+                          <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                            <div className="text-[var(--text-muted)]">Đóng phúc khảo</div>
+                            <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.appealEndDate?.split("T")[0] || rnd.AppealEndDate?.split("T")[0] || "Chưa đặt"}</div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      /* Form Chỉnh Sửa Vòng Thi Inline */
+                      <form onSubmit={handleSaveEditRound} className="space-y-4 p-4 bg-[var(--bg-base)] border border-[var(--accent-coordinator)] rounded">
+                        <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
+                          <h4 className="font-mono font-bold text-sm text-[var(--accent-coordinator)] flex items-center gap-2">
+                            <Edit3 className="w-4 h-4" /> Đang Chỉnh Sửa Vòng Thi: {rnd.roundName || rnd.RoundName}
+                          </h4>
+                          <Button variant="ghost" onClick={() => setEditingRoundId(null)} className="text-xs font-mono">Hủy</Button>
+                        </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-6 gap-2 font-mono text-[11px]">
-                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                        <div className="text-[var(--text-muted)]">Mở nộp bài</div>
-                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.startDate?.split("T")[0] || rnd.StartDate?.split("T")[0] || "Chưa đặt"}</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                        <div className="text-[var(--text-muted)]">Hạn nộp bài</div>
-                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.endDate?.split("T")[0] || rnd.EndDate?.split("T")[0] || "Chưa đặt"}</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                        <div className="text-[var(--text-muted)]">Bắt đầu chấm</div>
-                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.scoringStartDate?.split("T")[0] || rnd.ScoringStartDate?.split("T")[0] || "Chưa đặt"}</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                        <div className="text-[var(--text-muted)]">Kết thúc chấm</div>
-                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.scoringEndDate?.split("T")[0] || rnd.ScoringEndDate?.split("T")[0] || "Chưa đặt"}</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                        <div className="text-[var(--text-muted)]">Mở phúc khảo</div>
-                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.appealStartDate?.split("T")[0] || rnd.AppealStartDate?.split("T")[0] || "Chưa đặt"}</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                        <div className="text-[var(--text-muted)]">Đóng phúc khảo</div>
-                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.appealEndDate?.split("T")[0] || rnd.AppealEndDate?.split("T")[0] || "Chưa đặt"}</div>
-                      </div>
-                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-[var(--text-muted)]">Tên Vòng Thi *</label>
+                            <Input type="text" value={editRoundName} onChange={(e) => setEditRoundName(e.target.value)} required />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-[var(--text-muted)]">Điều Kiện Qua Vòng *</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <select
+                                value={editRuleType}
+                                onChange={(e) => handleRuleTypeChange(e.target.value as any, true)}
+                                className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+                              >
+                                <option value="top">Top N đội cao điểm nhất</option>
+                                <option value="percent">Top N% số đội</option>
+                                <option value="minscore">Điểm tối thiểu N</option>
+                              </select>
+                              <Input
+                                type="number"
+                                step={editRuleType === "minscore" ? "0.1" : "1"}
+                                min={editRuleType === "minscore" ? "0" : "1"}
+                                max={editRuleType === "minscore" ? "10" : "100"}
+                                value={editRuleValue}
+                                onChange={(e) => setEditRuleValue(Number(e.target.value))}
+                                className="font-mono text-xs"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 6 Date Pickers for Edit */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-2">
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-amber-400">Mở Nộp Bài</label>
+                            <Input type="date" value={editRoundStartDate} onChange={(e) => setEditRoundStartDate(e.target.value)} required />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-amber-400">Hạn Chót Nộp Bài</label>
+                            <Input type="date" value={editRoundEndDate} onChange={(e) => setEditRoundEndDate(e.target.value)} required />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-cyan-400">Bắt Đầu Chấm</label>
+                            <Input type="date" value={editRoundScoringStartDate} onChange={(e) => setEditRoundScoringStartDate(e.target.value)} required />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-cyan-400">Kết Thúc Chấm</label>
+                            <Input type="date" value={editRoundScoringEndDate} onChange={(e) => setEditRoundScoringEndDate(e.target.value)} required />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-purple-400">Mở Phúc Khảo</label>
+                            <Input type="date" value={editRoundAppealStartDate} onChange={(e) => setEditRoundAppealStartDate(e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-purple-400">Đóng Phúc Khảo</label>
+                            <Input type="date" value={editRoundAppealEndDate} onChange={(e) => setEditRoundAppealEndDate(e.target.value)} />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
+                          <Button variant="ghost" onClick={() => setEditingRoundId(null)} className="text-xs font-mono">Hủy Bỏ</Button>
+                          <Button type="submit" variant="primary" accent="coordinator" className="text-xs font-mono">Lưu Thay Đổi Vòng Thi</Button>
+                        </div>
+                      </form>
+                    )}
                   </Card>
                 );
               })}
@@ -726,45 +1041,103 @@ export const CoordinatorEventDetailView: React.FC = () => {
             <div className="space-y-4">
               {(tracks ?? []).map((trk: any, index: number) => {
                 const trkId = trk.id || trk.Id || trk.trackId || "";
+                const isEditingTrack = editingTrackId === trkId;
+
                 return (
                   <Card key={trkId || index} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">
-                    <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
-                      <h4 className="font-mono font-bold text-sm text-[var(--text-primary)] flex items-center gap-2">
-                        <Target className="w-4 h-4 text-[var(--accent-team)]" />
-                        {trk.trackName || trk.TrackName}
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        <Badge tone="neutral">ID: {trkId}</Badge>
-                        <Button variant="ghost" onClick={() => handleDeleteTrack(trkId)} className="text-xs font-mono text-[var(--color-danger)] hover:bg-red-500/10">
-                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Xóa
-                        </Button>
-                      </div>
-                    </div>
+                    {!isEditingTrack ? (
+                      <>
+                        <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
+                          <h4 className="font-mono font-bold text-sm text-[var(--text-primary)] flex items-center gap-2">
+                            <Target className="w-4 h-4 text-[var(--accent-team)]" />
+                            {trk.trackName || trk.TrackName}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <Badge tone="neutral">ID: {trkId}</Badge>
+                            <Button variant="ghost" onClick={() => startEditTrack(trk)} className="text-xs font-mono text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10">
+                              <Edit3 className="w-3.5 h-3.5 mr-1" /> Sửa
+                            </Button>
+                            <Button variant="ghost" onClick={() => handleDeleteTrack(trkId)} className="text-xs font-mono text-[var(--color-danger)] hover:bg-red-500/10">
+                              <Trash2 className="w-3.5 h-3.5 mr-1" /> Xóa
+                            </Button>
+                          </div>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-sans text-[var(--text-muted)]">
-                      <div><strong className="text-[var(--text-primary)]">Mô tả:</strong> {trk.description || trk.Description || "Chưa có mô tả"}</div>
-                      <div><strong className="text-[var(--text-primary)]">Quy định nộp bài:</strong> {trk.submissionRuleDescription || trk.SubmissionRuleDescription || "Tương theo quy định chung"}</div>
-                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-sans text-[var(--text-muted)]">
+                          <div><strong className="text-[var(--text-primary)]">Mô tả:</strong> {trk.description || trk.Description || "Chưa có mô tả"}</div>
+                          <div><strong className="text-[var(--text-primary)]">Quy định nộp bài:</strong> {trk.submissionRuleDescription || trk.SubmissionRuleDescription || "Tuân theo quy định chung"}</div>
+                        </div>
 
-                    <div className="flex items-center gap-3 pt-2 border-t border-[var(--border-muted)]">
-                      <span className="text-xs font-mono text-[var(--text-muted)] flex items-center gap-1">
-                        <LayoutTemplate className="w-3.5 h-3.5 text-[var(--accent-coordinator)]" />
-                        Template tiêu chí:
-                      </span>
+                        <div className="flex items-center gap-3 pt-2 border-t border-[var(--border-muted)]">
+                          <span className="text-xs font-mono text-[var(--text-muted)] flex items-center gap-1">
+                            <LayoutTemplate className="w-3.5 h-3.5 text-[var(--accent-coordinator)]" />
+                            Template tiêu chí:
+                          </span>
 
-                      <select
-                        onChange={(e) => handleAssignTemplate(trkId, e.target.value)}
-                        defaultValue={trk.templateId || ""}
-                        className="px-2 py-1 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs"
-                      >
-                        <option value="">-- Gán lại Mẫu chấm --</option>
-                        {templates.map((tpl: any) => (
-                          <option key={tpl.id || tpl.Id} value={tpl.id || tpl.Id}>
-                            {tpl.templateName || tpl.TemplateName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                          <select
+                            onChange={(e) => handleAssignTemplate(trkId, e.target.value)}
+                            defaultValue={trk.templateId || ""}
+                            className="px-2 py-1 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs"
+                          >
+                            <option value="">-- Gán lại Mẫu chấm --</option>
+                            {templates.map((tpl: any) => (
+                              <option key={tpl.id || tpl.Id} value={tpl.id || tpl.Id}>
+                                {tpl.templateName || tpl.TemplateName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    ) : (
+                      /* Form Chỉnh Sửa Hạng Mục Inline */
+                      <form onSubmit={handleSaveEditTrack} className="space-y-4 p-4 bg-[var(--bg-base)] border border-[var(--accent-coordinator)] rounded">
+                        <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
+                          <h4 className="font-mono font-bold text-sm text-[var(--accent-coordinator)] flex items-center gap-2">
+                            <Edit3 className="w-4 h-4" /> Đang Chỉnh Sửa Hạng Mục: {trk.trackName || trk.TrackName}
+                          </h4>
+                          <Button variant="ghost" onClick={() => setEditingTrackId(null)} className="text-xs font-mono">Hủy</Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-[var(--text-muted)]">Tên Hạng Mục *</label>
+                            <Input type="text" value={editTrackName} onChange={(e) => setEditTrackName(e.target.value)} required />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-[var(--text-muted)]">Mẫu Tiêu Chí (Template)</label>
+                            <select
+                              value={editTemplateId}
+                              onChange={(e) => setEditTemplateId(e.target.value)}
+                              className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs"
+                            >
+                              <option value="">-- Giữ Nguyên / Chọn Mẫu Mới --</option>
+                              {templates.map((tpl: any) => (
+                                <option key={tpl.id || tpl.Id} value={tpl.id || tpl.Id}>
+                                  {tpl.templateName || tpl.TemplateName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-[var(--text-muted)]">Mô tả Hạng mục</label>
+                            <Input type="text" value={editTrackDesc} onChange={(e) => setEditTrackDesc(e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-[var(--text-muted)]">Quy định nộp bài riêng</label>
+                            <Input type="text" value={editSubmissionRuleDesc} onChange={(e) => setEditSubmissionRuleDesc(e.target.value)} />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
+                          <Button variant="ghost" onClick={() => setEditingTrackId(null)} className="text-xs font-mono">Hủy Bỏ</Button>
+                          <Button type="submit" variant="primary" accent="coordinator" className="text-xs font-mono">Lưu Thay Đổi Hạng Mục</Button>
+                        </div>
+                      </form>
+                    )}
                   </Card>
                 );
               })}
