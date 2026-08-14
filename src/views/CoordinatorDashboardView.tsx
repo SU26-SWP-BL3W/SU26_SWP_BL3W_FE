@@ -14,9 +14,9 @@ type EventWithCounts = EventDTO & { rounds?: unknown[]; tracks?: unknown[] };
 
 function toEventDates(ev: EventDTO): Pick<MockEvent, "startDate" | "endDate" | "registrationEndDate"> {
   return {
-    startDate: ev.startDate || ev.StartDate || "",
-    endDate: ev.endDate || ev.EndDate || "",
-    registrationEndDate: ev.registrationEndDate || ev.RegistrationEndDate || ev.endDate || ev.EndDate || "",
+    startDate: ev.startDate || "",
+    endDate: ev.endDate || "",
+    registrationEndDate: ev.registrationEndDate || ev.endDate || "",
   };
 }
 
@@ -153,7 +153,7 @@ export const CoordinatorDashboardView: React.FC = () => {
                         {ev.eventName || ev.EventName || ev.name}
                       </h3>
                       <p className="text-xs text-[var(--text-muted)] line-clamp-2">
-                        {ev.description || ev.Description}
+                        {ev.description || ""}
                       </p>
                     </div>
 
