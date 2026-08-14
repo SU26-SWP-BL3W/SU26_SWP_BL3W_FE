@@ -34,6 +34,34 @@ export function usePublishRoundResults() {
   });
 }
 
+export function usePublishRoundDirectly() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (roundId: string) => {
+      const res = await apiClient.post(`/FinalResults/publish/${roundId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["final-results"] });
+    },
+  });
+}
+
+export function useUnpublishRoundDirectly() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (roundId: string) => {
+      const res = await apiClient.put(`/FinalResults/round/${roundId}/publish-status`, {
+        isPublished: false,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["final-results"] });
+    },
+  });
+}
+
 // ─── PATCH /api/FinalResults/{id}/assign-prize ────────────────
 
 export function useAssignPrize() {
@@ -49,32 +77,43 @@ export function useAssignPrize() {
   });
 }
 
-// ─── GET /api/Prizes ─────────────────────────────────────────
+// ─── GET /api/Events/{eventId}/Prizes ─────────────────────────────────────────
 
 export function useGetPrizes(params?: { eventId?: string; trackId?: string }) {
   return useQuery({
     queryKey: ["prizes", params],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<Prize[]>>("/Prizes", { params });
-      return res.data?.data ?? [];
+      if (!params?.eventId) return [];
+      try {
+        const res = await apiClient.get<BaseResponse<Prize[]>>(`/Events/${params.eventId}/Prizes`);
+        const list = res.data?.data ?? [];
+        if (params.trackId) {
+          return list.filter((p: any) => p.trackId === params.trackId || p.TrackId === params.trackId);
+        }
+        return list;
+      } catch {
+        return [];
+      }
     },
+    enabled: !!params?.eventId,
   });
 }
 
-// ─── POST /api/Prizes — Tạo Giải thưởng mới cho Track ────────
+// ─── POST /api/Events/{eventId}/Prizes — Tạo Giải thưởng ────────
 
 export function useCreatePrize() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
-      eventId?: string;
+      eventId: string;
       trackId?: string;
       prizeName: string;
       rewardAmount: number;
       quantity: number;
       description?: string;
     }) => {
-      const res = await apiClient.post<BaseResponse<Prize>>("/Prizes", payload);
+      const { eventId, ...body } = payload;
+      const res = await apiClient.post<BaseResponse<Prize>>(`/Events/${eventId}/Prizes`, body);
       return res.data?.data;
     },
     onSuccess: () => {

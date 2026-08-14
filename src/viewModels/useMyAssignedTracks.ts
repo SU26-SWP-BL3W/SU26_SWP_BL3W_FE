@@ -15,7 +15,7 @@ export function useMyAssignedTracks() {
 
   const userId = user?.userId || user?.UserID || user?.id;
 
-  const allTracks: TrackWithStaffModel[] = tracksPage?.data ?? [];
+  const allTracks: TrackWithStaffModel[] = Array.isArray(tracksPage) ? tracksPage : [];
   const myTracks = allTracks.filter((t) => {
     const mentors = t.mentors || t.Mentors || [];
     return mentors.some((m) => (m.id || m.Id) === userId);

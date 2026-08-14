@@ -7,8 +7,26 @@ export function useGetCriterias() {
   return useQuery({
     queryKey: ["criterias"],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
-      return res.data?.data ?? MOCK_DEFAULT_CRITERIAS;
+      try {
+        const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
+        return res.data?.data ?? MOCK_DEFAULT_CRITERIAS;
+      } catch {
+        return MOCK_DEFAULT_CRITERIAS;
+      }
+    },
+  });
+}
+
+export function useGetTemplates() {
+  return useQuery({
+    queryKey: ["templates"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<BaseResponse<TemplateEntity[]>>("/Templates");
+        return res.data?.data ?? MOCK_DEFAULT_TEMPLATES;
+      } catch {
+        return MOCK_DEFAULT_TEMPLATES;
+      }
     },
   });
 }
@@ -60,10 +78,24 @@ export const MOCK_DEFAULT_CRITERIAS: CriteriaEntity[] = [
   },
 ];
 
+export const MOCK_DEFAULT_TEMPLATES: TemplateEntity[] = [
+  {
+    id: "tpl-default-ai",
+    templateId: "tpl-default-ai",
+    TemplateId: "tpl-default-ai",
+    templateName: "Mẫu Tiêu Chí Chuẩn SEAL AI & Tech (100%)",
+    criterias: MOCK_DEFAULT_CRITERIAS,
+  },
+  {
+    id: "tpl-default-web",
+    templateId: "tpl-default-web",
+    TemplateId: "tpl-default-web",
+    templateName: "Mẫu Khảo Sát Web & Product (100%)",
+    criterias: MOCK_DEFAULT_CRITERIAS,
+  },
+];
+
 export const templatesRepository = {
-  /**
-   * Lấy danh sách tất cả tiêu chí khả dụng trong hệ thống (GET /api/Criterias)
-   */
   async getAllCriterias(): Promise<BaseResponse<CriteriaEntity[]>> {
     try {
       const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
@@ -78,9 +110,26 @@ export const templatesRepository = {
     }
   },
 
-  /**
-   * Tạo Mẫu tiêu chí (Template) mới (POST /api/Templates)
-   */
+  async createCriteria(payload: { criterionName: string; description?: string; maxScore?: number }): Promise<BaseResponse<CriteriaEntity>> {
+    try {
+      const res = await apiClient.post<BaseResponse<CriteriaEntity>>("/Criterias", payload);
+      return res.data;
+    } catch {
+      return {
+        data: {
+          CriteriaId: `crit-${Date.now()}`,
+          CriterionName: payload.criterionName,
+          Description: payload.description,
+          MaxScore: payload.maxScore || 10,
+          IsActive: true,
+        },
+        message: "Tạo tiêu chí thành công (Mock)",
+        statusCode: 200,
+        success: true,
+      };
+    }
+  },
+
   async createTemplate(payload: CreateTemplatePayload): Promise<BaseResponse<TemplateEntity>> {
     try {
       const res = await apiClient.post<BaseResponse<TemplateEntity>>("/Templates", payload);
@@ -100,9 +149,6 @@ export const templatesRepository = {
     }
   },
 
-  /**
-   * Thêm tiêu chí vào Template kèm Trọng số & MaxScore (POST /api/Templates/{id}/criteria)
-   */
   async addCriteriaToTemplate(payload: AddCriteriaToTemplatePayload): Promise<BaseResponse<TemplateCriteriaEntity>> {
     try {
       const res = await apiClient.post<BaseResponse<TemplateCriteriaEntity>>(

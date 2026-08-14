@@ -3,9 +3,41 @@ import apiClient from "@/models/apiClient";
 import type { Event, Round } from "@/models/entities";
 import type { MockRound } from "@/viewModels/mockEventsData";
 
+export interface MyEventModel {
+  id?: string;
+  Id?: string;
+  eventId?: string;
+  EventId?: string;
+  eventName?: string;
+  EventName?: string;
+  season?: string;
+  Season?: string;
+  year?: number;
+  Year?: number;
+  startDate?: string;
+  StartDate?: string;
+  endDate?: string;
+  EndDate?: string;
+  registrationStartDate?: string;
+  RegistrationStartDate?: string;
+  registrationEndDate?: string;
+  RegistrationEndDate?: string;
+  maxTeams?: number;
+  MaxTeams?: number;
+  teamCount?: number;
+  TeamCount?: number;
+  description?: string;
+  Description?: string;
+  rounds?: Round[];
+}
+
 export const eventsRepository = {
   getEvents: async () => {
     const res = await apiClient.get<Event[]>("/Events");
+    return res.data;
+  },
+  getMyEvents: async () => {
+    const res = await apiClient.get<MyEventModel[]>("/Events/my-events");
     return res.data;
   },
   getEventById: async (id: string) => {
@@ -14,6 +46,7 @@ export const eventsRepository = {
   },
   createEvent,
   updateEvent,
+  deleteEvent,
 };
 
 export interface EventDTO {
@@ -49,6 +82,23 @@ export function useEvents() {
   });
 }
 
+export function useMyEvents() {
+  return useQuery({
+    queryKey: ["my-events"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<any>("/Events/my-events");
+        const data = res.data;
+        if (Array.isArray(data)) return data as MyEventModel[];
+        if (data && Array.isArray(data.data)) return data.data as MyEventModel[];
+        return [] as MyEventModel[];
+      } catch {
+        return [] as MyEventModel[];
+      }
+    },
+  });
+}
+
 export function useEventDetail(eventId: string) {
   return useQuery({
     queryKey: ["event-detail", eventId],
@@ -79,12 +129,55 @@ export function useEventRounds(eventId: string) {
   });
 }
 
-export async function createEvent(data: Partial<Event>): Promise<Event> {
-  const response = await apiClient.post<Event>("/Events", data);
-  return response.data;
+export async function createEvent(data: Partial<Event>): Promise<any> {
+  try {
+    const response = await apiClient.post<any>("/Events", data);
+    return response.data;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 401) {
+      return {
+        success: false,
+        message: "Phiên làm việc đã hết hạn hoặc bạn chưa đăng nhập. Vui lòng đăng nhập lại!",
+      };
+    }
+    if (status === 403) {
+      return {
+        success: false,
+        message: "Tài khoản của bạn không có quyền Admin / Event Coordinator để tạo sự kiện.",
+      };
+    }
+    return {
+      success: false,
+      message: err?.response?.data?.message || err?.message || "Tạo sự kiện thất bại.",
+    };
+  }
 }
 
-export async function updateEvent(id: string, data: Partial<Event>): Promise<Event> {
-  const response = await apiClient.put<Event>(`/Events/${id}`, data);
-  return response.data;
+export async function updateEvent(id: string, data: Partial<Event>): Promise<any> {
+  try {
+    const response = await apiClient.put<any>(`/Events/${id}`, data);
+    return response.data;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 401) {
+      return {
+        success: false,
+        message: "Phiên làm việc hết hạn. Vui lòng đăng nhập lại!",
+      };
+    }
+    return {
+      success: false,
+      message: err?.response?.data?.message || err?.message || "Cập nhật sự kiện thất bại.",
+    };
+  }
+}
+
+export async function deleteEvent(id: string): Promise<boolean> {
+  try {
+    const response = await apiClient.delete(`/Events/${id}`);
+    return response.status === 200 || response.status === 204;
+  } catch {
+    return false;
+  }
 }

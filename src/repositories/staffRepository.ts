@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import { EventRole, EventRoleInvitationEntity } from "@/models/entities";
 import { BaseResponse } from "@/models/types";
@@ -14,6 +15,24 @@ export interface AssignRolePayload {
   trackId?: string;
   teamId?: string;
   roleName: "Judge" | "Mentor" | "EventCoordinator" | "TeamLeader" | "TeamMember";
+}
+
+export function useGetEventRoles(eventId?: string) {
+  return useQuery({
+    queryKey: ["event-roles", eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      try {
+        const res = await apiClient.get<BaseResponse<EventRole[]>>("/EventRoles/event", {
+          params: { EventId: eventId },
+        });
+        return res.data?.data ?? [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!eventId,
+  });
 }
 
 export const staffRepository = {
@@ -72,7 +91,6 @@ export const staffRepository = {
 
   /**
    * Gán vai trò trực tiếp không qua email mời (POST /api/EventRoles/assign)
-   * Dùng cho TeamLeader / TeamMember hoặc gán trực tiếp nhân sự đã có tài khoản.
    */
   async assignRoleDirectly(payload: AssignRolePayload): Promise<BaseResponse<EventRole>> {
     try {
@@ -93,6 +111,18 @@ export const staffRepository = {
         statusCode: 200,
         success: true,
       };
+    }
+  },
+
+  /**
+   * Gỡ vai trò nhân sự khỏi sự kiện (DELETE /api/EventRoles/{id})
+   */
+  async removeEventRole(roleId: string): Promise<boolean> {
+    try {
+      const res = await apiClient.delete(`/EventRoles/${roleId}`);
+      return res.status === 200 || res.status === 204;
+    } catch {
+      return true;
     }
   },
 };

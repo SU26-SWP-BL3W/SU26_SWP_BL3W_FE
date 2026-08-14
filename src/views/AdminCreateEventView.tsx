@@ -41,12 +41,11 @@ export const AdminCreateEventView: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    // 1. Admin tạo Event (POST /api/Events)
     const res = await eventsRepository.createEvent(form);
 
-    if (res.success && res.data) {
-      const eventId = res.data.id || res.data.EventId || "";
-      // 2. Nếu có email EC chỉ định -> Gán EventRole EventCoordinator
+    if (res && res.success !== false && (res.data || res.id || res.Id || res.eventId || res.EventId)) {
+      const innerData = res.data || res;
+      const eventId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId || "";
       if (form.coordinatorEmail.trim()) {
         await staffRepository.assignRoleDirectly({
           userId: `usr-ec-${Date.now()}`,
@@ -56,7 +55,7 @@ export const AdminCreateEventView: React.FC = () => {
       }
       setSuccessEventId(eventId);
     } else {
-      setErrorMessage(res.message || "Không thể tạo sự kiện");
+      setErrorMessage(res?.message || "Tạo sự kiện thất bại. Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.");
     }
     setIsSubmitting(false);
   };

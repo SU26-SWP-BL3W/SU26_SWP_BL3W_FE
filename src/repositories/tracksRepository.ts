@@ -35,11 +35,15 @@ export function useGetTracksByEvent(eventId?: string) {
   return useQuery({
     queryKey: ["tracks-by-event", eventId],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<PagedResult<TrackWithStaffModel>>>(
-        "/Tracks/event",
-        { params: { EventId: eventId, PageSize: 100 } }
-      );
-      return res.data.data;
+      try {
+        const res = await apiClient.get<BaseResponse<PagedResult<TrackWithStaffModel>>>(
+          "/Tracks/event",
+          { params: { EventId: eventId, PageSize: 100 } }
+        );
+        return res.data.data?.data ?? [];
+      } catch {
+        return [];
+      }
     },
     enabled: !!eventId,
   });

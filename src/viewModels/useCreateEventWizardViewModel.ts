@@ -294,7 +294,8 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Sự kiện cần ít nhất 1 Vòng thi (Round)!");
         return;
       }
-      const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId;
+      const rawObj = createdEvent as any;
+      const realEventId = rawObj?.id || rawObj?.Id || rawObj?.eventId || rawObj?.EventId || rawObj?.data?.id || rawObj?.data?.Id || rawObj?.data?.eventId || rawObj?.data?.EventId;
       if (!realEventId) {
         setErrorMessage("Vui lòng hoàn thành Bước 1 để khởi tạo Sự kiện trước!");
         return;
