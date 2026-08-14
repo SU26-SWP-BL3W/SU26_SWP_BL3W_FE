@@ -51,8 +51,9 @@ export default async function RootLayout({
     <html
       lang={locale}
       className={`${chakraPetch.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
+      <body className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
