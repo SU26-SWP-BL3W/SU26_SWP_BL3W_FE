@@ -35,16 +35,19 @@ export function RegisterView() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    setErrors({});
     try {
-      await registerApi({ email: email.trim(), password, fullName: fullName.trim() }).catch(
-        (err) => {
-          // Graceful fallback nếu API chưa sẵn sàng
-          console.warn("[SEAL] Register API error (mocked):", err?.message);
-        }
-      );
+      // Chi chuyen sang man "da gui email" khi API THAT SU thanh cong. Truoc day
+      // co .catch() nuot loi roi van setStep("success") -> dang ky that bai van
+      // bao "da gui email xac thuc", nguoi dung cho mai khong thay mail.
+      await registerApi({ email: email.trim(), password, fullName: fullName.trim() });
       setStep("success");
-    } catch {
-      setErrors({ submit: "Đăng ký thất bại. Vui lòng thử lại." });
+    } catch (err) {
+      const apiMessage = (err as { response?: { data?: { message?: string } }; message?: string })
+        ?.response?.data?.message;
+      setErrors({
+        submit: apiMessage || "Đăng ký thất bại. Vui lòng kiểm tra kết nối và thử lại.",
+      });
     }
   };
 
