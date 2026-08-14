@@ -51,10 +51,15 @@ export function useGetTracksByEvent(eventId?: string) {
 
 export interface CreateTrackPayload {
   eventId: string;
+  roundId?: string;
   trackName: string;
   templateId?: string;
   description?: string;
   submissionRuleDescription?: string;
+  startDate?: string;
+  endDate?: string;
+  scoringStartDate?: string;
+  scoringEndDate?: string;
 }
 
 export const tracksRepository = {

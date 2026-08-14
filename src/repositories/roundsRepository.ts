@@ -9,6 +9,10 @@ export interface CreateRoundPayload {
   startDate: string;
   endDate: string;
   advancementRule?: string; // "top N", "percent P", "minScore X"
+  scoringStartDate?: string;
+  scoringEndDate?: string;
+  appealStartDate?: string;
+  appealEndDate?: string;
 }
 
 export const roundsRepository = {

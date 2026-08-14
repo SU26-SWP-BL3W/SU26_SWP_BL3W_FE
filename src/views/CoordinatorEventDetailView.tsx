@@ -30,17 +30,26 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [registrationStartDate, setRegistrationStartDate] = useState("");
+  const [registrationEndDate, setRegistrationEndDate] = useState("");
+  const [photoEventUrl, setPhotoEventUrl] = useState("");
+  const [status, setStatus] = useState<boolean>(true);
 
   // Sync Form when event data arrives
   React.useEffect(() => {
     if (event) {
-      setEventName(event.eventName || (event as any).EventName || event.name || "");
-      setSeason(event.season || (event as any).Season || "");
-      setYear(event.year || (event as any).Year || 2026);
-      setMaxTeams(event.maxTeams || (event as any).MaxTeams || 50);
-      setDescription(event.description || (event as any).Description || "");
-      setStartDate(event.startDate ? event.startDate.split("T")[0] : "");
-      setEndDate(event.endDate ? event.endDate.split("T")[0] : "");
+      const ev = event as any;
+      setEventName(ev.eventName || ev.EventName || ev.name || "");
+      setSeason(ev.season || ev.Season || "");
+      setYear(ev.year || ev.Year || 2026);
+      setMaxTeams(ev.maxTeams || ev.MaxTeams || 50);
+      setDescription(ev.description || ev.Description || "");
+      setStartDate(ev.startDate ? ev.startDate.split("T")[0] : ev.StartDate ? ev.StartDate.split("T")[0] : "");
+      setEndDate(ev.endDate ? ev.endDate.split("T")[0] : ev.EndDate ? ev.EndDate.split("T")[0] : "");
+      setRegistrationStartDate(ev.registrationStartDate ? ev.registrationStartDate.split("T")[0] : ev.RegistrationStartDate ? ev.RegistrationStartDate.split("T")[0] : "");
+      setRegistrationEndDate(ev.registrationEndDate ? ev.registrationEndDate.split("T")[0] : ev.RegistrationEndDate ? ev.RegistrationEndDate.split("T")[0] : "");
+      setPhotoEventUrl(ev.photoEventUrl || ev.PhotoEventUrl || "");
+      setStatus(ev.status !== undefined ? Boolean(ev.status) : ev.Status !== undefined ? Boolean(ev.Status) : true);
     }
   }, [event]);
 
@@ -221,8 +230,8 @@ export const CoordinatorEventDetailView: React.FC = () => {
           <Card className="hud-glow-coordinator p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
               <div>
-                <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase">Chỉnh Sửa Thông Tin Sự Kiện</h3>
-                <p className="text-xs text-[var(--text-muted)] font-sans">Cập nhật tiêu đề, quy mô và mốc thời gian sự kiện qua API PUT /Events/{eventId}</p>
+                <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">Chỉnh Sửa Thông Tin Sự Kiện</h3>
+                <p className="text-xs text-[var(--text-muted)] font-sans mt-0.5">Cập nhật tiêu đề, quy mô, ảnh bìa và mốc thời gian diễn ra sự kiện.</p>
               </div>
               {saveStatus && (
                 <span className="font-mono text-xs text-[var(--accent-coordinator)] flex items-center gap-1">
@@ -231,42 +240,80 @@ export const CoordinatorEventDetailView: React.FC = () => {
               )}
             </div>
 
-            <form onSubmit={handleUpdateGeneral} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-[var(--text-muted)]">Tên Sự Kiện</label>
-                  <Input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} required />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
+            <form onSubmit={handleUpdateGeneral} className="space-y-6">
+              {/* Nhóm 1: Thông tin cơ bản */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">1. Thông Tin Cơ Bản</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-mono text-[var(--text-muted)]">Mùa Giải</label>
-                    <Input type="text" value={season} onChange={(e) => setSeason(e.target.value)} placeholder="VD: Mùa Hè" />
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Tên sự kiện *</label>
+                    <Input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} required />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-[var(--text-muted)]">Mùa giải</label>
+                      <Input type="text" value={season} onChange={(e) => setSeason(e.target.value)} placeholder="Ví dụ: Mùa Hè" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-[var(--text-muted)]">Năm</label>
+                      <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+                    </div>
+                  </div>
+
                   <div className="space-y-1">
-                    <label className="text-xs font-mono text-[var(--text-muted)]">Năm</label>
-                    <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Quy mô đội thi tối đa</label>
+                    <Input type="number" value={maxTeams} onChange={(e) => setMaxTeams(Number(e.target.value))} />
                   </div>
-                </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-[var(--text-muted)]">Thời Gian Bắt Đầu</label>
-                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Trạng thái hoạt động</label>
+                    <select
+                      value={status ? "active" : "inactive"}
+                      onChange={(e) => setStatus(e.target.value === "active")}
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+                    >
+                      <option value="active">🟢 Đang Hoạt Động (Mở Cổng)</option>
+                      <option value="inactive">🔴 Tạm Khóa / Tạm Dừng</option>
+                    </select>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-[var(--text-muted)]">Thời Gian Kết Thúc</label>
-                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-[var(--text-muted)]">Quy Mô Đội Thi Tối Đa</label>
-                  <Input type="number" value={maxTeams} onChange={(e) => setMaxTeams(Number(e.target.value))} />
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Đường dẫn ảnh đại diện sự kiện (Photo URL)</label>
+                    <Input type="text" value={photoEventUrl} onChange={(e) => setPhotoEventUrl(e.target.value)} placeholder="https://..." />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-mono text-[var(--text-muted)]">Mô Tả Chi Tiết Sự Kiện</label>
+              {/* Nhóm 2: Mốc thời gian */}
+              <div className="space-y-3 pt-4 border-t border-[var(--border-muted)]">
+                <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">2. Khung Thời Gian Cổng Đăng Ký & Sự Kiện</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                    <label className="text-xs font-bold text-amber-400">Mở cổng đăng ký</label>
+                    <Input type="date" value={registrationStartDate} onChange={(e) => setRegistrationStartDate(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                    <label className="text-xs font-bold text-amber-400">Đóng cổng đăng ký</label>
+                    <Input type="date" value={registrationEndDate} onChange={(e) => setRegistrationEndDate(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                    <label className="text-xs font-bold text-cyan-400">Bắt đầu sự kiện chính thức</label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                    <label className="text-xs font-bold text-cyan-400">Kết thúc sự kiện chính thức</label>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Nhóm 3: Mô tả */}
+              <div className="space-y-1 pt-4 border-t border-[var(--border-muted)]">
+                <label className="text-xs font-medium text-[var(--text-muted)]">Mô tả chi tiết sự kiện</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}

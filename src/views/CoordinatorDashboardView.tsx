@@ -42,15 +42,20 @@ export const CoordinatorDashboardView: React.FC = () => {
     ? appealsList.filter((a: any) => a.status === 0 || a.status === "Pending" || a.Status === "Filed").length
     : 0;
 
-  // Filtered Events
+  // Filtered Events with Deduplication
+  const seenEventKeys = new Set<string>();
   const filteredEvents = eventsList
     .filter((ev, idx) => {
       const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-id-${idx}`;
       return !deletedIds.includes(id);
     })
     .filter((ev) => {
-      const name = ev.eventName || ev.EventName || "";
-      return name.toLowerCase().includes(searchTerm.toLowerCase());
+      const name = (ev.eventName || ev.EventName || "").trim();
+      if (!name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      const key = `${name.toLowerCase()}-${ev.year || ev.Year || 2026}`;
+      if (seenEventKeys.has(key)) return false;
+      seenEventKeys.add(key);
+      return true;
     });
 
   const handleDeleteEvent = async () => {
@@ -112,12 +117,12 @@ export const CoordinatorDashboardView: React.FC = () => {
             </span>
             <div className="flex items-baseline justify-between">
               <span className="font-mono font-bold text-2xl text-[var(--accent-coordinator)]">
-                {isLoading ? "..." : eventsList.length}
+                {isLoading ? "..." : filteredEvents.length}
               </span>
               <Shield className="w-5 h-5 text-[var(--accent-coordinator)] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--text-muted)] block">
-              Dữ liệu từ GET /api/Events/my-events
+              Danh sách sự kiện được phân công
             </span>
           </Card>
 

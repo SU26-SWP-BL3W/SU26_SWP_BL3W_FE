@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Card, Table } from "@/components/ui";
+import { Button, Input, Card } from "@/components/ui";
 import { RoundFormState } from "@/viewModels/useCreateEventWizardViewModel";
-import { Layers, Plus, Trash2, Calendar, ArrowLeft, ArrowRight, ShieldAlert } from "lucide-react";
+import { Layers, Plus, Trash2, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Step2RoundConfigProps {
   rounds: RoundFormState[];
@@ -26,12 +26,12 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
     <Card className="hud-glow-coordinator p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
         <div>
-          <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+          <h3 className="font-display font-bold text-lg text-[var(--text-primary)] tracking-wider flex items-center gap-2">
             <Layers className="w-5 h-5 text-[var(--accent-coordinator)]" />
-            Bước 2: Cấu Hình Vòng Thi (Rounds)
+            Bước 2: Cấu Hình Vòng Thi & Mốc Thời Gian
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Actor: Event Coordinator (POST /api/Rounds). Thiết lập danh sách các vòng thi, mốc thời gian nộp bài & quy tắc thăng hạng (AdvancementRule).
+            Thiết lập danh sách các vòng thi, mốc nộp bài, thời gian chấm điểm, phúc khảo và quy tắc chuyển vòng.
           </p>
         </div>
         <Button variant="ghost" onClick={onAddRound} className="flex items-center gap-1 text-xs">
@@ -40,7 +40,7 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {rounds.map((round, index) => (
           <div
             key={round.id}
@@ -66,48 +66,20 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Tên vòng */}
+            {/* Tên vòng & Quy tắc thăng vòng */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Tên Vòng Thi</label>
+                <label className="text-xs font-medium text-[var(--text-muted)]">Tên vòng thi *</label>
                 <Input
                   type="text"
                   value={round.roundName}
                   onChange={(e) => onUpdateRound(round.id, "roundName", e.target.value)}
-                  placeholder="Ví dụ: Vòng Loại / Chung Kết"
-                />
-              </div>
-
-              {/* Ngày Bắt Đầu & Ngày Kết Thúc */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-[var(--accent-coordinator)]" />
-                  Từ Ngày (StartDate)
-                </label>
-                <Input
-                  type="date"
-                  value={round.startDate}
-                  onChange={(e) => onUpdateRound(round.id, "startDate", e.target.value)}
+                  placeholder="Ví dụ: Vòng Sơ Loại / Vòng Chung Kết"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-[var(--accent-coordinator)]" />
-                  Đến Ngày (EndDate)
-                </label>
-                <Input
-                  type="date"
-                  value={round.endDate}
-                  onChange={(e) => onUpdateRound(round.id, "endDate", e.target.value)}
-                />
-              </div>
-
-              {/* Quy tắc thăng hạng AdvancementRule */}
-              <div className="md:col-span-3 space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">
-                  Quy Tắc Thăng Hạng (AdvancementRule - Ví dụ: "top 10", "percent 50%", "minScore 7.0")
-                </label>
+                <label className="text-xs font-medium text-[var(--text-muted)]">Quy tắc thăng vòng *</label>
                 <div className="flex gap-2">
                   <select
                     value={
@@ -123,9 +95,9 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
                     }}
                     className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
                   >
-                    <option value="top">Lấy Top N Đội Thi (e.g. top 10)</option>
-                    <option value="percent">Lấy % Số Đội (e.g. percent 50)</option>
-                    <option value="minScore">Điểm Tối Thiểu (e.g. minScore 7.5)</option>
+                    <option value="top">Top N đội thi</option>
+                    <option value="percent">% Số lượng đội</option>
+                    <option value="minScore">Điểm tối thiểu</option>
                   </select>
                   <Input
                     type="text"
@@ -133,6 +105,74 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
                     onChange={(e) => onUpdateRound(round.id, "advancementRule", e.target.value)}
                     placeholder="e.g. top 10"
                     className="flex-1"
+                  />
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] mt-1">Gợi ý: "top 10" (Lấy 10 đội dẫn đầu) hoặc "percent 50" (Lấy 50% đội)</p>
+              </div>
+            </div>
+
+            {/* Timeline datetime grid */}
+            <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-3">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--accent-coordinator)] border-b border-[var(--border-muted)] pb-2">
+                <Calendar className="w-4 h-4 text-[var(--accent-coordinator)]" />
+                <span>Khung Thời Gian Vòng Thi (Timeline Lifecycle)</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                {/* Nộp bài */}
+                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                  <span className="text-[11px] font-bold text-amber-400">1. Mở Nộp Bài (StartDate)</span>
+                  <Input
+                    type="date"
+                    value={round.startDate}
+                    onChange={(e) => onUpdateRound(round.id, "startDate", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                  <span className="text-[11px] font-bold text-amber-400">2. Hạn Chót Nộp Bài (EndDate)</span>
+                  <Input
+                    type="date"
+                    value={round.endDate}
+                    onChange={(e) => onUpdateRound(round.id, "endDate", e.target.value)}
+                  />
+                </div>
+
+                {/* Chấm điểm */}
+                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                  <span className="text-[11px] font-bold text-cyan-400">3. Bắt Đầu Chấm (ScoringStart)</span>
+                  <Input
+                    type="date"
+                    value={round.scoringStartDate || round.endDate || ""}
+                    onChange={(e) => onUpdateRound(round.id, "scoringStartDate", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                  <span className="text-[11px] font-bold text-cyan-400">4. Kết Thúc Chấm (ScoringEnd)</span>
+                  <Input
+                    type="date"
+                    value={round.scoringEndDate || ""}
+                    onChange={(e) => onUpdateRound(round.id, "scoringEndDate", e.target.value)}
+                  />
+                </div>
+
+                {/* Phúc khảo */}
+                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                  <span className="text-[11px] font-bold text-purple-400">5. Mở Phúc Khảo (AppealStart)</span>
+                  <Input
+                    type="date"
+                    value={round.appealStartDate || ""}
+                    onChange={(e) => onUpdateRound(round.id, "appealStartDate", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                  <span className="text-[11px] font-bold text-purple-400">6. Đóng Phúc Khảo (AppealEnd)</span>
+                  <Input
+                    type="date"
+                    value={round.appealEndDate || ""}
+                    onChange={(e) => onUpdateRound(round.id, "appealEndDate", e.target.value)}
                   />
                 </div>
               </div>
@@ -143,10 +183,10 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
 
       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-muted)]">
         <Button variant="ghost" onClick={onPrev} className="flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> &lt; Quay Lại Bước 1
+          <ArrowLeft className="w-4 h-4" /> Quay Lại
         </Button>
         <Button variant="primary" onClick={onNext} className="flex items-center gap-2">
-          Tiếp Tục Cấu Hình Hạng Mục (Tracks) &gt;
+          Tiếp Theo: Cấu Hình Hạng Mục &gt; <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </Card>

@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button, Input, Card } from "@/components/ui";
 import { RoundFormState, TrackFormState } from "@/viewModels/useCreateEventWizardViewModel";
-import { Target, Plus, Trash2, ArrowLeft, LayoutTemplate } from "lucide-react";
+import { useGetTemplates } from "@/repositories/templatesRepository";
+import { Target, Plus, Trash2, ArrowLeft, LayoutTemplate, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Step3TrackConfigProps {
   rounds: RoundFormState[];
@@ -23,16 +24,23 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
   onNext,
   onPrev,
 }) => {
+  const { data: templates = [] } = useGetTemplates();
+  const [expandedScheduleTrackId, setExpandedScheduleTrackId] = useState<string | null>(null);
+
+  const toggleCustomSchedule = (id: string) => {
+    setExpandedScheduleTrackId(expandedScheduleTrackId === id ? null : id);
+  };
+
   return (
     <Card className="hud-glow-team p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
         <div>
-          <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+          <h3 className="font-display font-bold text-lg text-[var(--text-primary)] tracking-wider flex items-center gap-2">
             <Target className="w-5 h-5 text-[var(--accent-team)]" />
             Bước 3: Tạo Hạng Mục Thi (Tracks)
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Cấu hình các Hạng mục chuyên môn thuộc Sự kiện (ví dụ: AI & ML, Web & Product, Game Dev...).
+            Cấu hình các Hạng mục chuyên môn thuộc Sự kiện (ví dụ: AI & Machine Learning, Web & Product, Game Dev...).
           </p>
         </div>
         <Button variant="ghost" onClick={onAddTrack} className="flex items-center gap-1 text-xs">
@@ -70,35 +78,39 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tên Hạng Mục */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Tên Hạng Mục (TrackName)</label>
+                <label className="text-xs font-medium text-[var(--text-muted)]">Tên hạng mục *</label>
                 <Input
                   type="text"
                   value={track.trackName}
                   onChange={(e) => onUpdateTrack(track.id, "trackName", e.target.value)}
-                  placeholder="e.g. AI & Machine Learning"
+                  placeholder="Ví dụ: AI & Machine Learning"
                 />
               </div>
 
               {/* Mẫu tiêu chí TemplateId */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase flex items-center gap-1">
-                  <LayoutTemplate className="w-3 h-3 text-[var(--accent-team)]" />
-                  Mẫu Tiêu Chí (Template)
+                <label className="text-xs font-medium text-[var(--text-muted)] flex items-center gap-1">
+                  <LayoutTemplate className="w-3.5 h-3.5 text-[var(--accent-team)]" />
+                  Mẫu tiêu chí
                 </label>
                 <select
                   value={track.templateId}
                   onChange={(e) => onUpdateTrack(track.id, "templateId", e.target.value)}
                   className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
                 >
-                  <option value="tpl-default-ai">Mẫu Chuẩn SEAL AI & Tech (100%)</option>
-                  <option value="tpl-default-web">Mẫu Khảo Sát Web & Product (100%)</option>
-                  <option value="tpl-custom">Mẫu Tự Chỉnh ở Bước 4</option>
+                  <option value="">— Chọn mẫu tiêu chí từ hệ thống —</option>
+                  {templates.map((t: any) => (
+                    <option key={t.id || t.Id || t.templateId} value={t.id || t.Id || t.templateId}>
+                      {t.templateName || t.TemplateName}
+                    </option>
+                  ))}
+                  <option value="__custom__">✨ Tự tạo mẫu tiêu chí mới ở Bước 4</option>
                 </select>
               </div>
 
               {/* Mô tả hạng mục */}
               <div className="md:col-span-2 space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Mô Tả & Quy Định Nộp Bài</label>
+                <label className="text-xs font-medium text-[var(--text-muted)]">Mô tả & Quy định nộp bài</label>
                 <Input
                   type="text"
                   value={track.description}
@@ -107,16 +119,70 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
                 />
               </div>
             </div>
+
+            {/* Custom Schedule Toggle Section */}
+            <div className="pt-2 border-t border-[var(--border-muted)]">
+              <button
+                type="button"
+                onClick={() => toggleCustomSchedule(track.id)}
+                className="flex items-center gap-1.5 text-xs font-mono text-[var(--accent-team)] hover:underline"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Lịch thi riêng cho hạng mục này (Tùy chọn ghi đè lịch vòng)</span>
+                {expandedScheduleTrackId === track.id ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              {expandedScheduleTrackId === track.id && (
+                <div className="mt-3 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-[var(--text-muted)]">Ngày bắt đầu nộp bài riêng</label>
+                    <Input
+                      type="datetime-local"
+                      value={track.startDate || ""}
+                      onChange={(e) => onUpdateTrack(track.id, "startDate", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-[var(--text-muted)]">Hạn chót nộp bài riêng</label>
+                    <Input
+                      type="datetime-local"
+                      value={track.endDate || ""}
+                      onChange={(e) => onUpdateTrack(track.id, "endDate", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-[var(--text-muted)]">Ngày bắt đầu chấm riêng</label>
+                    <Input
+                      type="datetime-local"
+                      value={track.scoringStartDate || ""}
+                      onChange={(e) => onUpdateTrack(track.id, "scoringStartDate", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-[var(--text-muted)]">Hạn chót chấm riêng</label>
+                    <Input
+                      type="datetime-local"
+                      value={track.scoringEndDate || ""}
+                      onChange={(e) => onUpdateTrack(track.id, "scoringEndDate", e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-muted)]">
         <Button variant="ghost" onClick={onPrev} className="flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> &lt; Quay Lại Bước 2
+          <ArrowLeft className="w-4 h-4" /> Quay Lại
         </Button>
-        <Button variant="primary" onClick={onNext} className="flex items-center gap-2">
-          Chỉnh Sửa Tiêu Chí (Criteria) &gt;
+        <Button variant="primary" onClick={onNext}>
+          Tiếp Theo: Thiết Lập Mẫu Tiêu Chí &gt;
         </Button>
       </div>
     </Card>
