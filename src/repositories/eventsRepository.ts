@@ -70,7 +70,20 @@ export interface EventDTO {
 
 import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
 
+let locallyCreatedEvents: any[] = [];
 let eventsCacheStore: any[] = [...MOCK_EVENTS];
+
+function mergeCreatedWithDb(dbList: any[]) {
+  if (!Array.isArray(dbList)) return locallyCreatedEvents;
+  const dbIds = new Set(
+    dbList.map((e) => e.id || e.Id || e.eventId || e.EventId).filter(Boolean)
+  );
+  const unpersistedLocal = locallyCreatedEvents.filter((loc) => {
+    const id = loc.id || loc.Id || loc.eventId || loc.EventId;
+    return id && !dbIds.has(id);
+  });
+  return [...unpersistedLocal, ...dbList];
+}
 
 export function useEvents() {
   return useQuery({
@@ -79,11 +92,13 @@ export function useEvents() {
       try {
         const res = await apiClient.get<any>("/Events");
         const data = res.data?.data ?? res.data;
-        if (Array.isArray(data) && data.length > 0) return data as Event[];
+        if (Array.isArray(data) && data.length > 0) {
+          return mergeCreatedWithDb(data) as Event[];
+        }
       } catch {
         // Fallback to cache store
       }
-      return eventsCacheStore as Event[];
+      return mergeCreatedWithDb(eventsCacheStore) as Event[];
     },
   });
 }
@@ -95,7 +110,9 @@ export function useMyEvents() {
       try {
         const res = await apiClient.get<any>("/Events/my-events");
         const data = res.data?.data ?? res.data;
-        if (Array.isArray(data) && data.length > 0) return data as MyEventModel[];
+        if (Array.isArray(data) && data.length > 0) {
+          return mergeCreatedWithDb(data) as MyEventModel[];
+        }
       } catch {
         // Fallback to fallback
       }
@@ -104,11 +121,13 @@ export function useMyEvents() {
       try {
         const allRes = await apiClient.get<any>("/Events");
         const allData = allRes.data?.data ?? allRes.data;
-        if (Array.isArray(allData) && allData.length > 0) return allData as MyEventModel[];
+        if (Array.isArray(allData) && allData.length > 0) {
+          return mergeCreatedWithDb(allData) as MyEventModel[];
+        }
       } catch {
         // ignore
       }
-      return eventsCacheStore as MyEventModel[];
+      return mergeCreatedWithDb(eventsCacheStore) as MyEventModel[];
     },
   });
 }
@@ -181,6 +200,7 @@ export async function createEvent(data: Partial<Event>): Promise<any> {
 
   const innerData = createdResult.data || createdResult;
   if (innerData) {
+    locallyCreatedEvents = [innerData, ...locallyCreatedEvents];
     eventsCacheStore = [innerData, ...eventsCacheStore];
   }
 
@@ -193,6 +213,9 @@ export async function deleteEvent(id: string): Promise<any> {
   } catch {
     // Ignore network error in mock mode
   }
+  locallyCreatedEvents = locallyCreatedEvents.filter(
+    (e) => (e.id || e.Id || e.eventId || e.EventId) !== id
+  );
   eventsCacheStore = eventsCacheStore.filter(
     (e) => (e.id || e.Id || e.eventId || e.EventId) !== id
   );
