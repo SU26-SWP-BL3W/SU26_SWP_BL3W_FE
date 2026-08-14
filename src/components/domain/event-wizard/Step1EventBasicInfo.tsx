@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button, Card, Input } from "@/components/ui";
 import { EventFormState } from "@/viewModels/useCreateEventWizardViewModel";
-import { Calendar, Shield, Edit3, CheckCircle2, ArrowRight } from "lucide-react";
+import { Calendar, Shield, Edit3, CheckCircle2, ArrowRight, Users } from "lucide-react";
 
 interface Step1EventBasicInfoProps {
   eventData: EventFormState;
@@ -86,6 +86,19 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                 onChange={(e) => onUpdateField("endDate", e.target.value)}
               />
             </div>
+            <div className="space-y-1">
+              <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                <Users className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                Số Lượng Đội Thi Tối Đa (Max Teams) *
+              </label>
+              <Input
+                type="number"
+                min={1}
+                max={500}
+                value={eventData.maxTeams}
+                onChange={(e) => onUpdateField("maxTeams", Number(e.target.value))}
+              />
+            </div>
             <div className="md:col-span-2 space-y-1">
               <label className="text-[10px] text-[var(--text-muted)] uppercase">Mô Tả Sự Kiện</label>
               <textarea
@@ -128,7 +141,7 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
             <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1">
               <span className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
@@ -146,6 +159,16 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
               </span>
               <p className="font-bold text-[var(--text-primary)]">
                 {eventData.registrationStartDate} ➔ {eventData.registrationEndDate}
+              </p>
+            </div>
+
+            <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1">
+              <span className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                Quy Mô Đội Thi Tối Đa
+              </span>
+              <p className="font-bold text-[var(--accent-primary)]">
+                Giới hạn: {eventData.maxTeams || 50} Đội thi
               </p>
             </div>
 

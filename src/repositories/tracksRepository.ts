@@ -15,8 +15,8 @@ export interface TrackStaffModel {
 export interface TrackWithStaffModel {
   id?: string;
   Id?: string;
-  roundId?: string;
-  RoundId?: string;
+  eventId?: string;
+  EventId?: string;
   trackName?: string;
   TrackName?: string;
   description?: string;
@@ -46,7 +46,7 @@ export function useGetTracksByEvent(eventId?: string) {
 }
 
 export interface CreateTrackPayload {
-  roundId: string;
+  eventId: string;
   trackName: string;
   templateId?: string;
   description?: string;
@@ -55,7 +55,7 @@ export interface CreateTrackPayload {
 
 export const tracksRepository = {
   /**
-   * Tạo Hạng mục (Track) mới trong vòng thi (Event Coordinator - POST /api/Tracks)
+   * Tạo Hạng mục (Track) mới trong sự kiện (Event Coordinator - POST /api/Tracks)
    */
   async createTrack(payload: CreateTrackPayload): Promise<BaseResponse<TrackEntity>> {
     try {
@@ -64,7 +64,7 @@ export const tracksRepository = {
     } catch (err: any) {
       const mockCreated: TrackEntity = {
         TrackId: `trk-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        RoundId: payload.roundId,
+        EventId: payload.eventId,
         TemplateId: payload.templateId,
         TrackName: payload.trackName,
         Description: payload.description,

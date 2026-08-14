@@ -81,11 +81,12 @@ export const AdminUsersView: React.FC = () => {
 
     // Role filter
     let matchesRole = true;
-    if (roleFilter === "admin") matchesRole = !!u.isAdmin;
-    else if (roleFilter === "student") matchesRole = !!u.isStudent;
-    else if (roleFilter === "fpt") matchesRole = !!u.isFpt;
-    else if (roleFilter === "nonfpt") matchesRole = !u.isFpt && !!u.isStudent;
-    else if (roleFilter === "locked") matchesRole = (u.rejectionCount ?? 0) >= 2;
+    const emailLower = (u.email || "").toLowerCase();
+    if (roleFilter === "admin") matchesRole = !!u.isAdmin || emailLower.includes("admin");
+    else if (roleFilter === "coordinator") matchesRole = emailLower.includes("ec.coordinator");
+    else if (roleFilter === "judge") matchesRole = emailLower.includes("judge");
+    else if (roleFilter === "mentor") matchesRole = emailLower.includes("mentor");
+    else if (roleFilter === "student") matchesRole = !u.isAdmin && !emailLower.includes("admin") && !emailLower.includes("ec.coordinator") && !emailLower.includes("judge") && !emailLower.includes("mentor");
 
     // Status filter
     let matchesStatus = true;
@@ -203,9 +204,10 @@ export const AdminUsersView: React.FC = () => {
               >
                 <option value="all">Tất cả Vai trò (All Roles)</option>
                 <option value="admin">System Admin</option>
-                <option value="fpt">Sinh Viên FPT</option>
-                <option value="nonfpt">Sinh Viên Non-FPT</option>
-                <option value="locked">SV Bị Khóa 2 Gậy</option>
+                <option value="coordinator">Event Coordinator</option>
+                <option value="judge">Giám Khảo</option>
+                <option value="mentor">Mentor</option>
+                <option value="student">Thí Sinh (Student)</option>
               </select>
             </div>
 
@@ -247,7 +249,7 @@ export const AdminUsersView: React.FC = () => {
                   <tr>
                     <th>HỌ VÀ TÊN / EMAIL</th>
                     <th>MÃ SV & TRƯỜNG HỌC</th>
-                    <th>PHÂN LOẠI VAI TRÒ</th>
+                    <th>VAI TRÒ (SYSTEM ROLE)</th>
                     <th>TRẠNG THÁI HỒ SƠ</th>
                     <th className="text-center">THAO TÁC XEM & DUYỆT</th>
                   </tr>
@@ -256,6 +258,8 @@ export const AdminUsersView: React.FC = () => {
                   {filteredUsers.map((u) => {
                     const isLocked = (u.rejectionCount ?? 0) >= 2;
                     const userId = u.id || u.userId || "";
+                    const userEmailLower = (u.email || "").toLowerCase();
+                    const isStaffOrAdmin = u.isAdmin || userEmailLower.includes("admin") || userEmailLower.includes("ec.coordinator");
 
                     return (
                       <tr key={userId}>
@@ -267,7 +271,7 @@ export const AdminUsersView: React.FC = () => {
                         </td>
                         <td>
                           <div className="font-mono text-xs text-[var(--text-primary)]">
-                            {u.studentCode ? `MSSV: ${u.studentCode}` : "N/A"}
+                            {u.studentCode ? `MSSV: ${u.studentCode}` : (isStaffOrAdmin ? "Cán bộ Ban Tổ Chức" : "Chưa cập nhật")}
                           </div>
                           <div className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1">
                             <Building2 className="w-3 h-3 text-[var(--text-muted)]" />
@@ -275,12 +279,16 @@ export const AdminUsersView: React.FC = () => {
                           </div>
                         </td>
                         <td>
-                          {u.isAdmin ? (
-                            <Badge tone="warning">SYSTEM ADMIN</Badge>
-                          ) : u.isFpt ? (
-                            <Badge tone="team">SV FPT (TỰ ĐỘNG)</Badge>
+                          {u.isAdmin || userEmailLower.includes("admin") ? (
+                            <Badge tone="danger">SYSTEM ADMIN</Badge>
+                          ) : userEmailLower.includes("ec.coordinator") ? (
+                            <Badge tone="coordinator">EVENT COORDINATOR</Badge>
+                          ) : userEmailLower.includes("judge") ? (
+                            <Badge tone="judge">GIÁM KHẢO</Badge>
+                          ) : userEmailLower.includes("mentor") ? (
+                            <Badge tone="warning">MENTOR</Badge>
                           ) : (
-                            <Badge tone="coordinator">SV NON-FPT</Badge>
+                            <Badge tone="team">THÍ SINH</Badge>
                           )}
                         </td>
                         <td>
@@ -307,13 +315,15 @@ export const AdminUsersView: React.FC = () => {
                             >
                               <Eye className="w-3.5 h-3.5" /> SOI CHI TIẾT
                             </Button>
-                            <Button
-                              variant="ghost"
-                              onClick={() => setSelectedUserForEc(u)}
-                              className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
-                            >
-                              <UserCheck className="w-3.5 h-3.5" /> Gán EC
-                            </Button>
+                            {!isStaffOrAdmin && (
+                              <Button
+                                variant="ghost"
+                                onClick={() => setSelectedUserForEc(u)}
+                                className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" /> Gán EC
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -325,105 +335,151 @@ export const AdminUsersView: React.FC = () => {
           )}
         </Card>
 
-        {/* Modal 1: Xem Chi Tiết Đầy Đủ Hồ Sơ User Before Approval */}
-        {detailUserModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-            <Card className="w-full max-w-2xl bg-[var(--bg-panel)] border border-[var(--color-danger)] hud-clipped p-6 space-y-6 relative max-h-[90vh] overflow-y-auto">
-              <button
-                type="button"
-                onClick={() => setDetailUserModal(null)}
-                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
+        {/* Modal 1: Xem Chi Tiết Đầy Đủ Hồ Sơ User */}
+        {detailUserModal && (() => {
+          const userEmailLower = (detailUserModal.email || "").toLowerCase();
+          const isStaffOrAdmin = detailUserModal.isAdmin || userEmailLower.includes("admin") || userEmailLower.includes("ec.coordinator") || userEmailLower.includes("judge") || userEmailLower.includes("mentor");
 
-              <div className="border-b border-[var(--border-muted)] pb-4">
-                <HudLabel>// SYSTEM ADMIN USER PROFILE INSPECTION</HudLabel>
-                <h3 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase tracking-wider mt-1">
-                  {detailUserModal.fullName}
-                </h3>
-                <p className="font-mono text-xs text-[var(--accent-primary)]">Email: {detailUserModal.email}</p>
-              </div>
+          return (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+              <Card className="w-full max-w-2xl bg-[var(--bg-panel)] border border-[var(--color-danger)] hud-clipped p-6 space-y-6 relative max-h-[90vh] overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => setDetailUserModal(null)}
+                  className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
 
-              {/* Detail Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                <div className="space-y-2 p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
-                  <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin sinh viên & Trường:</span>
-                  <div>Mã SV: <strong className="text-[var(--text-primary)]">{detailUserModal.studentCode || "N/A (Chưa cập nhật)"}</strong></div>
-                  <div>Trường học: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || (detailUserModal.isFpt ? "Đại học FPT" : "Chưa chọn trường")}</strong></div>
-                  <div>Loại tài khoản: <strong className="text-[var(--accent-team)]">{detailUserModal.isFpt ? "SV FPT (Tự động xác thực)" : "SV Non-FPT (Cần duyệt thẻ)"}</strong></div>
-                  <div>Ngày đăng ký: <strong className="text-[var(--text-muted)]">{detailUserModal.createdTime ? new Date(detailUserModal.createdTime).toLocaleDateString("vi-VN") : "Hôm nay"}</strong></div>
+                <div className="border-b border-[var(--border-muted)] pb-4">
+                  <HudLabel>
+                    {isStaffOrAdmin ? "// SYSTEM ADMIN - STAFF & EXPERT PROFILE INSPECTION" : "// SYSTEM ADMIN - STUDENT CANDIDATE CARD INSPECTION"}
+                  </HudLabel>
+                  <h3 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase tracking-wider mt-1">
+                    {detailUserModal.fullName}
+                  </h3>
+                  <p className="font-mono text-xs text-[var(--accent-primary)]">Email: {detailUserModal.email}</p>
                 </div>
 
-                <div className="space-y-2 p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
-                  <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">2. Trạng thái & Lịch sử duyệt:</span>
-                  <div>Số lần bị từ chối: <strong className={detailUserModal.rejectionCount && detailUserModal.rejectionCount >= 2 ? "text-[var(--color-danger)] font-bold" : "text-[var(--color-success)]"}>{detailUserModal.rejectionCount ?? 0} / 2 lần</strong></div>
-                  {detailUserModal.rejectionReason && (
-                    <div className="p-2 bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)]/30 text-[10px] text-[var(--color-danger)]">
-                      Lý do từ chối trước: {detailUserModal.rejectionReason}
+                {isStaffOrAdmin ? (
+                  /* ── STAFF / EXPERT / ADMIN PROFILE ── */
+                  <div className="space-y-6 font-mono text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2.5 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin cá nhân & Vai trò:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[var(--text-muted)]">Vai trò hệ thống:</span>
+                          {detailUserModal.isAdmin || userEmailLower.includes("admin") ? (
+                            <Badge tone="danger">SYSTEM ADMIN</Badge>
+                          ) : userEmailLower.includes("ec.coordinator") ? (
+                            <Badge tone="coordinator">EVENT COORDINATOR</Badge>
+                          ) : userEmailLower.includes("judge") ? (
+                            <Badge tone="judge">GIÁM KHẢO</Badge>
+                          ) : (
+                            <Badge tone="warning">MENTOR</Badge>
+                          )}
+                        </div>
+                        <div>Đơn vị công tác: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || "Ban Tổ Chức System"}</strong></div>
+                        <div>Mã số quản trị: <strong className="text-[var(--accent-primary)]">{detailUserModal.id || detailUserModal.userId || "STAFF-01"}</strong></div>
+                      </div>
+
+                      <div className="space-y-2.5 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">2. Trạng thái phân quyền:</span>
+                        <div>Trạng thái hoạt động: <span className="text-[var(--color-success)] font-bold">✓ TÀI KHOẢN KÍCH HOẠT HỢP LỆ</span></div>
+                        <div>Quyền truy cập: <span className="text-[var(--accent-team)] font-semibold">Bảng điều hành & Control Center</span></div>
+                      </div>
                     </div>
-                  )}
-                  <div>Trạng thái hiện tại: {detailUserModal.isApproved ? (
-                    <span className="text-[var(--color-success)] font-bold">✓ ĐÃ PHÊ DUYỆT HỒ SƠ</span>
-                  ) : (
-                    <span className="text-[var(--color-warning)] font-bold">⏳ ĐANG CHỜ PHÊ DUYỆT</span>
-                  )}</div>
-                </div>
-              </div>
 
-              {/* Physical Student Card Photo Inspection */}
-              <div className="space-y-2">
-                <span className="font-mono text-xs text-[var(--accent-primary)] font-bold uppercase block">
-                  3. Ảnh Chụp Thẻ Sinh Viên Thực Tế (Physical Student Card Photo Inspection):
-                </span>
-                <div className="w-full h-56 bg-black border border-[var(--border-muted)] hud-clipped flex items-center justify-center relative overflow-hidden group">
-                  {(detailUserModal as any).photoStudentCardUrl || (detailUserModal as any).studentCardPhotoUrl ? (
-                    <img
-                      src={(detailUserModal as any).photoStudentCardUrl || (detailUserModal as any).studentCardPhotoUrl || ""}
-                      alt="Thẻ Sinh Viên"
-                      className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="text-center font-mono text-xs text-[var(--text-muted)] space-y-2">
-                      <FileText className="w-10 h-10 text-[var(--accent-primary)] mx-auto opacity-50" />
-                      <p>[ DEMO MOCK: Ảnh Thẻ Sinh Viên HD {detailUserModal.fullName} ]</p>
-                      <p className="text-[10px] opacity-70">Mặt trước thẻ SV có khớp với Họ tên & Mã số SV không?</p>
+                    <div className="flex justify-end pt-4 border-t border-[var(--border-muted)]">
+                      <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs border border-[var(--border-muted)] px-4">
+                        ĐÓNG
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                ) : (
+                  /* ── STUDENT CANDIDATE CARD INSPECTION ── */
+                  <div className="space-y-6 font-mono text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2 p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin sinh viên & Trường:</span>
+                        <div>Mã SV: <strong className="text-[var(--text-primary)]">{detailUserModal.studentCode || "Chưa cập nhật"}</strong></div>
+                        <div>Trường học: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || (detailUserModal.isFpt ? "Đại học FPT" : "Chưa chọn trường")}</strong></div>
+                        <div>Xác minh FPT: <strong className="text-[var(--accent-team)]">{detailUserModal.isFpt ? "SV FPT (Tự động)" : "SV Non-FPT (Cần duyệt thẻ)"}</strong></div>
+                        <div>Ngày đăng ký: <strong className="text-[var(--text-muted)]">{detailUserModal.createdTime ? new Date(detailUserModal.createdTime).toLocaleDateString("vi-VN") : "Hôm nay"}</strong></div>
+                      </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--border-muted)]">
-                <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs">
-                  Đóng
-                </Button>
+                      <div className="space-y-2 p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">2. Trạng thái & Lịch sử duyệt thẻ:</span>
+                        <div>Số lần bị từ chối: <strong className={detailUserModal.rejectionCount && detailUserModal.rejectionCount >= 2 ? "text-[var(--color-danger)] font-bold" : "text-[var(--color-success)]"}>{detailUserModal.rejectionCount ?? 0} / 2 lần</strong></div>
+                        {detailUserModal.rejectionReason && (
+                          <div className="p-2 bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)]/30 text-[10px] text-[var(--color-danger)]">
+                            Lý do từ chối trước: {detailUserModal.rejectionReason}
+                          </div>
+                        )}
+                        <div>Trạng thái hiện tại: {detailUserModal.isApproved ? (
+                          <span className="text-[var(--color-success)] font-bold">✓ ĐÃ PHÊ DUYỆT HỒ SƠ</span>
+                        ) : (
+                          <span className="text-[var(--color-warning)] font-bold">⏳ ĐANG CHỜ PHÊ DUYỆT</span>
+                        )}</div>
+                      </div>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setRejectUserModal({
-                        userId: detailUserModal.id || detailUserModal.userId || "",
-                        fullName: detailUserModal.fullName || "User",
-                      });
-                    }}
-                    className="font-mono text-xs text-[var(--color-danger)] border-[var(--color-danger)]/40 hover:bg-[var(--color-danger)]/10"
-                  >
-                    <UserX className="w-3.5 h-3.5" /> Từ Chối Hồ Sơ
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => handleApprove(detailUserModal.id || detailUserModal.userId || "")}
-                    className="font-mono text-xs bg-[var(--color-success)] text-white hover:bg-white hover:text-black font-bold"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> // PHÊ DUYỆT HỒ SƠ &gt;
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
+                    {/* Physical Student Card Photo Inspection */}
+                    <div className="space-y-2">
+                      <span className="font-mono text-xs text-[var(--accent-primary)] font-bold uppercase block">
+                        3. Ảnh Chụp Thẻ Sinh Viên Thực Tế (Physical Student Card Inspection):
+                      </span>
+                      <div className="w-full h-56 bg-black border border-[var(--border-muted)] hud-clipped flex items-center justify-center relative overflow-hidden group">
+                        {detailUserModal.photoStudentCardUrl ? (
+                          <img
+                            src={detailUserModal.photoStudentCardUrl}
+                            alt="Thẻ Sinh Viên"
+                            className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="text-center font-mono text-xs text-[var(--text-muted)] space-y-2">
+                            <FileText className="w-10 h-10 text-[var(--accent-primary)] mx-auto opacity-50" />
+                            <p>[ DEMO MOCK: Ảnh Thẻ Sinh Viên HD {detailUserModal.fullName} ]</p>
+                            <p className="text-[10px] opacity-70">Mặt trước thẻ SV có khớp với Họ tên & Mã số SV không?</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--border-muted)]">
+                      <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs">
+                        Đóng
+                      </Button>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setRejectUserModal({
+                              userId: detailUserModal.id || detailUserModal.userId || "",
+                              fullName: detailUserModal.fullName || "User",
+                            });
+                          }}
+                          className="font-mono text-xs text-[var(--color-danger)] border-[var(--color-danger)]/40 hover:bg-[var(--color-danger)]/10"
+                        >
+                          <UserX className="w-3.5 h-3.5" /> Từ Chối Hồ Sơ
+                        </Button>
+                        <Button
+                          variant="primary"
+                          onClick={() => handleApprove(detailUserModal.id || detailUserModal.userId || "")}
+                          className="font-mono text-xs bg-[var(--color-success)] text-white hover:bg-white hover:text-black font-bold"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" /> // PHÊ DUYỆT HỒ SƠ &gt;
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </div>
+          );
+        })()}
 
         {/* Modal 2: Form Nhập Lý Do Từ Chối Hồ Sơ */}
         {rejectUserModal && (

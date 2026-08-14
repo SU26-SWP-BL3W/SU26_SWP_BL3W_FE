@@ -3,7 +3,7 @@
 import React from "react";
 import { Button, Input, Card } from "@/components/ui";
 import { RoundFormState, TrackFormState } from "@/viewModels/useCreateEventWizardViewModel";
-import { Target, Plus, Trash2, ArrowLeft, ArrowRight, LayoutTemplate } from "lucide-react";
+import { Target, Plus, Trash2, ArrowLeft, LayoutTemplate } from "lucide-react";
 
 interface Step3TrackConfigProps {
   rounds: RoundFormState[];
@@ -16,7 +16,6 @@ interface Step3TrackConfigProps {
 }
 
 export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
-  rounds,
   tracks,
   onAddTrack,
   onRemoveTrack,
@@ -33,7 +32,7 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
             Bước 3: Tạo Hạng Mục Thi (Tracks)
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Gán từng Hạng mục (Track) thuộc Vòng thi tương ứng và cấu hình nội dung chuyên môn.
+            Cấu hình các Hạng mục chuyên môn thuộc Sự kiện (ví dụ: AI & ML, Web & Product, Game Dev...).
           </p>
         </div>
         <Button variant="ghost" onClick={onAddTrack} className="flex items-center gap-1 text-xs">
@@ -68,23 +67,7 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Chọn Vòng Thi áp dụng */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Thuộc Vòng Thi</label>
-                <select
-                  value={track.roundId}
-                  onChange={(e) => onUpdateTrack(track.id, "roundId", e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
-                >
-                  {rounds.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      Vòng {r.roundNumber}: {r.roundName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tên Hạng Mục */}
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Tên Hạng Mục (TrackName)</label>
@@ -114,7 +97,7 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
               </div>
 
               {/* Mô tả hạng mục */}
-              <div className="md:col-span-3 space-y-1">
+              <div className="md:col-span-2 space-y-1">
                 <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Mô Tả & Quy Định Nộp Bài</label>
                 <Input
                   type="text"
