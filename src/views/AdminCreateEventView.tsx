@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button, Input, Card } from "@/components/ui";
 import { eventsRepository } from "@/repositories/eventsRepository";
 import { staffRepository } from "@/repositories/staffRepository";
+import { usersRepository } from "@/repositories/usersRepository";
 import { Shield, Calendar, Info, ArrowLeft, CheckCircle2, UserCheck } from "lucide-react";
 import Link from "next/link";
 
@@ -47,8 +48,11 @@ export const AdminCreateEventView: React.FC = () => {
       const innerData = res.data || res;
       const eventId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId || "";
       if (form.coordinatorEmail.trim()) {
+        const foundUser = await usersRepository.findUserByEmail(form.coordinatorEmail.trim());
+        const realUserId = foundUser?.id || (foundUser as any)?.Id || (foundUser as any)?.userId || (foundUser as any)?.UserId || "usr-ec-01";
+
         await staffRepository.assignRoleDirectly({
-          userId: `usr-ec-${Date.now()}`,
+          userId: realUserId,
           eventId: eventId,
           roleName: "EventCoordinator",
         });

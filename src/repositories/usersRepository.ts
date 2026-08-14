@@ -307,3 +307,21 @@ export function useFptStudentLookup(studentCode: string | null) {
     retry: false,
   });
 }
+
+export const usersRepository = {
+  async findUserByEmail(email: string): Promise<User | null> {
+    if (!email) return null;
+    try {
+      const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users");
+      const list = res.data?.data?.data ?? [];
+      const found = list.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase() || (u as any).Email?.toLowerCase() === email.toLowerCase()
+      );
+      if (found) return found;
+    } catch {
+      // Fallback
+    }
+    const mockFound = MOCK_USERS_LIST.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    return mockFound ?? null;
+  },
+};

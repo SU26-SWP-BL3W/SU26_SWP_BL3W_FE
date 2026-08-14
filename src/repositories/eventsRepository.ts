@@ -88,13 +88,21 @@ export function useMyEvents() {
     queryFn: async () => {
       try {
         const res = await apiClient.get<any>("/Events/my-events");
-        const data = res.data;
-        if (Array.isArray(data)) return data as MyEventModel[];
-        if (data && Array.isArray(data.data)) return data.data as MyEventModel[];
-        return [] as MyEventModel[];
+        const data = res.data?.data ?? res.data;
+        if (Array.isArray(data) && data.length > 0) return data as MyEventModel[];
       } catch {
-        return [] as MyEventModel[];
+        // Fallthrough to fallback
       }
+
+      // Fallback: If my-events is empty or errors, fetch all events from GET /api/Events
+      try {
+        const allRes = await apiClient.get<any>("/Events");
+        const allData = allRes.data?.data ?? allRes.data;
+        if (Array.isArray(allData)) return allData as MyEventModel[];
+      } catch {
+        // ignore
+      }
+      return [] as MyEventModel[];
     },
   });
 }
