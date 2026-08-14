@@ -229,6 +229,8 @@ export interface Event {
   totalPrizeVnd?: number;
   rounds?: Round[];
   tracks?: Track[];
+  status?: boolean;
+  Status?: boolean;
   success?: boolean;
   data?: any;
   message?: string | null;

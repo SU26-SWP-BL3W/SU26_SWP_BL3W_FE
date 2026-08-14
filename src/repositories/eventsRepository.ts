@@ -49,6 +49,21 @@ export const eventsRepository = {
   deleteEvent,
 };
 
+export function usePublicEvents() {
+  return useQuery({
+    queryKey: ["public-events"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<any>("/Events/upcoming", { params: { PageSize: 50 } });
+        return res.data?.data?.data || res.data?.data || res.data || [];
+      } catch {
+        const res = await apiClient.get<any>("/Events");
+        return res.data?.data || res.data || [];
+      }
+    },
+  });
+}
+
 export interface EventDTO {
   EventId?: string;
   EventName?: string;

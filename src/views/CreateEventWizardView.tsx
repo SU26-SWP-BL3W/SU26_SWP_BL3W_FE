@@ -7,7 +7,8 @@ import { Step2RoundConfig } from "@/components/domain/event-wizard/Step2RoundCon
 import { Step3TrackConfig } from "@/components/domain/event-wizard/Step3TrackConfig";
 import { Step4TemplateCriteriaEditor } from "@/components/domain/event-wizard/Step4TemplateCriteriaEditor";
 import { Step5StaffAssignment } from "@/components/domain/event-wizard/Step5StaffAssignment";
-import { Shield, Layers, Target, Sliders, Users, AlertCircle, ArrowLeft, CheckCircle2, Check, Lock } from "lucide-react";
+import { Step6EventConfirmation } from "@/components/domain/event-wizard/Step6EventConfirmation";
+import { Shield, Layers, Target, Sliders, Users, AlertCircle, ArrowLeft, CheckCircle2, Check, Lock, Rocket } from "lucide-react";
 import Link from "next/link";
 
 import { useGetTemplates } from "@/repositories/templatesRepository";
@@ -18,10 +19,11 @@ export const CreateEventWizardView: React.FC = () => {
 
   const steps = [
     { number: 1, label: "Tạo Event", icon: Shield },
-    { number: 2, label: "Vòng Thi (Rounds)", icon: Layers },
-    { number: 3, label: "Hạng Mục (Tracks)", icon: Target },
-    { number: 4, label: "Tiêu Chí (Criteria)", icon: Sliders },
-    { number: 5, label: "Nhân Sự (Staffing)", icon: Users },
+    { number: 2, label: "Vòng Thi", icon: Layers },
+    { number: 3, label: "Hạng Mục", icon: Target },
+    { number: 4, label: "Tiêu Chí", icon: Sliders },
+    { number: 5, label: "Nhân Sự", icon: Users },
+    { number: 6, label: "Công Bố", icon: Rocket },
   ];
 
   return (
@@ -190,6 +192,18 @@ export const CreateEventWizardView: React.FC = () => {
               onPrev={wizard.handlePrevStep}
               isSubmitting={wizard.isSubmitting}
               successMessage={wizard.successMessage}
+            />
+          )}
+
+          {wizard.currentStep === 6 && (
+            <Step6EventConfirmation
+              eventId={(wizard.createdEvent as any)?.id || (wizard.createdEvent as any)?.Id}
+              eventData={wizard.eventData}
+              rounds={wizard.rounds}
+              tracks={wizard.tracks}
+              criterias={wizard.criterias}
+              staffInvites={wizard.staffInvites}
+              onPrev={wizard.handlePrevStep}
             />
           )}
         </div>

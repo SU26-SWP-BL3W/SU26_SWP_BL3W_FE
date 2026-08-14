@@ -549,7 +549,8 @@ export function useCreateEventWizardViewModel() {
             });
           }
         }
-        setSuccessMessage("Đã hoàn tất tạo và cấu hình sự kiện cùng nhân sự thành công!");
+        setSuccessMessage("Đã hoàn tất cấu hình nhân sự! Đang chuyển đến Bước 6 xác nhận...");
+        setCurrentStep(6);
       } catch (err: any) {
         setErrorMessage(err?.response?.data?.message || "Có lỗi xảy ra khi phân công nhân sự.");
       } finally {

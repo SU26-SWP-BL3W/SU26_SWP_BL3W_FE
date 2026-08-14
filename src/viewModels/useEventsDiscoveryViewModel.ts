@@ -9,6 +9,8 @@ import {
   type EventCardData,
 } from "./mockEventsData";
 
+import { usePublicEvents } from "@/repositories/eventsRepository";
+
 export type { EventDisplayStatus, EventCardData };
 
 export type EventStatusFilter = "all" | "my_event" | EventDisplayStatus;
@@ -21,6 +23,7 @@ export interface TrackSummary {
 }
 
 export function useEventsDiscoveryViewModel() {
+  const { data: realPublicEvents = [] } = usePublicEvents();
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<EventStatusFilter>("all");
@@ -43,10 +46,47 @@ export function useEventsDiscoveryViewModel() {
     window.history.pushState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, []);
 
-  const allEvents: EventCardData[] = useMemo(
-    () => MOCK_EVENTS.map((ev) => ({ ...ev, status: computeEventStatus(ev, now) })),
-    [now],
-  );
+  const allEvents: EventCardData[] = useMemo(() => {
+    const mappedReal: EventCardData[] = realPublicEvents.map((ev: any) => {
+      const eId = ev.id || ev.Id || ev.eventId || ev.EventId || `real-${Date.now()}`;
+      const eName = ev.eventName || ev.EventName || "Sự kiện SEAL";
+      const eSeason = ev.season || ev.Season || "SWP";
+      const eYear = Number(ev.year || ev.Year || 2026);
+      const eStart = ev.startDate || ev.StartDate || "2026-08-15";
+      const eEnd = ev.endDate || ev.EndDate || "2026-09-30";
+      const eRegStart = ev.registrationStartDate || ev.RegistrationStartDate || eStart;
+      const eRegEnd = ev.registrationEndDate || ev.RegistrationEndDate || eEnd;
+
+      return {
+        id: eId,
+        eventName: eName,
+        season: eSeason,
+        year: eYear,
+        tagline: ev.tagline || ev.Tagline || ev.description || ev.Description || "Sự kiện cuộc thi RBL trên hệ thống SEAL",
+        description: ev.description || ev.Description || "",
+        startDate: eStart,
+        endDate: eEnd,
+        registrationStartDate: eRegStart,
+        registrationEndDate: eRegEnd,
+        maxTeams: Number(ev.maxTeams || ev.MaxTeams || 50),
+        teamCount: Number(ev.teamCount || ev.TeamCount || 0),
+        totalPrizeVnd: Number(ev.totalPrizeVnd || ev.TotalPrizeVnd || 100000000),
+        tracks: Array.isArray(ev.tracks || ev.Tracks) ? (ev.tracks || ev.Tracks) : ["RBL Project"],
+        status: "upcoming",
+      };
+    });
+
+    const combined = [...mappedReal, ...MOCK_EVENTS];
+    // Deduplicate by ID
+    const seen = new Set<string>();
+    const unique = combined.filter((ev) => {
+      if (seen.has(ev.id)) return false;
+      seen.add(ev.id);
+      return true;
+    });
+
+    return unique.map((ev) => ({ ...ev, status: computeEventStatus(ev, now) }));
+  }, [realPublicEvents, now]);
 
   const filteredEvents = useMemo(() => {
     const q = search.trim().toLowerCase();

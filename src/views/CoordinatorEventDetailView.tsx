@@ -87,6 +87,11 @@ export const CoordinatorEventDetailView: React.FC = () => {
     }
   }, [event]);
 
+  const hasRealToken =
+    typeof window !== "undefined" &&
+    !!localStorage.getItem("accessToken") &&
+    !localStorage.getItem("accessToken")!.startsWith("mock-jwt-token-");
+
   // Round Creation State
   const [newRoundName, setNewRoundName] = useState("");
   const [newRuleType, setNewRuleType] = useState<"top" | "percent" | "minscore">("top");
@@ -635,14 +640,14 @@ export const CoordinatorEventDetailView: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-[var(--text-muted)]">Trạng thái hoạt động</label>
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Hiển thị công khai (Trạng thái sự kiện)</label>
                     <select
                       value={status ? "active" : "inactive"}
                       onChange={(e) => setStatus(e.target.value === "active")}
-                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped font-bold"
                     >
-                      <option value="active">🟢 Đang Hoạt Động (Mở Cổng)</option>
-                      <option value="inactive">🔴 Tạm Khóa / Tạm Dừng</option>
+                      <option value="active">🟢 Đang hiển thị — Thí sinh xem &amp; đăng ký được</option>
+                      <option value="inactive">⚪ Đang ẩn (Bản nháp) — Chỉ Ban tổ chức thấy</option>
                     </select>
                   </div>
 
@@ -734,9 +739,18 @@ export const CoordinatorEventDetailView: React.FC = () => {
                 />
               </div>
 
+              {!hasRealToken && (
+                <div className="p-3 bg-[rgba(245,158,11,0.1)] border border-amber-500/40 text-amber-300 font-mono text-xs hud-clipped flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    ⚠️ Bạn đang ở <strong>Chế độ Xem Thử (Mock Role)</strong>. Để lưu thay đổi lên máy chủ (tránh lỗi 401), vui lòng đăng nhập bằng tài khoản Điều Phối Viên thật.
+                  </span>
+                </div>
+              )}
+
               <Button
                 type="submit"
-                disabled={isLoadingEvent || isSaving}
+                disabled={isLoadingEvent || isSaving || !hasRealToken}
                 variant="primary"
                 accent="coordinator"
                 className="hud-clipped font-mono text-xs flex items-center gap-2 disabled:opacity-50"
