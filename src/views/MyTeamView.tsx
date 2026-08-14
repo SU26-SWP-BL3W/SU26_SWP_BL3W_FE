@@ -11,6 +11,7 @@ import {
   type MockMember,
   type TeamStatus,
 } from "@/viewModels/mockTeamData";
+import { Shield, Search, Crown, Users, LogOut, Trophy } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<
@@ -424,7 +425,7 @@ export function MyTeamView() {
           
           {/* Hologram Icon */}
           <div className="w-20 h-20 hud-clipped bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/40 flex items-center justify-center text-[var(--accent-primary)] text-3xl font-mono font-bold">
-            🛡
+            <Shield className="w-10 h-10 text-[var(--accent-primary)]" />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -455,8 +456,8 @@ export function MyTeamView() {
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link href="/events">
-              <button className="hud-clipped px-6 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md">
-                🔍 KHÁM PHÁ SỰ KIỆN ĐANG MỞ ĐĂNG KÝ →
+              <button className="hud-clipped px-6 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md flex items-center gap-2">
+                <Search className="w-4 h-4" /> KHÁM PHÁ SỰ KIỆN ĐANG MỞ ĐĂNG KÝ
               </button>
             </Link>
           </div>
@@ -479,12 +480,20 @@ export function MyTeamView() {
               {team.name}
             </h1>
             <div className="flex flex-wrap items-center gap-3 mt-3">
-              <span className={`font-mono text-[10px] font-bold px-2.5 py-1 border tracking-widest uppercase ${
+              <span className={`font-mono text-[10px] font-bold px-2.5 py-1 border tracking-widest uppercase flex items-center gap-1.5 ${
                 isLeader
                   ? "bg-[var(--accent-team)]/10 text-[var(--accent-team)] border-[var(--accent-team)]/40"
                   : "bg-[#2dd4bf]/10 text-[#2dd4bf] border-[#2dd4bf]/40"
               }`}>
-                {isLeader ? "👑 QUYỀN ĐỘI TRƯỞNG (FULL MANAGEMENT)" : "👥 VAI TRÒ THÀNH VIÊN (READ-ONLY VIEW)"}
+                {isLeader ? (
+                  <>
+                    <Crown className="w-3.5 h-3.5 text-[var(--accent-team)]" /> QUYỀN ĐỘI TRƯỞNG (FULL MANAGEMENT)
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-3.5 h-3.5 text-[#2dd4bf]" /> VAI TRÒ THÀNH VIÊN (READ-ONLY VIEW)
+                  </>
+                )}
               </span>
               <span className="font-mono text-xs text-[var(--text-muted)] border border-[var(--border-muted)] px-2 py-0.5">
                 #{team.id.toUpperCase()}
@@ -500,7 +509,7 @@ export function MyTeamView() {
                 className="font-mono text-xs text-[var(--accent-primary)] hover:underline flex items-center gap-1 border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/10 px-2.5 py-0.5 rounded-none transition-colors"
               >
                 <span>{team.eventName}</span>
-                <span className="text-[10px]">↗ XEM CHI TIẾT</span>
+                <span className="text-[10px]">CHI TIẾT</span>
               </Link>
             </div>
             {team.description && (
@@ -532,9 +541,9 @@ export function MyTeamView() {
                     window.location.reload();
                   }
                 }}
-                className="hud-clipped px-5 py-2.5 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase tracking-wider hover:bg-[var(--color-danger)]/10 transition-all focus:outline-none"
+                className="hud-clipped px-5 py-2.5 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase tracking-wider hover:bg-[var(--color-danger)]/10 transition-all focus:outline-none flex items-center gap-1.5"
               >
-                🚪 RỜI ĐỘI THI
+                <LogOut className="w-3.5 h-3.5" /> RỜI ĐỘI THI
               </button>
             )}
 
@@ -544,7 +553,7 @@ export function MyTeamView() {
                   id="submit-project-btn"
                   className="hud-clipped px-6 py-3 bg-[var(--accent-team)] text-[var(--bg-base)] font-mono font-bold tracking-wider uppercase text-xs transition-all duration-200 hover:bg-white hover:shadow-[0_0_15px_rgba(56,189,248,0.5)] focus:outline-none"
                 >
-                  {"// NỘP BÀI THI >"}
+                  NỘP BÀI THI
                 </button>
               </Link>
             )}
@@ -554,14 +563,14 @@ export function MyTeamView() {
                   id="view-submissions-btn"
                   className="hud-clipped px-4 py-2.5 bg-transparent border border-[var(--border-muted)] text-[var(--text-muted)] font-mono text-xs tracking-wider uppercase transition-all duration-200 hover:border-[var(--accent-team)] hover:text-[var(--accent-team)] focus:outline-none"
                 >
-                  [ XEM QUẢN LÝ BÀI NỘP ]
+                  QUẢN LÝ BÀI NỘP
                 </button>
               </Link>
               <Link href={`/events/${team.eventId}/leaderboard`}>
                 <button
-                  className="hud-clipped px-4 py-2.5 bg-transparent border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] font-mono text-xs tracking-wider uppercase transition-all duration-200 hover:bg-[var(--accent-judge)]/10 focus:outline-none"
+                  className="hud-clipped px-4 py-2.5 bg-transparent border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] font-mono text-xs tracking-wider uppercase transition-all duration-200 hover:bg-[var(--accent-judge)]/10 focus:outline-none flex items-center gap-1.5"
                 >
-                  🏆 BẢNG XẾP HẠNG
+                  <Trophy className="w-3.5 h-3.5" /> BẢNG XẾP HẠNG
                 </button>
               </Link>
             </div>

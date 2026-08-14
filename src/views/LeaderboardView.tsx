@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { LandingLeaderboardPodium } from "@/components/domain/LandingLeaderboardPodium";
 import { MOCK_PODIUM_TEAMS, MOCK_EVENTS } from "@/viewModels/mockEventsData";
+import { Trophy, Target } from "lucide-react";
 
 interface TableTeam {
   rank: number;
@@ -89,7 +90,8 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-[var(--text-primary)] flex items-center gap-3">
-                    <span>🏆</span> BẢNG VINH DANH CÁC MÙA GIẢI (HALL OF FAME)
+                    <Trophy className="w-7 h-7 text-[var(--accent-judge)]" />
+                    <span>BẢNG VINH DANH CÁC MÙA GIẢI (HALL OF FAME)</span>
                   </h1>
                   <p className="font-mono text-xs text-[var(--text-muted)] mt-1">
                     Vinh danh Top Đội Thi Xuất Sắc Nhất đạt giải cao tại các Cuộc thi Hackathon toàn quốc.
@@ -98,13 +100,15 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
 
                 {/* Dropdown Chọn Sự Kiện Để Xem Vinh Danh (Chỉ hiện ở trang công khai ngoài) */}
                 <div className="flex items-center gap-2 bg-[var(--bg-input)] p-2 border border-[var(--accent-judge)]/50 hud-clipped">
-                  <span className="font-mono text-xs text-[var(--accent-judge)] font-bold">🎯 CHỌN SỰ KIỆN:</span>
+                  <span className="font-mono text-xs text-[var(--accent-judge)] font-bold flex items-center gap-1">
+                    <Target className="w-3.5 h-3.5" /> CHỌN SỰ KIỆN:
+                  </span>
                   <select
                     value={selectedEventId}
                     onChange={(e) => setSelectedEventId(e.target.value)}
                     className="bg-[var(--bg-panel)] text-[var(--text-primary)] font-mono text-xs font-bold px-3 py-1.5 border border-[var(--border-muted)] focus:outline-none focus:border-[var(--accent-judge)]"
                   >
-                    <option value="all">🏆 Tất Cả Mùa Giải (Hall of Fame)</option>
+                    <option value="all">Tất Cả Mùa Giải (Hall of Fame)</option>
                     {MOCK_EVENTS.map((ev) => (
                       <option key={ev.id} value={ev.id}>
                         {ev.eventName}

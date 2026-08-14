@@ -169,12 +169,12 @@ function TrackSubmissionCard({
           {isSaved ? (
             <div className="flex items-center gap-2 px-3 py-1.5 border border-[var(--color-success)]/40 bg-[var(--color-success)]/10 font-mono text-xs font-bold text-[var(--color-success)] uppercase tracking-wider hud-clipped">
               <span className="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse" />
-              ✓ ĐÃ NỘP BÀI
+              ĐÃ NỘP BÀI
             </div>
           ) : (
             <div className="flex items-center gap-2 px-3 py-1.5 border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 font-mono text-xs font-bold text-[var(--color-warning)] uppercase tracking-wider hud-clipped">
               <span className="w-2 h-2 rounded-full bg-[var(--color-warning)] animate-ping" />
-              ⚠ CHƯA NỘP
+              CHƯA NỘP
             </div>
           )}
         </div>
@@ -213,7 +213,7 @@ function TrackSubmissionCard({
                   {/* Left: Icon & Label */}
                   <div className="flex items-center gap-3 min-w-[200px]">
                     <span className={`px-2 py-1 font-mono text-[10px] font-bold border ${meta.badgeColor}`}>
-                      {meta.icon} {meta.label}
+                      {meta.label}
                     </span>
                     <div className="flex flex-col">
                       <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
@@ -252,11 +252,11 @@ function TrackSubmissionCard({
                   <div className="shrink-0 flex items-center gap-2">
                     {isValidUrl ? (
                       <span className="font-mono text-[10px] font-bold text-[var(--color-success)] flex items-center gap-1 border border-[var(--color-success)]/30 px-2 py-1 bg-[var(--color-success)]/10">
-                        ✓ ĐÃ ĐIỀN
+                        ĐÃ ĐIỀN
                       </span>
                     ) : dlv.required ? (
                       <span className="font-mono text-[10px] font-bold text-[var(--color-danger)] flex items-center gap-1 border border-[var(--color-danger)]/30 px-2 py-1 bg-[var(--color-danger)]/10">
-                        ○ CHƯA ĐIỀN
+                        CHƯA ĐIỀN
                       </span>
                     ) : (
                       <span className="font-mono text-[10px] text-[var(--text-muted)] border border-[var(--border-muted)] px-2 py-1">
@@ -292,7 +292,7 @@ function TrackSubmissionCard({
           <div className="font-mono text-xs text-[var(--text-muted)]">
             {isSaved ? (
               <span className="text-[var(--color-success)] font-semibold">
-                ✓ Đã lưu bài nộp cho hạng mục {track.trackName}
+                Đã lưu bài nộp cho hạng mục {track.trackName}
               </span>
             ) : (
               <span>Vui lòng kiểm tra kỹ các đường link trước khi xác nhận.</span>
@@ -313,8 +313,8 @@ function TrackSubmissionCard({
             {isSubmitting
               ? "ĐANG XỬ LÝ..."
               : isSaved
-              ? "✏ CẬP NHẬT BÀI NỘP"
-              : "🚀 XÁC NHẬN NỘP BÀI"}
+              ? "CẬP NHẬT BÀI NỘP"
+              : "XÁC NHẬN NỘP BÀI"}
           </button>
         </div>
       </form>
@@ -355,7 +355,7 @@ export function NewSubmissionView() {
       <div className="hud-lattice min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-[var(--bg-panel)] border border-[var(--color-warning)]/40 hud-clipped p-8 text-center">
           <div className="font-mono text-[10px] text-[var(--color-warning)] tracking-widest uppercase mb-3">
-            ⚠ CHƯA ĐỦ ĐIỀU KIỆN NỘP BÀI
+            CHƯA ĐỦ ĐIỀU KIỆN NỘP BÀI
           </div>
           <p className="font-mono text-sm text-[var(--text-primary)] mb-4 leading-relaxed">
             {!team ? "Bạn chưa có đội thi." : `Trạng thái đội thi hiện tại: `}
@@ -463,7 +463,7 @@ export function NewSubmissionView() {
               <span className="text-xs text-[var(--text-muted)] font-normal">({availableTracks.length} hạng mục)</span>
             </h2>
             <span className="font-mono text-xs text-[var(--text-muted)]">
-              💡 Cuộn xuống để xem và nộp bài cho từng hạng mục
+              Cuộn xuống để xem và nộp bài cho từng hạng mục
             </span>
           </div>
 

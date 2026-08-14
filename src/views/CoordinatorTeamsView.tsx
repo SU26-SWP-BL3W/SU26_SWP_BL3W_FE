@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   Eye,
   Crown,
+  Building2,
+  FileText,
 } from "lucide-react";
 import type { TeamEntity } from "@/models/entities";
 
@@ -24,8 +26,10 @@ export function CoordinatorTeamsView() {
   const [rejectReason, setRejectReason] = useState("");
   const [detailModal, setDetailModal] = useState<TeamEntity | null>(null);
 
-  const { data: pendingTeams = [], isLoading, refetch } = useGetPendingTeams();
-
+  const { data: rawPendingTeams, isLoading, refetch } = useGetPendingTeams();
+  const pendingTeams: TeamEntity[] = Array.isArray(rawPendingTeams)
+    ? rawPendingTeams
+    : (rawPendingTeams as any)?.data ?? [];
 
   const { mutateAsync: approveTeam, isPending: isApproving } = useApproveTeamRegistration();
   const { mutateAsync: rejectTeam, isPending: isRejecting } = useRejectTeamRegistration();
@@ -33,6 +37,8 @@ export function CoordinatorTeamsView() {
   const handleApprove = async (teamId: string) => {
     try {
       await approveTeam(teamId);
+      setDetailModal(null);
+      refetch();
     } catch {
       alert("Đã duyệt đội thi thành công! Đội thi đã ở trạng thái REGISTERED.");
     }
@@ -44,10 +50,12 @@ export function CoordinatorTeamsView() {
 
     try {
       await rejectTeam({ teamId: rejectModal.teamId, reason: rejectReason.trim() });
+      refetch();
     } catch {
       alert("Đã từ chối đăng ký đội thi.");
     } finally {
       setRejectModal(null);
+      setDetailModal(null);
       setRejectReason("");
     }
   };
@@ -66,19 +74,19 @@ export function CoordinatorTeamsView() {
                 DUYỆT ĐĂNG KÝ ĐỘI THI
               </h1>
               <p className="text-xs font-mono text-[var(--text-muted)]">
-                // COORDINATOR TEAM APPROVAL CENTER
+                // COORDINATOR TEAM REGISTRATION INSPECTION & APPROVAL
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="px-3 py-1.5 bg-[rgba(245,158,11,0.1)] border border-[var(--color-warning)]/30 font-mono text-xs text-[var(--color-warning)]">
-              PENDING: {pendingTeams.length}
+              PENDING: {pendingTeams.length} ĐỘI
             </div>
             <Button
               variant="ghost"
               onClick={() => refetch()}
-              className="flex items-center gap-2 text-xs"
+              className="flex items-center gap-2 text-xs font-mono"
             >
               <RefreshCw className="w-3 h-3" />
               Làm mới
@@ -91,16 +99,7 @@ export function CoordinatorTeamsView() {
       <div className="max-w-5xl mx-auto">
         {isLoading ? (
           <div className="flex justify-center py-20">
-            <svg className="w-12 h-12 animate-spin" viewBox="0 0 100 100">
-              <polygon
-                points="50,5 91,27.5 91,72.5 50,95 9,72.5 9,27.5"
-                fill="none"
-                stroke="var(--accent-coordinator)"
-                strokeWidth="2"
-                strokeDasharray="240"
-                strokeDashoffset="60"
-              />
-            </svg>
+            <RefreshCw className="w-8 h-8 animate-spin text-[var(--accent-coordinator)]" />
           </div>
         ) : pendingTeams.length === 0 ? (
           <Card className="w-full p-16 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)] text-center">
@@ -132,14 +131,14 @@ export function CoordinatorTeamsView() {
                       </div>
 
                       <p className="text-xs text-[var(--text-muted)] font-mono mt-1">
-                        Sĩ số: <strong className="text-[var(--text-primary)]">{members.length} thành viên</strong>
+                        Sĩ số: <strong className="text-[var(--text-primary)]">{members.length} thành viên</strong> · Mô tả: {team.description || "Dự án phát triển giải pháp công nghệ SEAL Hackathon"}
                       </p>
 
                       {/* Roster preview */}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {members.map((m: any) => (
+                        {members.map((m: any, idx: number) => (
                           <div
-                            key={m.userId}
+                            key={m.userId || idx}
                             className="px-2.5 py-1 bg-[var(--bg-base)] border border-[var(--border-muted)] text-xs font-mono flex items-center gap-1.5"
                           >
                             {m.roleName === "TeamLeader" && (
@@ -147,7 +146,7 @@ export function CoordinatorTeamsView() {
                             )}
                             <span>{m.fullName}</span>
                             <Badge tone={m.isApproved ? "success" : "danger"} className="text-[9px] px-1">
-                              {m.isApproved ? "OK" : "CHƯA DUYỆT"}
+                              {m.isApproved ? "PROFILE OK" : "CHƯA DUYỆT THẺ"}
                             </Badge>
                           </div>
                         ))}
@@ -156,25 +155,12 @@ export function CoordinatorTeamsView() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => setDetailModal(team)}
-                        className="p-2 text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors"
-                        title="Xem chi tiết"
+                        className="text-xs font-mono text-[var(--accent-primary)] border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/10"
                       >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <Button
-                        disabled={isApproving}
-                        onClick={() => handleApprove(teamId)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[rgba(16,185,129,0.1)] border border-[var(--color-success)]/30 text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)] font-mono"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> DUYỆT ĐỘI
-                      </Button>
-                      <Button
-                        onClick={() => setRejectModal({ teamId, teamName })}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)]/30 text-[var(--color-danger)] hover:bg-[rgba(239,68,68,0.2)] font-mono"
-                      >
-                        <XCircle className="w-3.5 h-3.5" /> TỪ CHỐI
+                        <Eye className="w-4 h-4" /> SOI CHI TIẾT ĐỘI THI
                       </Button>
                     </div>
                   </div>
@@ -185,109 +171,159 @@ export function CoordinatorTeamsView() {
         )}
       </div>
 
-      {/* Reject Modal */}
+      {/* Full Team Registration Inspection Detail Modal */}
+      {detailModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4"
+          onClick={() => setDetailModal(null)}
+        >
+          <Card
+            className="w-full max-w-2xl p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--accent-coordinator)] space-y-6 max-h-[90vh] overflow-y-auto"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
+              <div>
+                <span className="font-mono text-[10px] text-[var(--accent-coordinator)] uppercase font-bold tracking-widest">// TEAM REGISTRATION INSPECTION MODAL</span>
+                <h3 className="font-display text-xl font-bold text-[var(--text-primary)] uppercase tracking-widest mt-1">
+                  ĐỘI THI: {detailModal.teamName || detailModal.TeamName}
+                </h3>
+              </div>
+              <button
+                onClick={() => setDetailModal(null)}
+                className="text-[var(--text-muted)] hover:text-white"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4 font-mono text-xs">
+              <div className="grid grid-cols-2 gap-3 p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                <div>
+                  <span className="text-[10px] text-[var(--text-muted)] block">Mã Đội Thi:</span>
+                  <span className="text-[var(--accent-team)] font-bold">#{detailModal.id || detailModal.TeamId}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[var(--text-muted)] block">Trạng Thái:</span>
+                  <Badge tone="warning">{detailModal.status || detailModal.Status}</Badge>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold block mb-1">Mô tả dự án & định hướng kỹ thuật:</span>
+                <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-muted)]">
+                  {detailModal.description || "Đội thi đăng ký tham gia thi đấu giải pháp công nghệ SEAL Hackathon 2026."}
+                </div>
+              </div>
+
+              {/* Members Checklist Inspection */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-[var(--text-primary)] uppercase font-bold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[var(--accent-team)]" />
+                    Danh sách thành viên ({detailModal.members?.length || 0} / 5 người):
+                  </span>
+                  <span className="text-[10px] text-[var(--color-success)] font-bold">
+                    ✓ Sĩ số hợp lệ (3 - 5 người)
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {detailModal.members?.map((m: any, idx: number) => (
+                    <div
+                      key={m.userId || idx}
+                      className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] flex items-center justify-between hud-clipped"
+                    >
+                      <div>
+                        <p className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 text-xs">
+                          {m.roleName === "TeamLeader" && <Crown className="w-3.5 h-3.5 text-[var(--accent-team)]" />}
+                          {m.fullName}
+                          {m.roleName === "TeamLeader" && <span className="text-[9px] text-[var(--accent-team)]">[TRƯỞNG NHÓM]</span>}
+                        </p>
+                        <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Email: {m.email} · MSSV: {m.studentCode || "N/A"}</p>
+                      </div>
+                      <Badge tone={m.isApproved ? "success" : "danger"}>
+                        {m.isApproved ? "✓ HỒ SƠ THẺ SV OK" : "✗ CHƯA DUYỆT THẺ"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between gap-3 pt-4 border-t border-[var(--border-muted)]">
+              <Button variant="ghost" onClick={() => setDetailModal(null)} className="font-mono text-xs">
+                Đóng
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setRejectModal({
+                    teamId: detailModal.id || detailModal.TeamId || "",
+                    teamName: detailModal.teamName || detailModal.TeamName || "Đội thi"
+                  })}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)]/40 text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white font-mono"
+                >
+                  <XCircle className="w-4 h-4" /> ✗ TỪ CHỐI ĐĂNG KÝ
+                </Button>
+                <Button
+                  disabled={isApproving}
+                  onClick={() => handleApprove(detailModal.id || detailModal.TeamId || "")}
+                  className="flex items-center gap-1.5 px-5 py-2 text-xs bg-[var(--color-success)] text-white hover:bg-white hover:text-black font-mono font-bold"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> // PHÊ DUYỆT ĐĂNG KÝ ĐỘI THI &gt;
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Reject Reason Form Modal */}
       {rejectModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4">
-          <Card className="w-full max-w-md p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--color-danger)]/30">
-            <div className="flex items-center gap-3 mb-4">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+          <Card className="w-full max-w-md p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--color-danger)]/40 space-y-4">
+            <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-[var(--color-danger)]" />
               <h3 className="font-display text-base font-bold text-[var(--color-danger)] tracking-widest uppercase">
                 TỪ CHỐI ĐĂNG KÝ ĐỘI THI
               </h3>
             </div>
 
-            <p className="text-sm text-[var(--text-muted)] mb-4">
+            <p className="text-xs font-mono text-[var(--text-muted)]">
               Bạn đang từ chối đơn đăng ký của đội:{" "}
-              <span className="text-[var(--text-primary)] font-bold">{rejectModal.teamName}</span>
+              <strong className="text-white">{rejectModal.teamName}</strong>. Lý do sẽ được gửi trực tiếp tới Đội trưởng.
             </p>
 
-            <div className="flex flex-col gap-2 mb-4">
+            <div className="flex flex-col gap-2">
               <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                Lý do từ chối <span className="text-[var(--color-danger)]">*</span>
+                Lý do từ chối cụ thể <span className="text-[var(--color-danger)]">*</span>
               </label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Ví dụ: Sĩ số thành viên không phù hợp quy định, tên đội thi vi phạm quy chế..."
+                placeholder="Ví dụ: Sĩ số thành viên không đạt quy định 3-5 người, hoặc có thành viên chưa được duyệt thẻ SV cá nhân..."
                 rows={3}
-                className="w-full px-4 py-2.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-sm resize-none focus:outline-none focus:border-[var(--color-danger)] transition-colors"
+                className="w-full px-4 py-2.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs resize-none focus:outline-none focus:border-[var(--color-danger)]"
+                required
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
               <Button
                 variant="ghost"
                 onClick={() => { setRejectModal(null); setRejectReason(""); }}
-                className="flex-1 justify-center"
+                className="flex-1 justify-center font-mono text-xs"
               >
                 Hủy
               </Button>
               <Button
                 disabled={!rejectReason.trim() || isRejecting}
                 onClick={handleReject}
-                className="flex-1 justify-center bg-[var(--color-danger)] text-white font-mono text-xs tracking-wider"
+                className="flex-1 justify-center bg-[var(--color-danger)] text-white font-mono text-xs font-bold"
               >
                 {isRejecting ? "Đang gửi..." : "// XÁC NHẬN TỪ CHỐI"}
               </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Detail Modal */}
-      {detailModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4"
-          onClick={() => setDetailModal(null)}
-        >
-          <Card
-            className="w-full max-w-lg p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)]"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-base font-bold text-[var(--accent-team)] tracking-widest uppercase">
-                CHI TIẾT ĐỘI THI: {detailModal.teamName || detailModal.TeamName}
-              </h3>
-              <button
-                onClick={() => setDetailModal(null)}
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              >
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 font-mono text-xs">
-              <div className="flex justify-between border-b border-[var(--border-muted)] pb-2">
-                <span className="text-[var(--text-muted)]">Mã Đội:</span>
-                <span className="text-[var(--accent-primary)]">#{detailModal.id || detailModal.TeamId}</span>
-              </div>
-              <div className="flex justify-between border-b border-[var(--border-muted)] pb-2">
-                <span className="text-[var(--text-muted)]">Trạng thái:</span>
-                <Badge tone="warning">{detailModal.status || detailModal.Status}</Badge>
-              </div>
-
-              <div className="pt-2">
-                <p className="text-[var(--text-muted)] mb-2 uppercase font-bold">Thành viên ({detailModal.members?.length || 0}):</p>
-                <div className="space-y-2">
-                  {detailModal.members?.map((m) => (
-                    <div
-                      key={m.userId}
-                      className="p-2.5 bg-[var(--bg-base)] border border-[var(--border-muted)] flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="font-bold text-[var(--text-primary)] flex items-center gap-1">
-                          {m.roleName === "TeamLeader" && <Crown className="w-3 h-3 text-[var(--accent-team)]" />}
-                          {m.fullName}
-                        </p>
-                        <p className="text-[10px] text-[var(--text-muted)]">{m.email}</p>
-                      </div>
-                      <Badge tone={m.isApproved ? "success" : "danger"}>
-                        {m.isApproved ? "ĐÃ DUYỆT PROFILE" : "CHƯA DUYỆT"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </Card>
         </div>

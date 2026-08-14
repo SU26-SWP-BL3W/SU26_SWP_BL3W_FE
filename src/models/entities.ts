@@ -123,6 +123,7 @@ export interface User {
   id?: string;
   userId?: string;
   schoolId?: string | null;
+  schoolName?: string | null;
   studentCode?: string | null;
   email?: string;
   fullName?: string;
@@ -134,6 +135,7 @@ export interface User {
   isTemporary?: boolean;
   photoStudentCardUrl?: string | null;
   rejectionReason?: string | null;
+  rejectionCount?: number;
   rejectedCount?: number;
   createdTime?: string;
   lastUpdatedTime?: string;
@@ -193,11 +195,13 @@ export interface UserRejection {
 // ─── School ──────────────────────────────────────────────────
 
 export interface School {
-  id: string;
-  code: string;
-  name: string;
+  id?: string;
+  schoolId?: string;
+  code?: string;
+  name?: string;
   schoolName?: string;
-  isFpt: boolean;
+  address?: string;
+  isFpt?: boolean;
 }
 
 // ─── Event ───────────────────────────────────────────────────
@@ -216,26 +220,17 @@ export interface Event {
   tagline?: string;
   Tagline?: string;
   description?: string | null;
-  Description?: string | null;
   startDate?: string;
-  StartDate?: string;
   endDate?: string;
-  EndDate?: string;
   registrationStartDate?: string;
-  RegistrationStartDate?: string;
   registrationEndDate?: string;
-  RegistrationEndDate?: string;
   maxTeams?: number;
-  MaxTeams?: number;
   teamCount?: number;
-  TeamCount?: number;
   totalPrizeVnd?: number;
-  TotalPrizeVnd?: number;
+  rounds?: Round[];
   success?: boolean;
   data?: any;
   message?: string | null;
-  createdTime?: string;
-  lastUpdatedTime?: string;
 }
 
 // ─── Round ───────────────────────────────────────────────────
@@ -322,6 +317,7 @@ export interface Team {
   name?: string;
   teamName?: string;
   TeamName?: string;
+  description?: string | null;
   trackId?: string | null;
   leaderUserId?: string;
   isApproved?: boolean;
@@ -339,6 +335,7 @@ export interface TeamMember {
   roleName?: string;
   fullName?: string;
   email?: string;
+  studentCode?: string;
   isApproved?: boolean;
   joinedTime?: string;
   user?: User;
@@ -372,11 +369,14 @@ export type AppealStatusType = 0 | 1 | 2; // Pending=0, Approved=1, Rejected=2
 
 export interface Appeal {
   id?: string;
+  teamId?: string;
+  teamName?: string;
   submitResultId?: string;
   reason?: string | null;
   status?: AppealStatusType;
   response?: string | null;
   assignedJudgeId?: string | null;
+  createdTime?: string;
 }
 
 // ─── Pagination ──────────────────────────────────────────────

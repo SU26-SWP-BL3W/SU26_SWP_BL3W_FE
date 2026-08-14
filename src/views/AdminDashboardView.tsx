@@ -4,8 +4,27 @@ import React, { useState } from "react";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import { MOCK_EVENTS, MockEvent } from "@/viewModels/mockEventsData";
 import { staffRepository } from "@/repositories/staffRepository";
-import { ShieldAlert, Plus, Users, School, Settings, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, Plus, Users, School, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+
+function HudLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-mono text-[10px] tracking-[0.2em] text-[var(--color-danger)] uppercase">
+      {children}
+    </span>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 pb-3 border-b border-[var(--border-muted)]">
+      <span className="w-1.5 h-4 bg-[var(--color-danger)] inline-block" aria-hidden="true" />
+      <h2 className="font-mono text-sm font-bold text-[var(--text-primary)] tracking-widest uppercase">
+        {children}
+      </h2>
+    </div>
+  );
+}
 
 export const AdminDashboardView: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<MockEvent | null>(null);
@@ -42,32 +61,29 @@ export const AdminDashboardView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
-      <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-4 py-8 space-y-8">
+      <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-6 py-8 space-y-6">
         {/* Admin Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
           <div>
-            <div className="flex items-center gap-2 font-mono text-xs text-[var(--color-danger)] mb-1">
-              <ShieldAlert className="w-4 h-4" />
-              <span>TRUNG TÂM QUẢN TRỊ HỆ THỐNG (SYSTEM ADMIN)</span>
-            </div>
-            <h1 className="font-display font-bold text-2xl md:text-3xl text-[var(--text-primary)] uppercase tracking-wider">
+            <HudLabel>// SYSTEM ADMIN OPERATIONS HUB</HudLabel>
+            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1">
               Bảng Điều Hành Admin Tổng
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-              Dành riêng cho System Admin (`User.IsAdmin = true`): Khởi tạo sự kiện toàn hệ thống & phân công Event Coordinator quản lý.
+              Dành riêng cho System Admin: Khởi tạo sự kiện toàn hệ thống & phân công Event Coordinator quản lý.
             </p>
           </div>
 
           <Link href="/admin/events/new">
-            <Button variant="primary" className="hud-glow-cyan flex items-center gap-2 bg-[var(--color-danger)] hover:bg-white text-[var(--bg-base)]">
-              <Plus className="w-4 h-4" /> // TẠO SỰ KIỆN MỚI (POST /api/Events) &gt;
+            <Button variant="primary" className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold">
+              <Plus className="w-4 h-4" /> Tạo Sự Kiện Mới
             </Button>
           </Link>
         </div>
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="hud-glow-cyan p-5 space-y-2 border-l-4 border-l-[var(--color-danger)]">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--color-danger)] bg-[var(--bg-panel)] hud-clipped">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Tổng Sự Kiện Hệ Thống
             </span>
@@ -78,11 +94,11 @@ export const AdminDashboardView: React.FC = () => {
               <Shield className="w-5 h-5 text-[var(--color-danger)] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--color-success)] block">
-              ● 2 Sự kiện active trên hệ thống
+              ● {MOCK_EVENTS.length} Sự kiện active trên hệ thống
             </span>
           </Card>
 
-          <Card className="hud-glow-coordinator p-5 space-y-2">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--accent-coordinator)] bg-[var(--bg-panel)] hud-clipped">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Event Coordinators (EC)
             </span>
@@ -97,7 +113,7 @@ export const AdminDashboardView: React.FC = () => {
             </span>
           </Card>
 
-          <Card className="hud-glow-amber p-5 space-y-2">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--accent-judge)] bg-[var(--bg-panel)] hud-clipped">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Tổng Người Dùng Hệ Thống
             </span>
@@ -112,15 +128,15 @@ export const AdminDashboardView: React.FC = () => {
             </span>
           </Card>
 
-          <Card className="hud-glow-mentor p-5 space-y-2">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[#2dd4bf] bg-[var(--bg-panel)] hud-clipped">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Trường Đại Học Đăng Ký
             </span>
             <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--accent-mentor)]">
+              <span className="font-mono font-bold text-2xl text-[#2dd4bf]">
                 18
               </span>
-              <School className="w-5 h-5 text-[var(--accent-mentor)] opacity-60" />
+              <School className="w-5 h-5 text-[#2dd4bf] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--text-muted)] block">
               FPTU, HUST, VNU, UIT, HCMUT...
@@ -129,18 +145,8 @@ export const AdminDashboardView: React.FC = () => {
         </div>
 
         {/* All Events Admin Table */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
-            <h3 className="font-mono font-bold text-sm text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-[var(--color-danger)]" />
-              Danh Sách Tất Cả Sự Kiện Trong Hệ Thống ({MOCK_EVENTS.length})
-            </h3>
-            <Link href="/admin/events/new">
-              <Button variant="primary" className="text-xs font-mono bg-[var(--color-danger)]">
-                + Khởi Tạo Event Mới
-              </Button>
-            </Link>
-          </div>
+        <Card className="p-6 space-y-4 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)]">
+          <SectionTitle>DANH SÁCH TẤT CẢ SỰ KIỆN TRONG HỆ THỐNG ({MOCK_EVENTS.length})</SectionTitle>
 
           <div className="overflow-x-auto">
             <Table>
@@ -159,7 +165,7 @@ export const AdminDashboardView: React.FC = () => {
                   <tr key={ev.id}>
                     <td>
                       <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{ev.eventName}</div>
-                      <div className="font-mono text-[10px] text-[var(--accent-primary)]">ID: #{ev.id}</div>
+                      <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{ev.id}</div>
                     </td>
                     <td>
                       <Badge tone="team">{ev.season} {ev.year}</Badge>
@@ -198,7 +204,7 @@ export const AdminDashboardView: React.FC = () => {
         {/* Modal Gán Event Coordinator Dành Cho Admin */}
         {selectedEvent && (
           <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fade-in">
-            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)] hud-glow-coordinator space-y-4 relative hud-clipped">
+            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)] space-y-4 relative hud-clipped">
               <button
                 type="button"
                 onClick={() => setSelectedEvent(null)}
@@ -234,7 +240,7 @@ export const AdminDashboardView: React.FC = () => {
                       placeholder="e.g. ec.coordinator@seal.edu.vn"
                       value={ecEmail}
                       onChange={(e) => setEcEmail(e.target.value)}
-                      className="w-full"
+                      className="w-full text-xs font-mono"
                       required
                     />
                   </div>

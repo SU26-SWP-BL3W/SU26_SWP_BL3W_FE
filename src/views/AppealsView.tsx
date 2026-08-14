@@ -26,17 +26,19 @@ import {
   Send,
   Shield,
   MessageSquare,
+  Eye,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 import type { Appeal, AppealStatus } from "@/models/entities";
-
-
 
 export function AppealsView() {
   const { user, activeRole } = useAuth();
   const [reason, setReason] = useState("");
-  const [submitResultId, setSubmitResultId] = useState("sub-1");
+  const [submitResultId, setSubmitResultId] = useState("sub-101");
 
-  const [respondModal, setRespondModal] = useState<Appeal | null>(null);
+  const [detailModal, setDetailModal] = useState<any | null>(null);
+  const [respondModal, setRespondModal] = useState<any | null>(null);
   const [responseText, setResponseText] = useState("");
 
   const { data: appeals = [], isLoading, refetch } = useGetAppeals();
@@ -57,6 +59,7 @@ export function AppealsView() {
       await createAppeal({ SubmissionId: submitResultId, Reason: reason.trim() });
       alert("✓ Đã gửi Đơn Phúc Khảo thành công! Ban Tổ Chức sẽ phản hồi sớm.");
       setReason("");
+      refetch();
     } catch {
       alert("Đã gửi đơn phúc khảo (Mock Mode).");
       setReason("");
@@ -64,21 +67,25 @@ export function AppealsView() {
   };
 
   const handleRespondConfirm = async (status: string) => {
-    if (!respondModal || !respondModal.id) return;
+    const targetAppeal = respondModal || detailModal;
+    if (!targetAppeal || !targetAppeal.id) return;
     if (!responseText.trim()) return;
 
     try {
       await respondAppeal({
-        appealId: respondModal.id,
+        appealId: targetAppeal.id,
         status: status as any,
         responseReason: responseText.trim(),
       });
-      alert("✓ Đã xử lý phản hồi Đơn Phúc Khảo!");
+      alert("✓ Đã xử lý phản hồi Đơn Phúc Khảo thành công!");
       setRespondModal(null);
+      setDetailModal(null);
       setResponseText("");
+      refetch();
     } catch {
       alert("Đã xử lý đơn (Mock Mode).");
       setRespondModal(null);
+      setDetailModal(null);
       setResponseText("");
     }
   };
@@ -96,13 +103,13 @@ export function AppealsView() {
               XÉT PHÚC KHẢO KẾT QUẢ (APPEALS)
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              // QUẢN LÝ & XỬ LÝ ĐƠN KHIẾU NẠI ĐIỂM SỐ
+              // QUẢN LÝ & XỬ LÝ ĐƠN KHIẾU NẠI ĐIỂM SỐ SỰ KIỆN
             </p>
           </div>
         </div>
 
-        <Button variant="ghost" onClick={() => refetch()} className="text-xs">
-          <RefreshCw className="w-3.5 h-3.5" /> làm mới
+        <Button variant="ghost" onClick={() => refetch()} className="text-xs font-mono">
+          <RefreshCw className="w-3.5 h-3.5" /> Làm mới
         </Button>
       </div>
 
@@ -119,7 +126,7 @@ export function AppealsView() {
               * Lưu ý: Đơn phúc khảo chỉ được tạo bởi <strong>Team Leader</strong> và phải nộp <strong>TRƯỚC KHI</strong> kết quả chính thức được công bố.
             </p>
 
-            {activeRole?.RoleName === "TeamLeader" ? (
+            {activeRole?.roleName === "TeamLeader" ? (
               <form onSubmit={handleCreateAppeal} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5 w-full">
                   <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
@@ -136,14 +143,14 @@ export function AppealsView() {
 
                 <div className="flex flex-col gap-1.5 w-full">
                   <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                    Lý Do Phúc Khảo *
+                    Lý Do Phúc Khảo Cụ Thể *
                   </label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     required
                     rows={4}
-                    placeholder="Ghi rõ lý do khiếu nại (VD: Tiêu chí Kỹ thuật bị tính nhầm trọng số, minh chứng liên kết bài nộp bị trôi)..."
+                    placeholder="Ghi rõ lý do khiếu nại (VD: Tiêu chí Kỹ thuật bị tính nhầm trọng số, video demo live server chưa được xem)..."
                     className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-xs font-mono focus:border-[var(--color-warning)] focus:outline-none text-[var(--text-primary)] resize-none"
                   />
                 </div>
@@ -162,7 +169,7 @@ export function AppealsView() {
                   🔒 BẠN KHÔNG CÓ QUYỀN GỬI ĐƠN
                 </div>
                 <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
-                  Quyền tạo và gửi đơn khiếu nại điểm số thuộc về <strong>Đội Trưởng (Team Leader)</strong>. Bạn đang xem ở chế độ Thành Viên (Read-Only).
+                  Quyền tạo và gửi đơn khiếu nại điểm số thuộc về <strong>Đội Trưởng (Team Leader)</strong>. Bạn đang xem ở chế độ Read-Only.
                 </p>
               </div>
             )}
@@ -187,29 +194,17 @@ export function AppealsView() {
                   <TableHead>ĐỘI THI</TableHead>
                   <TableHead>LÝ DO KHIẾU NẠI</TableHead>
                   <TableHead>TRẠNG THÁI</TableHead>
-                  {isEC && <TableHead>THAO TÁC EC</TableHead>}
+                  <TableHead className="text-center">THAO TÁC SOI CHI TIẾT</TableHead>
                 </TableRow>
               </TableHeader>
               <tbody>
-                {((appeals.length > 0
-                  ? appeals
-                  : [
-                      {
-                        id: "app-1",
-                        teamId: "tm-1",
-                        teamName: "Cyber_Knights",
-                        reason: "Yêu cầu kiểm tra lại điểm Tiêu chí Kiến trúc hệ thống.",
-                        status: 0 as AppealStatus,
-                        response: undefined,
-                        createdTime: "12/08/2026",
-                      },
-                    ]) as Appeal[]
-                ).map((item) => {
-                  const statusNum = item.status ?? 0;
+                {(appeals as any[]).map((item) => {
+                  const appealItem = item as any;
+                  const statusNum = appealItem.status ?? appealItem.Status ?? 0;
                   const isPending = statusNum === 0;
                   const isApproved = statusNum === 1;
-
-                  const appealItem = item as any;
+                  const reasonText = appealItem.reason || appealItem.Reason || "Khiếu nại điểm số";
+                  const responseTextVal = appealItem.response || appealItem.Response || appealItem.responseReason;
                   const teamNameText = appealItem.teamName || appealItem.TeamName || `Đội #${appealItem.teamId || appealItem.TeamId || "TM"}`;
 
                   return (
@@ -222,11 +217,11 @@ export function AppealsView() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-mono text-xs text-[var(--text-primary)] max-w-xs truncate">
-                            {item.reason}
+                            {reasonText}
                           </span>
-                          {item.response && (
+                          {responseTextVal && (
                             <span className="text-[10px] font-mono text-[var(--accent-primary)] mt-1 flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" /> Phản hồi EC: {item.response}
+                              <MessageSquare className="w-3 h-3" /> Phản hồi EC: {responseTextVal}
                             </span>
                           )}
                         </div>
@@ -244,23 +239,15 @@ export function AppealsView() {
                           {isPending ? "ĐANG CHỜ" : isApproved ? "CHẤP NHẬN" : "TỪ CHỐI"}
                         </Badge>
                       </TableCell>
-                      {isEC && (
-                        <TableCell>
-                          {isPending ? (
-                            <Button
-                              variant="ghost"
-                              onClick={() => setRespondModal(item)}
-                              className="text-[10px] font-mono text-[var(--accent-coordinator)] border-[var(--accent-coordinator)]/30"
-                            >
-                              [ Phản Hồi ]
-                            </Button>
-                          ) : (
-                            <span className="text-[10px] font-mono text-[var(--text-muted)]">
-                              ✓ Đã xử lý
-                            </span>
-                          )}
-                        </TableCell>
-                      )}
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setDetailModal(item)}
+                          className="text-[10px] font-mono text-[var(--accent-primary)] border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/10"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> SOI CHI TIẾT
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -270,53 +257,91 @@ export function AppealsView() {
         </div>
       </div>
 
-      {/* Modal EC Phản Hồi Đơn Phúc Khảo */}
-      {respondModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4">
-          <Card className="w-full max-w-md p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--accent-coordinator)]/30">
-            <h3 className="font-display text-base font-bold text-[var(--accent-coordinator)] tracking-widest uppercase mb-3">
-              XỬ LÝ ĐƠN PHÚC KHẢO
-            </h3>
-
-            <p className="text-xs font-mono text-[var(--text-muted)] mb-3">
-              Đội thi: <strong className="text-[var(--text-primary)]">{(respondModal as any).teamName || (respondModal as any).TeamName || (respondModal as any).teamId || "Đội thi"}</strong>
-            </p>
-
-            <div className="space-y-1.5 mb-4">
-              <label className="text-xs font-mono text-[var(--text-muted)] uppercase">
-                Nội dung Phản hồi từ Event Coordinator *
-              </label>
-              <textarea
-                rows={3}
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-                placeholder="Nhập nội dung giải trình hoặc lý do chấp nhận/từ chối phúc khảo..."
-                className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped focus:outline-none focus:border-[var(--accent-coordinator)]"
-              />
+      {/* Modal 1: Soi Chi Tiết Đơn Phúc Khảo (Detailed Appeal Inspection Modal) */}
+      {detailModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+          <Card className="w-full max-w-2xl p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--color-warning)] space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
+              <div>
+                <span className="font-mono text-[10px] text-[var(--color-warning)] font-bold tracking-widest uppercase">// APPEAL & SUBMISSION INSPECTION MODAL</span>
+                <h3 className="font-display text-xl font-bold text-[var(--text-primary)] uppercase tracking-wider mt-1">
+                  ĐƠN PHÚC KHẢO: ĐỘI {(detailModal as any).teamName || (detailModal as any).TeamName || "CyberShield"}
+                </h3>
+              </div>
+              <button onClick={() => setDetailModal(null)} className="text-[var(--text-muted)] hover:text-white">
+                <XCircle className="w-6 h-6" />
+              </button>
             </div>
 
-            <div className="flex gap-3">
-              <Button
-                disabled={!responseText.trim() || isResponding}
-                onClick={() => handleRespondConfirm("Approved")}
-                className="flex-1 bg-[var(--color-success)] text-white font-mono text-xs font-bold justify-center"
-              >
-                ✓ CHẤP NHẬN
+            <div className="space-y-4 font-mono text-xs">
+              {/* Lý do khiếu nại của Đội trưởng */}
+              <div className="p-3 bg-[var(--bg-input)] border border-[var(--color-warning)]/40 hud-clipped space-y-1">
+                <span className="text-[10px] text-[var(--color-warning)] font-bold uppercase block">1. Nội dung Đơn Khiếu nại từ Đội trưởng:</span>
+                <p className="text-xs text-[var(--text-primary)] leading-relaxed font-bold">"{detailModal.reason}"</p>
+                <span className="text-[10px] text-[var(--text-muted)] block mt-1">Ngày gửi đơn: {detailModal.createdTime ? new Date(detailModal.createdTime).toLocaleString("vi-VN") : "Hôm nay"}</span>
+              </div>
+
+              {/* Thông tin Bài Nộp đối chiếu */}
+              <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2">
+                <span className="text-[10px] text-[var(--accent-primary)] font-bold uppercase block flex items-center gap-1">
+                  <FileText className="w-3.5 h-3.5" /> 2. Bài Nộp Dự Án Liên Quan (Submission Link):
+                </span>
+                <div>Mã bài nộp: <strong className="text-[var(--text-primary)]">#{detailModal.submitResultId || "sub-101"}</strong></div>
+                <div>Link Mã Nguồn / Demo: <a href="https://github.com/cybershield/seal-hackathon-2026" target="_blank" rel="noreferrer" className="text-[var(--accent-primary)] font-bold underline flex items-center gap-1 inline-flex">https://github.com/cybershield/seal-hackathon-2026 <ExternalLink className="w-3 h-3" /></a></div>
+                <div className="text-[11px] text-[var(--text-muted)]">Mô tả sản phẩm: Hệ thống phát hiện lỗ hổng bảo mật tự động tích hợp mô hình AI LLM.</div>
+              </div>
+
+              {/* Bảng Điểm Giám Khảo Hiện Tại */}
+              <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2">
+                <span className="text-[10px] text-[var(--accent-judge)] font-bold uppercase block">3. Điểm Số Hiện Tại Từ Ban Giám Khảo:</span>
+                <div className="flex items-center justify-between text-xs font-bold text-[var(--accent-judge)] border-b border-[var(--border-muted)] pb-1">
+                  <span>Điểm Tổng Hiện Tại: 8.85 / 10.0</span>
+                  <span>Giám Khảo: TS. Nguyễn Văn A (AI Track)</span>
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] italic">"Bài thi có tính hoàn thiện cao, cần bổ sung thêm tài liệu thử nghiệm thực tế."</p>
+              </div>
+
+              {/* Form Giải Trình Phản Hồi Dành Cho EC */}
+              {isEC && (
+                <div className="space-y-2 pt-2 border-t border-[var(--border-muted)]">
+                  <label className="text-xs font-mono text-[var(--accent-coordinator)] uppercase font-bold block">
+                    4. Nhập Phản Hồi Giải Trình Từ Event Coordinator (EC) *
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    placeholder="Nhập nội dung phản hồi giải trình hoặc kết quả điều chỉnh điểm số..."
+                    className="w-full p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--accent-coordinator)] resize-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between gap-3 pt-4 border-t border-[var(--border-muted)] font-mono text-xs">
+              <Button variant="ghost" onClick={() => setDetailModal(null)}>
+                Đóng
               </Button>
-              <Button
-                disabled={!responseText.trim() || isResponding}
-                onClick={() => handleRespondConfirm("Rejected")}
-                className="flex-1 bg-[var(--color-danger)] text-white font-mono text-xs font-bold justify-center"
-              >
-                ✕ TỪ CHỐI
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setRespondModal(null)}
-                className="text-xs font-mono"
-              >
-                Hủy
-              </Button>
+
+              {isEC && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    disabled={!responseText.trim() || isResponding}
+                    onClick={() => handleRespondConfirm("Rejected")}
+                    className="bg-[var(--color-danger)] text-white font-bold"
+                  >
+                    <XCircle className="w-3.5 h-3.5" /> ✕ TỪ CHỐI ĐƠN
+                  </Button>
+                  <Button
+                    disabled={!responseText.trim() || isResponding}
+                    onClick={() => handleRespondConfirm("Approved")}
+                    className="bg-[var(--color-success)] text-white font-bold"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> // CHẤP NHẬN PHÚC KHẢO &gt;
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
         </div>
