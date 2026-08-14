@@ -106,13 +106,13 @@ export function useCreateEventWizardViewModel() {
     {
       id: "tmp-t1",
       trackName: "AI & Machine Learning",
-      templateId: "",
+      templateId: "__custom__",
       description: "Hạng mục phát triển mô hình & ứng dụng Trí tuệ nhân tạo",
     },
     {
       id: "tmp-t2",
       trackName: "Phát triển Web & Mobile",
-      templateId: "",
+      templateId: "__custom__",
       description: "Hạng mục xây dựng giải pháp web hoàn chỉnh",
     },
   ]);
@@ -209,7 +209,7 @@ export function useCreateEventWizardViewModel() {
         id: `tmp-t${Date.now()}`,
         roundId: defaultRoundId,
         trackName: "Hạng mục công nghệ mới",
-        templateId: "tpl-default-ai",
+        templateId: "__custom__",
         description: "",
       },
     ]);
@@ -287,6 +287,14 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Số lượng đội thi tối đa phải lớn hơn 0!");
         return;
       }
+      // Step 1: Check if Event is already created from previous attempt
+      const rawObj = createdEvent as any;
+      const existingEventId = rawObj?.id || rawObj?.Id || rawObj?.eventId || rawObj?.EventId || rawObj?.data?.id || rawObj?.data?.Id;
+      if (existingEventId) {
+        setCurrentStep(2);
+        return;
+      }
+
       // Call API create event
       setIsSubmitting(true);
       try {
@@ -317,10 +325,24 @@ export function useCreateEventWizardViewModel() {
         return;
       }
 
+      // Check if rounds are already created
+      const existingRounds: any[] = (window as any).__createdRoundsList__ || [];
+      if (existingRounds.length > 0 && existingRounds.length === rounds.length) {
+        setCurrentStep(3);
+        return;
+      }
+
       setIsSubmitting(true);
       try {
         const createdRounds: any[] = [];
         for (const rnd of rounds) {
+          // If this specific round was already created, skip creating again
+          const alreadyCreated = existingRounds.find((r: any) => r.clientRoundId === rnd.id || r.roundNumber === rnd.roundNumber);
+          if (alreadyCreated) {
+            createdRounds.push(alreadyCreated);
+            continue;
+          }
+
           const res = await roundsRepository.createRound({
             eventId: realEventId,
             roundName: rnd.roundName,
@@ -333,8 +355,11 @@ export function useCreateEventWizardViewModel() {
             appealStartDate: rnd.appealStartDate,
             appealEndDate: rnd.appealEndDate,
           });
-          if (res?.data) createdRounds.push(res.data);
+          if (res?.data) {
+            createdRounds.push({ ...res.data, clientRoundId: rnd.id, roundNumber: rnd.roundNumber });
+          }
         }
+        (window as any).__createdRoundsList__ = createdRounds;
         setCurrentStep(3);
       } catch (err: any) {
         setErrorMessage(err?.response?.data?.message || "Lỗi khi khởi tạo danh sách Vòng thi!");
@@ -352,10 +377,23 @@ export function useCreateEventWizardViewModel() {
         return;
       }
 
+      // Check if tracks are already created
+      const existingTracks: any[] = (window as any).__createdTrackList__ || [];
+      if (existingTracks.length > 0 && existingTracks.length === tracks.length) {
+        setCurrentStep(4);
+        return;
+      }
+
       setIsSubmitting(true);
       try {
         const createdTrackList: any[] = [];
         for (const trk of tracks) {
+          const alreadyCreated = existingTracks.find((t: any) => t.clientTrackId === trk.id);
+          if (alreadyCreated) {
+            createdTrackList.push(alreadyCreated);
+            continue;
+          }
+
           const payload: any = {
             eventId: realEventId,
             trackName: trk.trackName,

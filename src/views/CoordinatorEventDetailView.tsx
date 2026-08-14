@@ -526,7 +526,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/coordinator/staff">
+            <Link href={`/coordinator/staff?eventId=${eventId}`}>
               <Button variant="secondary" className="hud-clipped font-mono text-xs text-[var(--accent-coordinator)] border-[var(--accent-coordinator)]/40 hover:bg-[var(--accent-coordinator)]/10">
                 <Users className="w-3.5 h-3.5 mr-1" />
                 QUẢN LÝ NHÂN SỰ &gt;

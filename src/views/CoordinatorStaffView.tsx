@@ -1,22 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { staffRepository, useGetEventRoles } from "@/repositories/staffRepository";
 import { useMyEvents } from "@/repositories/eventsRepository";
 import { useGetTracksByEvent } from "@/repositories/tracksRepository";
-import { UserCheck, UserPlus, Send, AlertCircle, CheckCircle2, Shield, Trash2, Search, Filter } from "lucide-react";
+import { UserCheck, UserPlus, Send, AlertCircle, CheckCircle2, Shield, Trash2, Search, Filter, Calendar } from "lucide-react";
 import { Button, Card, Badge, Input } from "@/components/ui";
 
 export const CoordinatorStaffView: React.FC = () => {
+  const searchParams = useSearchParams();
+  const queryEventId = searchParams.get("eventId");
+
   const { data: myEvents = [] } = useMyEvents();
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [selectedEventId, setSelectedEventId] = useState<string>(queryEventId || "");
 
   React.useEffect(() => {
-    if (myEvents.length > 0 && !selectedEventId) {
-      const firstId = myEvents[0].id || myEvents[0].Id || myEvents[0].eventId || myEvents[0].EventId || "";
-      setSelectedEventId(firstId);
+    if (queryEventId && queryEventId !== selectedEventId) {
+      setSelectedEventId(queryEventId);
     }
-  }, [myEvents, selectedEventId]);
+  }, [queryEventId]);
 
   const { data: eventRoles = [], refetch: refetchRoles } = useGetEventRoles(selectedEventId);
   const { data: tracks = [] } = useGetTracksByEvent(selectedEventId);
@@ -144,6 +147,40 @@ export const CoordinatorStaffView: React.FC = () => {
     const name = (er.user?.fullName || er.User?.FullName || er.fullName || "").toLowerCase();
     return email.includes(query) || name.includes(query);
   });
+
+  if (!selectedEventId) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col justify-center items-center p-4">
+        <Card className="p-8 text-center space-y-4 max-w-md w-full hud-glow-coordinator">
+          <Calendar className="w-12 h-12 text-[var(--accent-coordinator)] mx-auto" />
+          <h2 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase tracking-wider">
+            Chọn Sự Kiện Để Quản Lý Nhân Sự
+          </h2>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+            Vui lòng chọn sự kiện bạn đang điều phối để xem danh sách Giám khảo & Cố vấn hoặc phân công nhân sự mới.
+          </p>
+          <div className="pt-2">
+            <select
+              value=""
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="w-full px-4 py-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+            >
+              <option value="">-- Chọn Sự Kiện Của Bạn --</option>
+              {myEvents.map((ev: any) => {
+                const id = ev.id || ev.Id || ev.eventId || ev.EventId;
+                const name = ev.eventName || ev.EventName || "Sự kiện không tên";
+                return (
+                  <option key={id} value={id}>
+                    {name} ({ev.season || ev.Season} {ev.year || ev.Year})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">

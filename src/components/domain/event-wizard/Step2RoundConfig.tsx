@@ -41,145 +41,158 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
       </div>
 
       <div className="space-y-6">
-        {rounds.map((round) => (
-          <div
-            key={round.id}
-            className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hover:border-[var(--accent-coordinator)]/50 transition-all hud-clipped space-y-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[var(--accent-coordinator)]/10 text-[var(--accent-coordinator)] border border-[var(--accent-coordinator)]/30 font-mono text-xs font-bold flex items-center justify-center">
-                  #{round.roundNumber}
-                </span>
-                <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">
-                  Vòng {round.roundNumber}: {round.roundName}
-                </h4>
-              </div>
-              {rounds.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveRound(round.id)}
-                  className="text-xs font-mono text-[var(--color-danger)] hover:underline flex items-center gap-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Gỡ Vòng
-                </button>
-              )}
-            </div>
+        {rounds.map((round, index) => {
+          const isLastRound = index === rounds.length - 1;
+          const ruleParts = round.advancementRule.split(/[:\s]/);
+          const currentType = (ruleParts[0] || "top").toLowerCase();
+          const currentValue = ruleParts[1] || "10";
 
-            {/* Tên vòng & Quy tắc thăng vòng */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--text-muted)]">Tên vòng thi *</label>
-                <Input
-                  type="text"
-                  value={round.roundName}
-                  onChange={(e) => onUpdateRound(round.id, "roundName", e.target.value)}
-                  placeholder="Ví dụ: Vòng Sơ Loại / Vòng Bán Kết"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--text-muted)]">Quy tắc thăng vòng * (`AdvancementRule`)</label>
-                <div className="flex gap-2">
-                  <select
-                    value={
-                      round.advancementRule.startsWith("percent")
-                        ? "percent"
-                        : round.advancementRule.toLowerCase().startsWith("minscore")
-                        ? "minscore"
-                        : "top"
-                    }
-                    onChange={(e) => {
-                      const prefix = e.target.value;
-                      const val = round.advancementRule.split(/[:\s]/)[1] || "10";
-                      onUpdateRound(round.id, "advancementRule", `${prefix}:${val}`);
-                    }}
-                    className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+          return (
+            <div
+              key={round.id}
+              className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hover:border-[var(--accent-coordinator)]/50 transition-all hud-clipped space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[var(--accent-coordinator)]/10 text-[var(--accent-coordinator)] border border-[var(--accent-coordinator)]/30 font-mono text-xs font-bold flex items-center justify-center">
+                    #{round.roundNumber}
+                  </span>
+                  <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">
+                    Vòng {round.roundNumber}: {round.roundName}
+                  </h4>
+                </div>
+                {rounds.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveRound(round.id)}
+                    className="text-xs font-mono text-[var(--color-danger)] hover:underline flex items-center gap-1"
                   >
-                    <option value="top">Top N đội thi (top:N)</option>
-                    <option value="percent">Top N% số đội (percent:P)</option>
-                    <option value="minscore">Điểm tối thiểu N (minscore:X)</option>
-                  </select>
+                    <Trash2 className="w-3.5 h-3.5" /> Gỡ Vòng
+                  </button>
+                )}
+              </div>
+
+              {/* Tên vòng & Quy tắc thăng vòng */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[var(--text-muted)]">Tên vòng thi *</label>
                   <Input
                     type="text"
-                    value={round.advancementRule}
-                    onChange={(e) => onUpdateRound(round.id, "advancementRule", e.target.value)}
-                    placeholder="e.g. top:10, percent:50"
-                    className="flex-1 font-mono text-xs"
+                    value={round.roundName}
+                    onChange={(e) => onUpdateRound(round.id, "roundName", e.target.value)}
+                    placeholder="Ví dụ: Vòng Sơ Loại / Vòng Bán Kết"
                   />
                 </div>
-                <p className="text-[11px] text-[var(--text-muted)] mt-1">Cú pháp Backend: "top:10" (Top 10 đội), "percent:50" (Top 50%), "minscore:7.5" (Điểm ≥ 7.5)</p>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[var(--text-muted)]">Điều kiện qua vòng *</label>
+                  {!isLastRound ? (
+                    <div className="flex gap-2">
+                      <select
+                        value={currentType === "percent" || currentType === "minscore" ? currentType : "top"}
+                        onChange={(e) => {
+                          const prefix = e.target.value;
+                          const defaultVal = prefix === "top" ? "10" : prefix === "percent" ? "50" : "7.0";
+                          onUpdateRound(round.id, "advancementRule", `${prefix}:${defaultVal}`);
+                        }}
+                        className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+                      >
+                        <option value="top">Top N đội cao điểm nhất</option>
+                        <option value="percent">Top N% số đội</option>
+                        <option value="minscore">Điểm tối thiểu N</option>
+                      </select>
+                      <div className="flex items-center gap-1 flex-1">
+                        <Input
+                          type="number"
+                          step={currentType === "minscore" ? "0.1" : "1"}
+                          min={currentType === "minscore" ? "0" : "1"}
+                          max={currentType === "minscore" ? "10" : "100"}
+                          value={currentValue}
+                          onChange={(e) => onUpdateRound(round.id, "advancementRule", `${currentType}:${e.target.value}`)}
+                          className="flex-1 font-mono text-xs"
+                        />
+                        <span className="px-2 py-1.5 bg-[var(--bg-base)] border border-[var(--border-muted)] text-xs font-mono font-bold text-[var(--accent-coordinator)]">
+                          {currentType === "top" ? "đội" : currentType === "percent" ? "%" : "điểm"}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 bg-[var(--bg-base)] border border-[var(--border-muted)] text-xs text-[var(--text-muted)] rounded font-sans italic">
+                      Vòng cuối — kết quả dùng để xếp hạng và trao giải, không thăng vòng.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Timeline datetime grid */}
+              <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-3">
+                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--accent-coordinator)] border-b border-[var(--border-muted)] pb-2">
+                  <Calendar className="w-4 h-4 text-[var(--accent-coordinator)]" />
+                  <span>Mốc thời gian của vòng</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                  {/* Nộp bài */}
+                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                    <span className="text-[11px] font-bold text-amber-400">1. Mở nộp bài</span>
+                    <Input
+                      type="date"
+                      value={round.startDate}
+                      onChange={(e) => onUpdateRound(round.id, "startDate", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                    <span className="text-[11px] font-bold text-amber-400">2. Hạn chót nộp bài</span>
+                    <Input
+                      type="date"
+                      value={round.endDate}
+                      onChange={(e) => onUpdateRound(round.id, "endDate", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Chấm điểm */}
+                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                    <span className="text-[11px] font-bold text-cyan-400">3. Bắt đầu chấm</span>
+                    <Input
+                      type="date"
+                      value={round.scoringStartDate || round.endDate || ""}
+                      onChange={(e) => onUpdateRound(round.id, "scoringStartDate", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                    <span className="text-[11px] font-bold text-cyan-400">4. Kết thúc chấm</span>
+                    <Input
+                      type="date"
+                      value={round.scoringEndDate || ""}
+                      onChange={(e) => onUpdateRound(round.id, "scoringEndDate", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Phúc khảo */}
+                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                    <span className="text-[11px] font-bold text-purple-400">5. Mở phúc khảo</span>
+                    <Input
+                      type="date"
+                      value={round.appealStartDate || ""}
+                      onChange={(e) => onUpdateRound(round.id, "appealStartDate", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
+                    <span className="text-[11px] font-bold text-purple-400">6. Đóng phúc khảo</span>
+                    <Input
+                      type="date"
+                      value={round.appealEndDate || ""}
+                      onChange={(e) => onUpdateRound(round.id, "appealEndDate", e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Timeline datetime grid */}
-            <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-3">
-              <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--accent-coordinator)] border-b border-[var(--border-muted)] pb-2">
-                <Calendar className="w-4 h-4 text-[var(--accent-coordinator)]" />
-                <span>Khung Thời Gian Vòng Thi (Timeline Lifecycle)</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-                {/* Nộp bài */}
-                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                  <span className="text-[11px] font-bold text-amber-400">1. Mở Nộp Bài (StartDate)</span>
-                  <Input
-                    type="date"
-                    value={round.startDate}
-                    onChange={(e) => onUpdateRound(round.id, "startDate", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                  <span className="text-[11px] font-bold text-amber-400">2. Hạn Chót Nộp Bài (EndDate)</span>
-                  <Input
-                    type="date"
-                    value={round.endDate}
-                    onChange={(e) => onUpdateRound(round.id, "endDate", e.target.value)}
-                  />
-                </div>
-
-                {/* Chấm điểm */}
-                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                  <span className="text-[11px] font-bold text-cyan-400">3. Bắt Đầu Chấm (ScoringStart)</span>
-                  <Input
-                    type="date"
-                    value={round.scoringStartDate || round.endDate || ""}
-                    onChange={(e) => onUpdateRound(round.id, "scoringStartDate", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                  <span className="text-[11px] font-bold text-cyan-400">4. Kết Thúc Chấm (ScoringEnd)</span>
-                  <Input
-                    type="date"
-                    value={round.scoringEndDate || ""}
-                    onChange={(e) => onUpdateRound(round.id, "scoringEndDate", e.target.value)}
-                  />
-                </div>
-
-                {/* Phúc khảo */}
-                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                  <span className="text-[11px] font-bold text-purple-400">5. Mở Phúc Khảo (AppealStart)</span>
-                  <Input
-                    type="date"
-                    value={round.appealStartDate || ""}
-                    onChange={(e) => onUpdateRound(round.id, "appealStartDate", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                  <span className="text-[11px] font-bold text-purple-400">6. Đóng Phúc Khảo (AppealEnd)</span>
-                  <Input
-                    type="date"
-                    value={round.appealEndDate || ""}
-                    onChange={(e) => onUpdateRound(round.id, "appealEndDate", e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-muted)]">

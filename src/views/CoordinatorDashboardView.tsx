@@ -258,8 +258,8 @@ export const CoordinatorDashboardView: React.FC = () => {
                           <span className="text-[var(--text-primary)] font-bold">{maxTeams} Đội thi</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Vòng thi:</span>
-                          <span className="text-[var(--text-primary)] font-bold">{ev.rounds?.length ?? 1} Vòng</span>
+                          <span>Mùa giải:</span>
+                          <span className="text-[var(--text-primary)] font-bold">{ev.season || ev.Season || "Mùa Hè"} {ev.year || ev.Year || 2026}</span>
                         </div>
                       </div>
                     </div>
