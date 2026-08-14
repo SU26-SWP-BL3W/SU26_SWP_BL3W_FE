@@ -34,7 +34,7 @@ export const PRESET_ACCOUNTS: PresetAccount[] = [
     email: "judge.ai@seal.edu.vn",
     roleName: "Judge",
     fullName: "Giám Khảo Trí Tuệ Nhân Tạo (Judge)",
-    defaultRedirect: "/judge/events",
+    defaultRedirect: "/judge/tracks",
   },
   {
     email: "leader.cybershield@fpt.edu.vn",
@@ -47,7 +47,7 @@ export const PRESET_ACCOUNTS: PresetAccount[] = [
 // Trang đích sau khi đăng nhập thật, theo vai trò backend trả về.
 const REDIRECT_BY_ROLE: Record<string, string> = {
   EventCoordinator: "/coordinator/dashboard",
-  Judge: "/judge/events",
+  Judge: "/judge/tracks",
   Mentor: "/mentor/tracks",
   TeamLeader: "/my-team",
   TeamMember: "/my-team",
@@ -290,41 +290,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
     }
 
-    // Lấy vai trò THẬT từ backend. Admin toàn quyền nên bỏ qua bước này.
+    // Lấy vai trò THẬT từ backend cho TẤT CẢ các tài khoản
     let primaryRole: EventRole | null = null;
     let targetPath = isAdmin ? "/admin/dashboard" : "/events";
-    if (!isAdmin) {
-      try {
-        const rolesRes = await apiClient.get<any>("/EventRoles/user", {
-          params: { UserId: userId, PageSize: 200 },
-        });
-        const rows: any[] = rolesRes.data?.data ?? rolesRes.data ?? [];
-        const norm = rows.map((r) => ({
-          eventId: r.eventId ?? r.EventId,
-          roleName: r.roleName ?? r.RoleName,
-        }));
-        // Ưu tiên vai trò quản trị cao nhất khi một người giữ nhiều vai trò.
-        const rank = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
-        const chosen = rank.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
-        if (chosen) {
-          const assigned = norm
-            .filter((r) => r.roleName === chosen.roleName)
-            .map((r) => r.eventId)
-            .filter(Boolean);
-          primaryRole = {
-            eventRoleId: `real-${chosen.roleName}-${userId}`,
-            userId,
-            roleName: chosen.roleName,
-            EventRoleId: `real-${chosen.roleName}-${userId}`,
-            UserId: userId,
-            RoleName: chosen.roleName,
-            assignedEventIds: assigned,
-            AssignedEventIds: assigned,
-          } as EventRole;
-          targetPath = REDIRECT_BY_ROLE[chosen.roleName] ?? "/events";
-        }
-      } catch {
-        // Không lấy được vai trò -> vẫn cho vào, chỉ ở mức xem sự kiện.
+    const normalizedEmail = (d.email ?? d.Email ?? email).toLowerCase();
+
+    try {
+      const rolesRes = await apiClient.get<any>("/EventRoles/user", {
+        params: { UserId: userId, PageSize: 200 },
+      });
+      const rows: any[] = rolesRes.data?.data ?? rolesRes.data ?? [];
+      const norm = rows.map((r) => ({
+        eventId: r.eventId ?? r.EventId,
+        roleName: r.roleName ?? r.RoleName,
+      }));
+      // Ưu tiên vai trò nghiệp vụ cao nhất
+      const rank = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
+      const chosen = rank.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
+      if (chosen) {
+        const assigned = norm
+          .filter((r) => r.roleName === chosen.roleName)
+          .map((r) => r.eventId)
+          .filter(Boolean);
+        primaryRole = {
+          eventRoleId: `real-${chosen.roleName}-${userId}`,
+          userId,
+          roleName: chosen.roleName,
+          EventRoleId: `real-${chosen.roleName}-${userId}`,
+          UserId: userId,
+          RoleName: chosen.roleName,
+          assignedEventIds: assigned,
+          AssignedEventIds: assigned,
+        } as EventRole;
+        targetPath = REDIRECT_BY_ROLE[chosen.roleName] ?? "/events";
+      } else if (normalizedEmail.includes("ec_") || normalizedEmail.includes("ec.") || normalizedEmail.includes("coordinator")) {
+        targetPath = "/coordinator/dashboard";
+      } else if (normalizedEmail.includes("judge")) {
+        targetPath = "/judge/tracks";
+      } else if (normalizedEmail.includes("mentor")) {
+        targetPath = "/mentor/tracks";
+      } else if (isAdmin) {
+        targetPath = "/admin/dashboard";
+      }
+    } catch {
+      if (normalizedEmail.includes("ec_") || normalizedEmail.includes("ec.") || normalizedEmail.includes("coordinator")) {
+        targetPath = "/coordinator/dashboard";
+      } else if (normalizedEmail.includes("judge")) {
+        targetPath = "/judge/tracks";
+      } else if (normalizedEmail.includes("mentor")) {
+        targetPath = "/mentor/tracks";
+      } else if (isAdmin) {
+        targetPath = "/admin/dashboard";
       }
     }
 
