@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { useAuth, PRESET_ACCOUNTS } from "@/providers/AuthProvider";
-import { Button, Input, Card, Badge } from "@/components/ui";
 import { Link, useRouter } from "@/i18n/routing";
-import { Shield, KeyRound, ShieldAlert, Users, Layers, Award, ArrowRight, UserCheck } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight, UserCheck } from "lucide-react";
+import { SealShield } from "@/components/domain/SealShield";
 
 export function LoginView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const { loginWithEmail, loginWithRole } = useAuth();
   const router = useRouter();
 
@@ -31,120 +34,209 @@ export function LoginView() {
     router.push(targetPath);
   };
 
+  const handleGoogleLogin = () => {
+    const targetPath = loginWithRole("Student");
+    router.push(targetPath);
+  };
+
+  const handleFptEduLogin = () => {
+    setEmail("student.fpt@fpt.edu.vn");
+    const targetPath = loginWithEmail("student.fpt@fpt.edu.vn");
+    router.push(targetPath);
+  };
+
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 hud-lattice px-4">
-      <div className="w-full max-w-xl space-y-6">
-        {/* Main Login Card */}
-        <Card className="p-8 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)] hud-glow-cyan space-y-6">
-          <div className="text-center space-y-2 border-b border-[var(--border-muted)] pb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 mb-2">
-              <Shield className="w-6 h-6 text-[var(--accent-primary)]" />
+    <div className="min-h-[90vh] flex items-center justify-center py-12 px-4 hud-lattice font-sans">
+      <div className="w-full max-w-md space-y-6">
+        {/* Main Tactical Login Card */}
+        <div className="p-6 sm:p-8 bg-[#0f1826] border border-[#1e2e4a] hud-clipped shadow-2xl space-y-6">
+          
+          {/* Header with Glowing Hexagon Badge */}
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex items-center justify-center mb-1">
+              <SealShield className="w-8 h-8 text-amber-400" />
             </div>
-            <h2 className="font-display text-2xl font-bold text-[var(--text-primary)] tracking-widest uppercase">
-              SEAL HACKATHON SYSTEM // ĐĂNG NHẬP
-            </h2>
-            <p className="font-mono text-xs text-[var(--text-muted)]">
-              Cổng xác thực tài khoản thi đấu & quản trị sự kiện
+
+            <h1 className="font-mono text-2xl font-bold tracking-wider text-white uppercase">
+              CHÀO MỪNG TRỞ LẠI
+            </h1>
+
+            <p className="font-mono text-xs text-slate-400">
+              Đăng nhập vào <span className="text-amber-400 font-bold">SEAL-HMS</span> để tiếp tục
             </p>
           </div>
 
           {errorMessage && (
-            <div className="p-3 bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)] text-[var(--color-danger)] font-mono text-xs hud-clipped">
+            <div className="p-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 font-mono text-xs hud-clipped">
               ⚠️ {errorMessage}
             </div>
           )}
 
+          {/* Form Credentials */}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                Email Tài Khoản <span className="text-[var(--color-danger)]">*</span>
+            
+            {/* Email Field */}
+            <div className="space-y-1.5 font-mono">
+              <label className="text-xs font-bold text-slate-200">
+                Email
               </label>
-              <Input
-                type="email"
-                placeholder="Ví dụ: admin.system@seal.edu.vn"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full"
-                required
-              />
+              <div className="relative flex items-center">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                <input
+                  type="email"
+                  placeholder="you@fpt.edu.vn"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#152238] border border-[#1e2e4a] text-slate-100 font-mono text-xs focus:border-amber-400 focus:outline-none placeholder:text-slate-500 transition-colors hud-clipped"
+                  required
+                />
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                Mật Khẩu <span className="text-[var(--color-danger)]">*</span>
-              </label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full"
-                required
-              />
+            {/* Password Field */}
+            <div className="space-y-1.5 font-mono">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-200">
+                  Mật khẩu
+                </label>
+                <Link href="/forgot-password" className="text-xs text-amber-400 hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
+
+              <div className="relative flex items-center">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#152238] border border-[#1e2e4a] text-slate-100 font-mono text-xs focus:border-amber-400 focus:outline-none placeholder:text-slate-500 transition-colors hud-clipped"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 text-slate-400 hover:text-slate-200"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
-            <Button type="submit" className="w-full justify-center py-3 text-sm font-bold">
-              // ĐĂNG NHẬP HỆ THỐNG &gt;
-            </Button>
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center gap-2 pt-1 font-mono">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500 rounded border-slate-700 bg-[#152238] cursor-pointer"
+                />
+                <span>Nhớ tài khoản</span>
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-[#070b14] font-mono font-bold text-sm uppercase tracking-wider hud-clipped transition-all shadow-[0_0_15px_rgba(245,158,11,0.25)] flex items-center justify-center gap-2"
+            >
+              →] ĐĂNG NHẬP
+            </button>
           </form>
 
-          {/* Quick Preset Demo Accounts Picker */}
-          <div className="pt-6 border-t border-[var(--border-muted)] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[var(--accent-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                <UserCheck className="w-4 h-4 text-[var(--accent-primary)]" />
-                Tài Khoản Giả Lập Mẫu (Demo Presets):
-              </span>
-              <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                Click để chọn & tự động chuyển đến Dashboard vai trò
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {PRESET_ACCOUNTS.map((acc) => {
-                const getRoleBadge = (role: string) => {
-                  if (role === "Admin") return { tone: "danger" as const, label: "[ADM-SYSTEM]", color: "border-[var(--color-danger)] text-[var(--color-danger)]" };
-                  if (role === "Coordinator") return { tone: "coordinator" as const, label: "[EVENT-COORD]", color: "border-[var(--accent-coordinator)] text-[var(--accent-coordinator)]" };
-                  if (role === "Judge") return { tone: "judge" as const, label: "[JUDGE-STAFF]", color: "border-[var(--accent-judge)] text-[var(--accent-judge)]" };
-                  return { tone: "team" as const, label: "[TEAM-LEAD]", color: "border-[var(--accent-team)] text-[var(--accent-team)]" };
-                };
-                const badge = getRoleBadge(acc.roleName);
-
-                return (
-                  <button
-                    key={acc.roleName}
-                    type="button"
-                    onClick={() => handlePresetSelect(acc)}
-                    className="p-3 bg-[var(--bg-input)] hover:bg-[var(--bg-base)] border border-[var(--border-muted)] hover:border-[var(--accent-primary)] text-left transition-all duration-200 hud-clipped group space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-mono text-[10px] font-bold border px-1.5 py-0.5 ${badge.color}`}>
-                        {badge.label}
-                      </span>
-                      <ArrowRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                    <div className="font-mono font-bold text-xs text-[var(--text-primary)] truncate">
-                      {acc.fullName}
-                    </div>
-                    <div className="font-mono text-[10px] text-[var(--text-muted)] truncate">
-                      {acc.email}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="text-center pt-2 border-t border-[var(--border-muted)]">
-            <span className="text-xs font-mono text-[var(--text-muted)]">
-              Chưa có tài khoản?{" "}
-              <Link href="/register" className="text-[var(--accent-primary)] hover:underline font-bold">
-                Đăng ký ngay
-              </Link>
+          {/* Divider */}
+          <div className="relative flex items-center justify-center my-4 font-mono">
+            <div className="border-t border-[#1e2e4a] w-full" />
+            <span className="bg-[#0f1826] px-3 text-[11px] text-slate-500 font-bold uppercase shrink-0">
+              HOẶC
             </span>
+            <div className="border-t border-[#1e2e4a] w-full" />
           </div>
-        </Card>
+
+          {/* Social / OAuth Login Options */}
+          <div className="space-y-2.5 font-mono">
+            {/* Google Login */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full py-2.5 bg-[#152238] hover:bg-[#1e2e4a] border border-[#1e2e4a] hover:border-slate-500 text-slate-200 font-bold text-xs hud-clipped transition-all flex items-center justify-center gap-2.5"
+            >
+              <GoogleIcon className="w-4 h-4" />
+              <span>Đăng nhập với Google</span>
+            </button>
+
+            {/* FPT Edu Login */}
+            <button
+              type="button"
+              onClick={handleFptEduLogin}
+              className="w-full py-2.5 bg-[#1a1813] hover:bg-amber-500/10 border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold text-xs hud-clipped transition-all flex items-center justify-center gap-2.5"
+            >
+              <GraduationCap className="w-4 h-4 text-amber-400" />
+              <span>Đăng nhập bằng FPT Edu (@fpt.edu.vn)</span>
+            </button>
+          </div>
+
+          {/* Footer Register Link */}
+          <div className="text-center pt-3 border-t border-[#1e2e4a] font-mono text-xs text-slate-400">
+            Chưa có tài khoản?{" "}
+            <Link href="/register" className="text-white hover:text-amber-400 font-bold transition-colors">
+              Đăng ký ngay ›
+            </Link>
+          </div>
+
+          {/* Preset Demo Accounts Picker (Collapsible / Compact for Testing) */}
+          <div className="pt-4 border-t border-[#1e2e4a]/60 space-y-2 font-mono">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-bold text-amber-400 flex items-center gap-1">
+                <UserCheck className="w-3.5 h-3.5" /> Demo Presets:
+              </span>
+              <span className="text-[10px] text-slate-500">Click để chọn vai trò</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {PRESET_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.roleName}
+                  type="button"
+                  onClick={() => handlePresetSelect(acc)}
+                  className="p-2 bg-[#152238]/60 hover:bg-[#152238] border border-[#1e2e4a] hover:border-amber-500/50 text-left transition-all hud-clipped text-[10px] font-mono space-y-0.5"
+                >
+                  <div className="flex items-center justify-between text-amber-400 font-bold">
+                    <span>[{acc.roleName}]</span>
+                    <ArrowRight className="w-3 h-3 text-slate-500" />
+                  </div>
+                  <div className="text-slate-300 truncate font-semibold">{acc.fullName}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" {...props}>
+      <path
+        fill="#EA4335"
+        d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
+      />
+    </svg>
   );
 }
