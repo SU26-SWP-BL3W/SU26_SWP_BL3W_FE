@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, EventRole } from "@/models/entities";
+import apiClient from "@/models/apiClient";
 
 export interface PresetAccount {
   email: string;
@@ -82,12 +83,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveRole(newRole);
     if (typeof window !== "undefined") {
       localStorage.setItem("currentUser", JSON.stringify(newUser));
-      localStorage.setItem("accessToken", `mock-jwt-token-${newUser.id || newUser.userId}`);
       if (newRole) {
         localStorage.setItem("activeRole", JSON.stringify(newRole));
       } else {
         localStorage.removeItem("activeRole");
       }
+
+      // Automatically fetch real JWT token from Backend DB
+      const pass = newUser.isAdmin ? "AdminPassword123!" : "123456";
+      apiClient
+        .post<any>("/Auth/login", { email: newUser.email, password: pass })
+        .then((res) => {
+          const data = res.data?.data || res.data;
+          const realToken = data?.token || data?.accessToken;
+          if (realToken) {
+            localStorage.setItem("accessToken", realToken);
+          } else {
+            localStorage.setItem("accessToken", `mock-jwt-token-${newUser.id || newUser.userId}`);
+          }
+        })
+        .catch(() => {
+          localStorage.setItem("accessToken", `mock-jwt-token-${newUser.id || newUser.userId}`);
+        });
     }
   };
 

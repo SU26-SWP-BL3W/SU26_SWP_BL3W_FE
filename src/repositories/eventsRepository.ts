@@ -191,44 +191,17 @@ export function useEventRounds(eventId: string) {
 }
 
 export async function createEvent(data: Partial<Event>): Promise<any> {
-  let createdResult: any = null;
-  try {
-    const response = await apiClient.post<any>("/Events", data);
-    if (response.data && response.data.success !== false) {
-      createdResult = response.data;
-    }
-  } catch (err: any) {
-    console.warn("[SEAL] POST /Events endpoint returned error, falling back to mock event creation:", err?.message);
-  }
+  const response = await apiClient.post<any>("/Events", data);
+  const createdResult = response.data;
 
-  if (!createdResult) {
-    const mockId = `ev-mock-${Date.now()}`;
-    createdResult = {
-      success: true,
-      message: "Tạo sự kiện thành công (Chế độ Thử nghiệm)!",
-      data: {
-        id: mockId,
-        Id: mockId,
-        eventId: mockId,
-        EventId: mockId,
-        eventName: data.eventName || (data as any).EventName || "SEAL Hackathon 2026",
-        season: data.season || (data as any).Season || "Mùa Hè",
-        year: data.year || (data as any).Year || 2026,
-        maxTeams: data.maxTeams || (data as any).MaxTeams || 50,
-        description: data.description || (data as any).Description || "",
-        startDate: data.startDate || new Date().toISOString(),
-        endDate: data.endDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-        rounds: [],
-      },
-    };
-  }
-
-  const innerData = createdResult.data || createdResult;
+  const innerData = createdResult?.data || createdResult;
   if (innerData) {
     const currentStored = getStoredEvents();
     const targetId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId;
-    const updated = [innerData, ...currentStored.filter((e) => (e.id || e.Id || e.eventId || e.EventId) !== targetId)];
-    saveStoredEvents(updated);
+    if (targetId) {
+      const updated = [innerData, ...currentStored.filter((e) => (e.id || e.Id || e.eventId || e.EventId) !== targetId)];
+      saveStoredEvents(updated);
+    }
   }
 
   return createdResult;

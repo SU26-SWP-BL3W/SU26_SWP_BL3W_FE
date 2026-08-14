@@ -106,19 +106,19 @@ export function useCreateEventWizardViewModel() {
     {
       id: "tmp-t1",
       trackName: "AI & Machine Learning",
-      templateId: "tpl-default-ai",
+      templateId: "",
       description: "Hạng mục phát triển mô hình & ứng dụng Trí tuệ nhân tạo",
     },
     {
       id: "tmp-t2",
       trackName: "Phát triển Web & Mobile",
-      templateId: "tpl-default-web",
+      templateId: "",
       description: "Hạng mục xây dựng giải pháp web hoàn chỉnh",
     },
   ]);
 
   // Step 4 State: Criteria & Template Config
-  const [templateName, setTemplateName] = useState<string>("Mẫu Tiêu Chí Chuẩn SEAL 2026");
+  const [templateName, setTemplateName] = useState<string>("");
   const [criterias, setCriterias] = useState<TemplateCriteriaFormState[]>([
     {
       criteriaId: "crit-1",
