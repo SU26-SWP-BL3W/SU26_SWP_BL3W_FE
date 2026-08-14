@@ -28,6 +28,7 @@ export const CoordinatorDashboardView: React.FC = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetName, setDeleteTargetName] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [now] = useState(() => Date.now());
 
   const pendingStudentsList = Array.isArray(pendingUsersData)
@@ -42,21 +43,29 @@ export const CoordinatorDashboardView: React.FC = () => {
     : 0;
 
   // Filtered Events
-  const filteredEvents = eventsList.filter((ev) => {
-    const name = ev.eventName || ev.EventName || "";
-    return name.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const filteredEvents = eventsList
+    .filter((ev, idx) => {
+      const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-id-${idx}`;
+      return !deletedIds.includes(id);
+    })
+    .filter((ev) => {
+      const name = ev.eventName || ev.EventName || "";
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
   const handleDeleteEvent = async () => {
     if (!deleteTargetId) return;
     setIsDeleting(true);
     try {
-      await eventsRepository.deleteEvent(deleteTargetId);
+      if (!deleteTargetId.startsWith("ev-id-") && !deleteTargetId.startsWith("ev-mock-")) {
+        await eventsRepository.deleteEvent(deleteTargetId);
+      }
+      setDeletedIds((prev) => [...prev, deleteTargetId]);
       await refetch();
-      setDeleteTargetId(null);
     } catch (err) {
       alert("Xóa sự kiện thất bại. Vui lòng kiểm tra lại quyền truy cập.");
     } finally {
+      setDeleteTargetId(null);
       setIsDeleting(false);
     }
   };
@@ -208,9 +217,9 @@ export const CoordinatorDashboardView: React.FC = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEvents.map((ev) => {
+              {filteredEvents.map((ev, idx) => {
                 const status = computeEventStatus(toEventDates(ev) as MockEvent, now);
-                const id = ev.id || ev.Id || ev.eventId || ev.EventId || "";
+                const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-id-${idx}`;
                 const name = ev.eventName || ev.EventName || "Sự kiện Hackathon";
                 const season = ev.season || ev.Season || "Mùa giải";
                 const year = ev.year || ev.Year || 2026;

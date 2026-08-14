@@ -42,7 +42,22 @@ export const AdminCreateEventView: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    const res = await eventsRepository.createEvent(form);
+
+    const payload = {
+      eventName: form.eventName,
+      season: form.season,
+      year: Number(form.year),
+      startDate: new Date(form.startDate).toISOString(),
+      endDate: new Date(form.endDate).toISOString(),
+      registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : new Date(form.startDate).toISOString(),
+      registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : new Date(form.endDate).toISOString(),
+      description: form.description,
+      maxTeams: Number(form.maxTeams),
+      status: true,
+      rounds: [],
+    };
+
+    const res = await eventsRepository.createEvent(payload);
 
     if (res && res.success !== false && (res.data || res.id || res.Id || res.eventId || res.EventId)) {
       const innerData = res.data || res;
