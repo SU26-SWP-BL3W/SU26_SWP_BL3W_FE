@@ -60,6 +60,18 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
     warningMessage = "Ngày đóng phúc khảo phải diễn ra sau ngày mở phúc khảo!";
   }
 
+  // Helper normalize datetime for datetime-local input (YYYY-MM-DDTHH:mm)
+  const toDateTimeLocal = (val?: string, defaultTime = "08:00") => {
+    if (!val) return "";
+    if (val.includes("T")) {
+      const parts = val.split("T");
+      const datePart = parts[0];
+      const timePart = parts[1]?.substring(0, 5) || defaultTime;
+      return `${datePart}T${timePart}`;
+    }
+    return `${val}T${defaultTime}`;
+  };
+
   return (
     <div className="p-5 bg-[var(--bg-base)] border border-[var(--border-muted)] hud-clipped space-y-5">
       {/* Header & Stepper Progress */}
@@ -73,7 +85,7 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
               {title}
             </h4>
             <p className="text-[11px] text-[var(--text-muted)] font-mono">
-              3 giai đoạn nối tiếp: Nộp bài ➔ Chấm điểm ➔ Phúc khảo
+              Cấu hình ngày &amp; giờ chính xác mở/đóng Form Nộp bài, Chấm điểm và Phúc khảo
             </p>
           </div>
         </div>
@@ -112,28 +124,28 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
 
           <div className="space-y-3 text-xs">
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <span>1. Mở nộp bài</span>
+              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
+                <span>1. Mở nộp bài (Giờ/Ngày)</span>
                 <span className="text-amber-400 font-bold">*</span>
               </label>
               <Input
-                type="date"
-                value={values.startDate}
+                type="datetime-local"
+                value={toDateTimeLocal(values.startDate, "08:00")}
                 onChange={(e) => onChange("startDate", e.target.value)}
-                className="font-mono text-xs border-amber-500/30 focus:border-amber-400 bg-[var(--bg-input)]"
+                className="font-mono text-xs border-amber-500/30 focus:border-amber-400 bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <span>2. Hạn chót nộp bài</span>
+              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
+                <span>2. Hạn chót nộp bài (Khóa Form)</span>
                 <span className="text-amber-400 font-bold">*</span>
               </label>
               <Input
-                type="date"
-                value={values.endDate}
+                type="datetime-local"
+                value={toDateTimeLocal(values.endDate, "23:59")}
                 onChange={(e) => onChange("endDate", e.target.value)}
-                className="font-mono text-xs border-amber-500/30 focus:border-amber-400 bg-[var(--bg-input)]"
+                className="font-mono text-xs border-amber-500/30 focus:border-amber-400 bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
             </div>
           </div>
@@ -155,28 +167,28 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
 
           <div className="space-y-3 text-xs">
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <span>3. Bắt đầu chấm</span>
+              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
+                <span>3. Bắt đầu chấm (Mở Form Giám khảo)</span>
                 <span className="text-cyan-400 font-bold">*</span>
               </label>
               <Input
-                type="date"
-                value={values.scoringStartDate || values.endDate || ""}
+                type="datetime-local"
+                value={toDateTimeLocal(values.scoringStartDate || values.endDate, "08:00")}
                 onChange={(e) => onChange("scoringStartDate", e.target.value)}
-                className="font-mono text-xs border-cyan-500/30 focus:border-cyan-400 bg-[var(--bg-input)]"
+                className="font-mono text-xs border-cyan-500/30 focus:border-cyan-400 bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                <span>4. Kết thúc chấm</span>
+              <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
+                <span>4. Kết thúc chấm (Khóa Form Giám khảo)</span>
                 <span className="text-cyan-400 font-bold">*</span>
               </label>
               <Input
-                type="date"
-                value={values.scoringEndDate || ""}
+                type="datetime-local"
+                value={toDateTimeLocal(values.scoringEndDate, "23:59")}
                 onChange={(e) => onChange("scoringEndDate", e.target.value)}
-                className="font-mono text-xs border-cyan-500/30 focus:border-cyan-400 bg-[var(--bg-input)]"
+                className="font-mono text-xs border-cyan-500/30 focus:border-cyan-400 bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
             </div>
           </div>
@@ -203,25 +215,25 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
           <div className="space-y-3 text-xs">
             <div className="space-y-1">
               <label className="text-[11px] font-medium text-[var(--text-muted)]">
-                5. Mở phúc khảo
+                5. Mở phúc khảo (Mở Form Khiếu nại)
               </label>
               <Input
-                type="date"
-                value={values.appealStartDate || ""}
+                type="datetime-local"
+                value={toDateTimeLocal(values.appealStartDate, "08:00")}
                 onChange={(e) => onChange("appealStartDate", e.target.value)}
-                className="font-mono text-xs border-purple-500/30 focus:border-purple-400 bg-[var(--bg-input)]"
+                className="font-mono text-xs border-purple-500/30 focus:border-purple-400 bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-[11px] font-medium text-[var(--text-muted)]">
-                6. Đóng phúc khảo
+                6. Đóng phúc khảo (Khóa Form Khiếu nại)
               </label>
               <Input
-                type="date"
-                value={values.appealEndDate || ""}
+                type="datetime-local"
+                value={toDateTimeLocal(values.appealEndDate, "23:59")}
                 onChange={(e) => onChange("appealEndDate", e.target.value)}
-                className="font-mono text-xs border-purple-500/30 focus:border-purple-400 bg-[var(--bg-input)]"
+                className="font-mono text-xs border-purple-500/30 focus:border-purple-400 bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
             </div>
           </div>

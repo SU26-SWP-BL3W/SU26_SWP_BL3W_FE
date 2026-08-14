@@ -50,7 +50,9 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
   // Calculate overall validity across all tracks
   const isAllTracksValid = hasMultipleTracks
     ? tracks.every((trk) => {
-        const list = criteriasByTrack[trk.id] || criterias;
+        const inheritedTpl = templates.find((t: any) => (t.id || t.Id || t.templateId || t.TemplateId) === trk.templateId);
+        const defaultInitial = trk.templateId === "__custom__" ? [] : (inheritedTpl?.criterias ?? criterias);
+        const list = criteriasByTrack[trk.id] ?? defaultInitial;
         const w = list.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
         return Math.abs(w - 100) < 0.01;
       })
@@ -74,7 +76,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
           className={`px-4 py-2 border hud-clipped flex items-center gap-2 font-mono text-xs font-bold ${
             isAllTracksValid
               ? "bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border-[var(--color-success)]"
-              : "bg-[rgba(245,158,11,0.1)] text-[var(--color-warning)] border-[var(--color-warning)]"
+              : "bg-[rgba(239,68,68,0.15)] text-[var(--color-danger)] border-[var(--color-danger)]"
           }`}
         >
           {isAllTracksValid ? (
@@ -84,8 +86,8 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
             </>
           ) : (
             <>
-              <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
-              <span>CHƯA CÂN BẰNG ĐỦ 100% TRỌNG SỐ</span>
+              <AlertTriangle className="w-4 h-4 text-[var(--color-danger)] animate-pulse" />
+              <span>CHƯA CÂN BẰNG ĐỦ 100% TRỌNG SỐ CHO MỌI HẠNG MỤC</span>
             </>
           )}
         </div>
@@ -94,7 +96,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
       {/* Preset Pickers */}
       <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-2">
         <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
-          Ngân hàng tiêu chí chuẩn từ SEAL:
+          Ngân hàng tiêu chí chuẩn từ SEAL (Bấm để thêm nhanh):
         </span>
         <div className="flex flex-wrap gap-2">
           {criteriaPresetList.map((item: any, idx: number) => {
@@ -112,13 +114,15 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                   const newObj = {
                     criteriaId: cId,
                     criterionName: cName,
-                    description: cDesc,
+                    description: cDesc || "",
                     weight: cWeight,
                     maxScore: cMaxScore,
                   };
                   if (hasMultipleTracks && onUpdateTrackCriterias) {
                     tracks.forEach((trk) => {
-                      const cur = criteriasByTrack[trk.id] || criterias;
+                      const inheritedTpl = templates.find((t: any) => (t.id || t.Id || t.templateId || t.TemplateId) === trk.templateId);
+                      const defaultInitial = trk.templateId === "__custom__" ? [] : (inheritedTpl?.criterias ?? criterias);
+                      const cur = criteriasByTrack[trk.id] ?? defaultInitial;
                       onUpdateTrackCriterias(trk.id, [...cur, newObj]);
                     });
                   } else {
@@ -139,14 +143,15 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
       {hasMultipleTracks ? (
         <div className="space-y-6">
           {tracks.map((trk, trkIdx) => {
-            const trackCriterias = criteriasByTrack[trk.id] || criterias;
+            const inheritedTpl = templates.find((t: any) => (t.id || t.Id || t.templateId || t.TemplateId) === trk.templateId);
+            const defaultInitial = trk.templateId === "__custom__" ? [] : (inheritedTpl?.criterias ?? criterias);
+            const trackCriterias = criteriasByTrack[trk.id] ?? defaultInitial;
             const trackWeight = trackCriterias.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
             const isTrackValid = Math.abs(trackWeight - 100) < 0.01;
-            const inheritedTpl = templates.find((t: any) => (t.id || t.Id || t.templateId || t.TemplateId) === trk.templateId);
 
             return (
               <div key={trk.id} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] space-y-4 hud-clipped">
-                <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-muted)] pb-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] border border-[var(--accent-judge)]/30 font-mono text-xs font-bold">
@@ -168,10 +173,43 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className={`font-mono text-xs font-bold px-3 py-1 border hud-clipped ${isTrackValid ? "text-[var(--color-success)] border-[var(--color-success)] bg-[rgba(16,185,129,0.1)]" : "text-[var(--color-warning)] border-[var(--color-warning)] bg-[rgba(245,158,11,0.1)]"}`}>
-                      Trọng số: {trackWeight}% / 100%
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`font-mono text-xs font-bold px-3 py-1 border hud-clipped ${
+                        isTrackValid
+                          ? "text-[var(--color-success)] border-[var(--color-success)] bg-[rgba(16,185,129,0.1)]"
+                          : trackWeight > 100
+                          ? "text-[var(--color-danger)] border-[var(--color-danger)] bg-[rgba(239,68,68,0.15)]"
+                          : "text-[var(--color-warning)] border-[var(--color-warning)] bg-[rgba(245,158,11,0.15)]"
+                      }`}
+                    >
+                      Trọng số: {trackWeight}% / 100%{" "}
+                      {isTrackValid
+                        ? "✅ (Đạt chuẩn 100%)"
+                        : trackWeight > 100
+                        ? `🔴 (Vượt quá ${trackWeight - 100}%)`
+                        : `⚠️ (Còn thiếu ${100 - trackWeight}%)`}
                     </span>
+
+                    {trackCriterias.length > 0 && !isTrackValid && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          const count = trackCriterias.length;
+                          const avg = Math.floor(100 / count);
+                          const remainder = 100 - avg * count;
+                          const autoBalanced = trackCriterias.map((item, i) => ({
+                            ...item,
+                            weight: i === 0 ? avg + remainder : avg,
+                          }));
+                          onUpdateTrackCriterias?.(trk.id, autoBalanced);
+                        }}
+                        className="text-xs font-mono text-amber-400 hover:text-amber-300 border border-amber-500/30"
+                      >
+                        ⚡ Tự động cân bằng 100%
+                      </Button>
+                    )}
+
                     {onApplyToAllTracks && (
                       <Button
                         variant="ghost"
@@ -184,6 +222,30 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                     )}
                   </div>
                 </div>
+
+                {/* Empty State Prompt if custom template has 0 criteria */}
+                {trackCriterias.length === 0 && (
+                  <div className="p-6 bg-[var(--bg-base)] border border-dashed border-[var(--border-muted)] rounded text-center space-y-3">
+                    <p className="text-xs font-mono text-[var(--text-muted)]">
+                      Hạng mục này đang chọn <strong>"Tự tạo mẫu tiêu chí mới"</strong> và chưa có tiêu chí nào.
+                    </p>
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          const updated = [
+                            { criterionName: "Tính đổi mới & sáng tạo", description: "Độ độc đáo của giải pháp", weight: 50, maxScore: 10, criteriaId: `crit-${Date.now()}` },
+                            { criterionName: "Chất lượng sản phẩm & Đô thị thực chiến", description: "Mã nguồn và tính khả thi", weight: 50, maxScore: 10, criteriaId: `crit-${Date.now() + 1}` },
+                          ];
+                          onUpdateTrackCriterias?.(trk.id, updated);
+                        }}
+                        className="text-xs font-mono text-[var(--accent-judge)]"
+                      >
+                        + Tạo nhanh 2 tiêu chí mẫu (50% - 50%)
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {/* List of criterias for this track */}
                 <div className="space-y-3">
