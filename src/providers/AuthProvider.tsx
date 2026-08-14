@@ -44,6 +44,15 @@ export const PRESET_ACCOUNTS: PresetAccount[] = [
   },
 ];
 
+// Trang đích sau khi đăng nhập thật, theo vai trò backend trả về.
+const REDIRECT_BY_ROLE: Record<string, string> = {
+  EventCoordinator: "/coordinator/dashboard",
+  Judge: "/judge/events",
+  Mentor: "/mentor/tracks",
+  TeamLeader: "/my-team",
+  TeamMember: "/my-team",
+};
+
 interface AuthContextType {
   user: User | null;
   activeRole: EventRole | null;
@@ -54,6 +63,10 @@ interface AuthContextType {
   // TypeScript coi như không check gì cả. Giờ khai đúng kiểu thật, bỏ "as any".
   loginWithRole: (roleName: string) => string;
   loginWithEmail: (email: string) => string;
+  // Đăng nhập THẬT bằng email + mật khẩu người dùng nhập: gọi /Auth/login lấy
+  // token thật, lấy vai trò thật từ /EventRoles/user. Ném lỗi nếu sai để form
+  // hiện thông báo, KHÔNG gán token giả rồi để bị đá ra sau vài giây.
+  loginWithCredentials: (email: string, password: string) => Promise<string>;
   logout: () => void;
 }
 
@@ -247,6 +260,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return loginWithRole(roleName);
   };
 
+  const loginWithCredentials = async (email: string, password: string): Promise<string> => {
+    const res = await apiClient.post<any>("/Auth/login", { email: email.trim(), password });
+    const d = res.data ?? {};
+    const accessToken = d.accessToken ?? d.AccessToken;
+    const refreshToken = d.refreshToken ?? d.RefreshToken;
+    if (!accessToken) throw new Error("Phản hồi đăng nhập thiếu token.");
+
+    const userId = d.userId ?? d.UserId;
+    const isAdmin = Boolean(d.isAdmin ?? d.IsAdmin);
+    const isStudent = Boolean(d.isStudent ?? d.IsStudent);
+    const fullName = d.fullName ?? d.FullName ?? "";
+    const authUser: User = {
+      id: userId,
+      userId,
+      email: d.email ?? d.Email ?? email.trim(),
+      fullName,
+      isAdmin,
+      isStudent,
+      isApproved: true,
+      isFpt: false,
+      UserID: userId,
+      FullName: fullName,
+      IsAdmin: isAdmin,
+    };
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", accessToken);
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    }
+
+    // Lấy vai trò THẬT từ backend. Admin toàn quyền nên bỏ qua bước này.
+    let primaryRole: EventRole | null = null;
+    let targetPath = isAdmin ? "/admin/dashboard" : "/events";
+    if (!isAdmin) {
+      try {
+        const rolesRes = await apiClient.get<any>("/EventRoles/user", {
+          params: { UserId: userId, PageSize: 200 },
+        });
+        const rows: any[] = rolesRes.data?.data ?? rolesRes.data ?? [];
+        const norm = rows.map((r) => ({
+          eventId: r.eventId ?? r.EventId,
+          roleName: r.roleName ?? r.RoleName,
+        }));
+        // Ưu tiên vai trò quản trị cao nhất khi một người giữ nhiều vai trò.
+        const rank = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
+        const chosen = rank.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
+        if (chosen) {
+          const assigned = norm
+            .filter((r) => r.roleName === chosen.roleName)
+            .map((r) => r.eventId)
+            .filter(Boolean);
+          primaryRole = {
+            eventRoleId: `real-${chosen.roleName}-${userId}`,
+            userId,
+            roleName: chosen.roleName,
+            EventRoleId: `real-${chosen.roleName}-${userId}`,
+            UserId: userId,
+            RoleName: chosen.roleName,
+            assignedEventIds: assigned,
+            AssignedEventIds: assigned,
+          } as EventRole;
+          targetPath = REDIRECT_BY_ROLE[chosen.roleName] ?? "/events";
+        }
+      } catch {
+        // Không lấy được vai trò -> vẫn cho vào, chỉ ở mức xem sự kiện.
+      }
+    }
+
+    // Lưu phiên trực tiếp — KHÔNG qua saveSession vì saveSession tự gọi lại
+    // /Auth/login với mật khẩu cứng "123456" (chỉ dùng cho tài khoản mock).
+    setUser(authUser);
+    setActiveRole(primaryRole);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("currentUser", JSON.stringify(authUser));
+      if (primaryRole) localStorage.setItem("activeRole", JSON.stringify(primaryRole));
+      else localStorage.removeItem("activeRole");
+    }
+    return targetPath;
+  };
+
   const logout = () => {
     setUser(null);
     setActiveRole(null);
@@ -259,7 +352,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, activeRole, isInitialized, login, loginWithRole, loginWithEmail, logout }}>
+    <AuthContext.Provider value={{ user, activeRole, isInitialized, login, loginWithRole, loginWithEmail, loginWithCredentials, logout }}>
       {children}
     </AuthContext.Provider>
   );

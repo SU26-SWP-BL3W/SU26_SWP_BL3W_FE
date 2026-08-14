@@ -52,10 +52,10 @@ export const CreateEventWizardView: React.FC = () => {
         </div>
 
         {/* HUD Step Indicator Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {steps.map((step) => {
             const isActive = wizard.currentStep === step.number;
-            const isCompleted = wizard.currentStep > step.number;
+            const isCompleted = step.number === 6 ? wizard.canPublishEvent : Boolean(wizard.stepDoneMap[step.number]);
 
             return (
               <button
@@ -203,6 +203,8 @@ export const CreateEventWizardView: React.FC = () => {
               tracks={wizard.tracks}
               criterias={wizard.criterias}
               staffInvites={wizard.staffInvites}
+              canPublishEvent={wizard.canPublishEvent}
+              validationMissingItems={wizard.validationMissingItems}
               onPrev={wizard.handlePrevStep}
             />
           )}

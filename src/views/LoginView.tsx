@@ -13,18 +13,26 @@ export function LoginView() {
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { loginWithEmail, loginWithRole } = useAuth();
+  const { loginWithRole, loginWithEmail, loginWithCredentials } = useAuth();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-    if (!email.trim()) {
-      setErrorMessage("Vui lòng nhập địa chỉ email!");
+    if (!email.trim() || !password) {
+      setErrorMessage("Vui lòng nhập email và mật khẩu!");
       return;
     }
-    const targetPath = loginWithEmail(email);
-    router.push(targetPath);
+    setIsSubmitting(true);
+    try {
+      const targetPath = await loginWithCredentials(email, password);
+      router.push(targetPath);
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || "Email hoặc mật khẩu không đúng.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePresetSelect = (acc: (typeof PRESET_ACCOUNTS)[0]) => {
@@ -140,9 +148,10 @@ export function LoginView() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-[#070b14] font-mono font-bold text-sm uppercase tracking-wider hud-clipped transition-all shadow-[0_0_15px_rgba(245,158,11,0.25)] flex items-center justify-center gap-2"
+              disabled={isSubmitting}
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-60 disabled:cursor-not-allowed text-[#070b14] font-mono font-bold text-sm uppercase tracking-wider hud-clipped transition-all shadow-[0_0_15px_rgba(245,158,11,0.25)] flex items-center justify-center gap-2"
             >
-              →] ĐĂNG NHẬP
+              {isSubmitting ? "ĐANG ĐĂNG NHẬP…" : "→] ĐĂNG NHẬP"}
             </button>
           </form>
 

@@ -186,6 +186,92 @@ export function useCreateEventWizardViewModel() {
   const totalWeight = criterias.reduce((acc, item) => acc + (Number(item.weight) || 0), 0);
   const isValidWeight100 = Math.abs(totalWeight - 100) < 0.01;
 
+  // Real data-based Step completion checks
+  const isStep1Done = Boolean(
+    eventData.eventName?.trim() &&
+    eventData.startDate &&
+    eventData.endDate &&
+    new Date(eventData.startDate) <= new Date(eventData.endDate) &&
+    (eventData.maxTeams ?? 0) > 0
+  );
+
+  const isStep2Done = Boolean(
+    rounds.length > 0 &&
+    rounds.every((r) => {
+      const scoringEnd = r.scoringEndDate || (r as any).ScoringEndDate;
+      return (
+        r.roundName?.trim() &&
+        r.startDate &&
+        r.endDate &&
+        scoringEnd &&
+        new Date(r.startDate) <= new Date(r.endDate)
+      );
+    })
+  );
+
+  const isStep3Done = Boolean(
+    tracks.length > 0 &&
+    tracks.every((t) => t.trackName?.trim())
+  );
+
+  const isStep4Done = Boolean(
+    tracks.length > 0 &&
+    tracks.every((trk) => {
+      if (trk.templateId && trk.templateId !== "__custom__") {
+        return true;
+      }
+      const list = criteriasByTrack[trk.id] ?? (trk.templateId === "__custom__" ? [] : criterias);
+      if (!list || list.length === 0) return false;
+      const weight = list.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
+      return Math.abs(weight - 100) < 0.01;
+    })
+  );
+
+  const isStep5Done = Boolean(
+    staffInvites.length > 0 &&
+    staffInvites.every((s) => s.email?.trim() && s.email.includes("@"))
+  );
+
+  const stepDoneMap: Record<number, boolean> = {
+    1: isStep1Done,
+    2: isStep2Done,
+    3: isStep3Done,
+    4: isStep4Done,
+    5: isStep5Done,
+  };
+
+  const validationMissingItems: string[] = [];
+  if (!isStep1Done) {
+    validationMissingItems.push("Bước 1: Thông tin sự kiện chưa đầy đủ (Tên, Ngày bắt đầu/kết thúc hoặc Số lượng đội).");
+  }
+  if (!isStep2Done) {
+    const unconfigRounds = rounds.filter((r) => !(r.scoringEndDate || (r as any).ScoringEndDate));
+    if (rounds.length === 0) {
+      validationMissingItems.push("Bước 2: Sự kiện chưa có Vòng thi nào.");
+    } else if (unconfigRounds.length > 0) {
+      validationMissingItems.push(`Bước 2: Có ${unconfigRounds.length} Vòng thi chưa điền hạn chót chấm điểm (${unconfigRounds.map((r) => r.roundName).join(", ")}).`);
+    } else {
+      validationMissingItems.push("Bước 2: Mốc thời gian các Vòng thi chưa hợp lệ.");
+    }
+  }
+  if (!isStep3Done) {
+    validationMissingItems.push("Bước 3: Sự kiện cần ít nhất 1 Hạng mục thi đấu.");
+  }
+  if (!isStep4Done) {
+    const invalidTracks = tracks.filter((trk) => {
+      if (trk.templateId && trk.templateId !== "__custom__") return false;
+      const list = criteriasByTrack[trk.id] ?? (trk.templateId === "__custom__" ? [] : criterias);
+      if (!list || list.length === 0) return true;
+      const weight = list.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
+      return Math.abs(weight - 100) >= 0.01;
+    });
+    if (invalidTracks.length > 0) {
+      validationMissingItems.push(`Bước 4: Hạng mục [${invalidTracks.map((t) => t.trackName).join(", ")}] chưa cân bằng đủ 100% trọng số tiêu chí.`);
+    }
+  }
+
+  const canPublishEvent = isStep1Done && isStep2Done && isStep3Done && isStep4Done;
+
   // Actions
   const handleUpdateEventField = (field: keyof EventFormState, value: any) => {
     setEventData((prev) => ({ ...prev, [field]: value }));
@@ -584,6 +670,14 @@ export function useCreateEventWizardViewModel() {
     applyCriteriasToAllTracks,
     totalWeight,
     isValidWeight100,
+    isStep1Done,
+    isStep2Done,
+    isStep3Done,
+    isStep4Done,
+    isStep5Done,
+    stepDoneMap,
+    canPublishEvent,
+    validationMissingItems,
     staffInvites,
     handleUpdateEventField,
     handleAddRound,

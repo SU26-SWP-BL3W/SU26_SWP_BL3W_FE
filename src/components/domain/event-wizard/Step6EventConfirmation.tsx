@@ -27,6 +27,8 @@ interface Step6EventConfirmationProps {
   tracks: any[];
   criterias: any[];
   staffInvites: any[];
+  canPublishEvent?: boolean;
+  validationMissingItems?: string[];
   onPrev: () => void;
 }
 
@@ -37,22 +39,16 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
   tracks,
   criterias,
   staffInvites,
+  canPublishEvent = false,
+  validationMissingItems = [],
   onPrev,
 }) => {
   const router = useRouter();
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
-  // Warnings check
-  const warnings: string[] = [];
-  if (rounds.some((r) => !r.scoringEndDate)) {
-    warnings.push("Vẫn còn Vòng thi chưa hoàn tất cấu hình ngày kết thúc chấm điểm.");
-  }
-  if (staffInvites.length === 0) {
-    warnings.push("Sự kiện chưa gửi lời mời Giám khảo hay Cố vấn nào.");
-  }
-
   const handlePublish = async (isPublic: boolean) => {
+    if (isPublic && !canPublishEvent) return;
     setIsPublishing(true);
     try {
       if (eventId) {
@@ -76,14 +72,24 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
     <Card className="hud-glow-cyan p-8 space-y-8">
       {/* Success Stepper Header */}
       <div className="text-center space-y-3 border-b border-[var(--border-muted)] pb-6">
-        <div className="w-16 h-16 rounded-full bg-[rgba(16,185,129,0.15)] border-2 border-[var(--color-success)] flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-          <Sparkles className="w-8 h-8 text-[var(--color-success)] animate-pulse" />
+        <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center mx-auto ${
+          canPublishEvent
+            ? "bg-[rgba(16,185,129,0.15)] border-[var(--color-success)] shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            : "bg-amber-500/15 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+        }`}>
+          {canPublishEvent ? (
+            <Sparkles className="w-8 h-8 text-[var(--color-success)] animate-pulse" />
+          ) : (
+            <AlertTriangle className="w-8 h-8 text-amber-400 animate-pulse" />
+          )}
         </div>
         <h2 className="font-display font-bold text-2xl text-[var(--text-primary)] uppercase tracking-wider">
           Xác Nhận &amp; Chốt Công Bố Sự Kiện
         </h2>
         <p className="text-xs font-mono text-[var(--text-muted)] max-w-xl mx-auto">
-          Tất cả 5 bước cấu hình cơ bản đã hoàn tất! Vui lòng kiểm tra lại tổng quan sự kiện trước khi công bố công khai cho thí sinh.
+          {canPublishEvent
+            ? "Tất cả các bước cấu hình đã đạt chuẩn! Bạn có thể công bố sự kiện công khai ngay hoặc lưu lại bản nháp."
+            : "Sự kiện hiện chưa hoàn tất đầy đủ các bước bắt buộc. Vui lòng kiểm tra danh sách bên dưới trước khi công bố."}
         </p>
 
         {/* Current Draft Status Badge */}
@@ -129,8 +135,8 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
             </span>
             <span className="text-lg font-black">{criterias.length}</span>
           </div>
-          <p className="text-[11px] font-mono text-[var(--color-success)] flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Trọng số 100%
+          <p className="text-[11px] font-mono text-[var(--text-muted)] truncate">
+            {tracks.length} Hạng mục tham chiếu
           </p>
         </div>
 
@@ -148,25 +154,30 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
         </div>
       </div>
 
-      {/* Warnings List */}
-      {warnings.length > 0 && (
-        <div className="p-4 bg-[rgba(245,158,11,0.1)] border border-amber-500/40 text-amber-300 font-mono text-xs rounded space-y-1">
-          <div className="font-bold flex items-center gap-2 text-amber-400">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>LƯU Ý CẦN BỔ SUNG VỀ SAU:</span>
+      {/* Validation Missing Items List (Red Error Box) */}
+      {!canPublishEvent && validationMissingItems.length > 0 && (
+        <div className="p-5 bg-red-500/10 border-2 border-red-500/60 text-red-300 font-mono text-xs rounded hud-clipped space-y-3">
+          <div className="font-bold flex items-center gap-2 text-red-400 text-sm">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-red-400" />
+            <span>SỰ KIỆN CHƯA THỂ CÔNG BỐ — VUI LÒNG BỔ SUNG CÁC BƯỚC BẮT BUỘC:</span>
           </div>
-          <ul className="list-disc list-inside space-y-0.5 text-[11px] pl-2 text-amber-200/80">
-            {warnings.map((w, idx) => (
-              <li key={idx}>{w}</li>
+          <ul className="list-disc list-inside space-y-1.5 text-xs pl-2 text-red-200 font-medium">
+            {validationMissingItems.map((item, idx) => (
+              <li key={idx} className="leading-relaxed">
+                {item}
+              </li>
             ))}
           </ul>
+          <p className="text-[11px] text-gray-400 italic pt-1 border-t border-red-500/30">
+            💡 Bạn có thể bấm <strong>"Lưu Bản Nháp"</strong> để lưu lại tiến trình đã làm và quay lại hoàn thiện sau.
+          </p>
         </div>
       )}
 
       {/* Published Feedback Alert */}
       {publishSuccess && (
         <div className="p-4 bg-[rgba(16,185,129,0.15)] border border-[var(--color-success)] text-[var(--color-success)] font-mono text-xs text-center font-bold rounded animate-fadeIn">
-          🎉 ĐÃ CÔNG BỐ SỰ KIỆN THÀNH CÔNG! Đang chuyển về Trang quản lý Điều phối viên...
+          🎉 ĐÃ LƯU TRẠNG THÁI SỰ KIỆN THÀNH CÔNG! Đang chuyển về Trang quản lý Điều phối viên...
         </div>
       )}
 
@@ -190,11 +201,21 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
           <Button
             variant="primary"
             onClick={() => handlePublish(true)}
-            disabled={isPublishing}
-            className="flex-1 sm:flex-initial text-xs font-mono flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black font-bold border-0 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+            disabled={!canPublishEvent || isPublishing}
+            className={`flex-1 sm:flex-initial text-xs font-mono flex items-center justify-center gap-2 font-bold border-0 ${
+              canPublishEvent
+                ? "bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)] cursor-pointer"
+                : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50"
+            }`}
           >
             <Rocket className="w-4 h-4" />
-            <span>{isPublishing ? "Đang Công Bố..." : "🚀 CÔNG BỐ SỰ KIỆN NGAY"}</span>
+            <span>
+              {isPublishing
+                ? "Đang Công Bố..."
+                : canPublishEvent
+                ? "🚀 CÔNG BỐ SỰ KIỆN NGAY"
+                : "⚠️ Chưa Đủ Điều Kiện Công Bố"}
+            </span>
           </Button>
         </div>
       </div>
