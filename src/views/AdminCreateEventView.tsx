@@ -128,10 +128,15 @@ export const AdminCreateEventView: React.FC = () => {
                   </span>
                 )}
               </p>
-              <div className="pt-2 flex justify-center gap-4">
+              <div className="pt-2 flex flex-wrap justify-center gap-4">
                 <Link href="/admin/dashboard">
                   <Button variant="primary" className="font-mono text-xs bg-[var(--color-danger)]">
                     Về Bảng Điều Hành Admin Tổng &gt;
+                  </Button>
+                </Link>
+                <Link href="/coordinator/dashboard">
+                  <Button variant="secondary" className="font-mono text-xs border-[var(--accent-coordinator)] text-[var(--accent-coordinator)]">
+                    Sang Bảng EC Dashboard &gt;
                   </Button>
                 </Link>
               </div>
