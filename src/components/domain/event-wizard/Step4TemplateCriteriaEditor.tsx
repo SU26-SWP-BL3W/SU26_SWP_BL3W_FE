@@ -224,12 +224,14 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                       <Button
                         variant="ghost"
                         onClick={() => {
+                          if (!isTrackValid) return;
                           onApplyToAllTracks(trackCriterias);
                           setSyncMessage(`Đã sao chép toàn bộ tiêu chí của "${trk.trackName}" sang ${tracks.length - 1} Hạng mục còn lại!`);
                           setTimeout(() => setSyncMessage(null), 4000);
                         }}
-                        className="text-xs font-mono text-cyan-400 hover:text-cyan-300 border border-cyan-500/30"
-                        title="Tự động sao chép bộ tiêu chí đang thiết lập này sang cho tất cả các Hạng mục còn lại trong sự kiện"
+                        disabled={!isTrackValid}
+                        className="text-xs font-mono text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={!isTrackValid ? "Cần đạt đúng 100% trọng số mới có thể đồng bộ sang hạng mục khác" : "Tự động sao chép bộ tiêu chí đang thiết lập này sang cho tất cả các Hạng mục còn lại trong sự kiện"}
                       >
                         📋 Đồng bộ cho mọi Hạng mục
                       </Button>
@@ -238,15 +240,22 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                     <Button
                       variant="ghost"
                       onClick={() => {
+                        if (!isTrackValid) return;
                         onUpdateTrackCriterias?.(trk.id, trackCriterias);
                         setSaveStatus((prev) => ({ ...prev, [trk.id]: true }));
                         setTimeout(() => {
                           setSaveStatus((prev) => ({ ...prev, [trk.id]: false }));
                         }, 3000);
                       }}
-                      className="text-xs font-mono text-[var(--color-success)] border border-[var(--color-success)]/40 hover:bg-[var(--color-success)]/10"
+                      disabled={!isTrackValid}
+                      className={`text-xs font-mono border transition-all ${
+                        isTrackValid
+                          ? "text-[var(--color-success)] border-[var(--color-success)]/40 hover:bg-[var(--color-success)]/10 cursor-pointer"
+                          : "text-[var(--text-muted)] border-[var(--border-muted)] opacity-50 cursor-not-allowed"
+                      }`}
+                      title={!isTrackValid ? "Yêu cầu tổng trọng số phải đạt ĐÚNG 100% mới được phép lưu!" : "Lưu bộ tiêu chí cho hạng mục này"}
                     >
-                      {saveStatus[trk.id] ? "✅ Đã lưu cấu hình!" : "💾 Lưu tiêu chí hạng mục"}
+                      {saveStatus[trk.id] ? "✅ Đã lưu cấu hình!" : isTrackValid ? "💾 Lưu tiêu chí hạng mục" : "⚠️ Cần đủ 100% để lưu"}
                     </Button>
                   </div>
                 </div>
