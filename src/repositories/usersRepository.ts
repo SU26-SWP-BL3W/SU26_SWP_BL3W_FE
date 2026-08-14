@@ -120,7 +120,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<User>>("/Users/me");
+      const res = await apiClient.get<BaseResponse<User>>("/Users/profile");
       return res.data.data;
     },
     retry: false,

@@ -22,6 +22,8 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"general" | "rounds" | "tracks" | "staff">("general");
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
+  const [isSaving, setIsSaving] = useState(false);
+
   // Form State General
   const [eventName, setEventName] = useState("");
   const [season, setSeason] = useState("");
@@ -61,25 +63,37 @@ export const CoordinatorEventDetailView: React.FC = () => {
   // Track Creation State
   const [newTrackName, setNewTrackName] = useState("");
   const [newTrackDesc, setNewTrackDesc] = useState("");
+  const [newSubmissionRuleDesc, setNewSubmissionRuleDesc] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
   const handleUpdateGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     setSaveStatus("Đang lưu...");
+
+    const updatePayload: Record<string, any> = {
+      eventName,
+      season,
+      year,
+      maxTeams,
+      description,
+      photoEventUrl,
+      status,
+    };
+
+    if (startDate) updatePayload.startDate = new Date(startDate).toISOString();
+    if (endDate) updatePayload.endDate = new Date(endDate).toISOString();
+    if (registrationStartDate) updatePayload.registrationStartDate = new Date(registrationStartDate).toISOString();
+    if (registrationEndDate) updatePayload.registrationEndDate = new Date(registrationEndDate).toISOString();
+
     try {
-      await eventsRepository.updateEvent(eventId, {
-        eventName,
-        season,
-        year,
-        maxTeams,
-        description,
-        startDate: startDate ? new Date(startDate).toISOString() : undefined,
-        endDate: endDate ? new Date(endDate).toISOString() : undefined,
-      });
+      await eventsRepository.updateEvent(eventId, updatePayload);
       await refetchEvent();
       setSaveStatus("Cập nhật thông tin sự kiện thành công!");
     } catch {
       setSaveStatus("Cập nhật thất bại. Vui lòng thử lại.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -104,6 +118,16 @@ export const CoordinatorEventDetailView: React.FC = () => {
     }
   };
 
+  const handleDeleteRound = async (roundId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa vòng thi này khỏi sự kiện?")) return;
+    try {
+      await roundsRepository.deleteRound(roundId);
+      await refetchRounds();
+    } catch {
+      alert("Xóa vòng thi thất bại.");
+    }
+  };
+
   const handleCreateTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTrackName.trim()) return;
@@ -112,13 +136,25 @@ export const CoordinatorEventDetailView: React.FC = () => {
         eventId,
         trackName: newTrackName,
         description: newTrackDesc,
+        submissionRuleDescription: newSubmissionRuleDesc,
         templateId: selectedTemplateId || undefined,
       });
       setNewTrackName("");
       setNewTrackDesc("");
+      setNewSubmissionRuleDesc("");
       await refetchTracks();
     } catch {
       alert("Khởi tạo Hạng mục thất bại.");
+    }
+  };
+
+  const handleDeleteTrack = async (trackId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa hạng mục này khỏi sự kiện?")) return;
+    try {
+      await tracksRepository.deleteTrack(trackId);
+      await refetchTracks();
+    } catch {
+      alert("Xóa hạng mục thất bại.");
     }
   };
 
@@ -166,6 +202,13 @@ export const CoordinatorEventDetailView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link href="/coordinator/staff">
+              <Button variant="secondary" className="hud-clipped font-mono text-xs text-[var(--accent-coordinator)] border-[var(--accent-coordinator)]/40 hover:bg-[var(--accent-coordinator)]/10">
+                <Users className="w-3.5 h-3.5 mr-1" />
+                QUẢN LÝ NHÂN SỰ &gt;
+              </Button>
+            </Link>
+
             <Link href={`/events/${eventId}`}>
               <Button variant="secondary" className="hud-clipped font-mono text-xs">
                 XEM TRANG PUBLIC &gt;
@@ -174,7 +217,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Tabs Selector */}
+        {/* 3 Tabs Selector */}
         <div className="flex items-center gap-2 border-b border-[var(--border-muted)] overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab("general")}
@@ -211,18 +254,6 @@ export const CoordinatorEventDetailView: React.FC = () => {
             <Target className="w-4 h-4" />
             Tab 3: Hạng Mục ({(tracks ?? []).length})
           </button>
-
-          <button
-            onClick={() => setActiveTab("staff")}
-            className={`px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center gap-2 border-b-2 ${
-              activeTab === "staff"
-                ? "border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] bg-[var(--accent-coordinator)]/10"
-                : "border-transparent text-[var(--text-muted)] hover:text-white"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            Tab 4: Phân Công Nhân Sự
-          </button>
         </div>
 
         {/* Tab 1: General Info */}
@@ -243,7 +274,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
             <form onSubmit={handleUpdateGeneral} className="space-y-6">
               {/* Nhóm 1: Thông tin cơ bản */}
               <div className="space-y-3">
-                <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">1. Thông Tin Cơ Bản</h4>
+                <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">Thông Tin Cơ Bản</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-muted)]">Tên sự kiện *</label>
@@ -286,32 +317,39 @@ export const CoordinatorEventDetailView: React.FC = () => {
               </div>
 
               {/* Nhóm 2: Mốc thời gian */}
-              <div className="space-y-3 pt-4 border-t border-[var(--border-muted)]">
-                <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">2. Khung Thời Gian Cổng Đăng Ký & Sự Kiện</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                    <label className="text-xs font-bold text-amber-400">Mở cổng đăng ký</label>
-                    <Input type="date" value={registrationStartDate} onChange={(e) => setRegistrationStartDate(e.target.value)} />
-                  </div>
+              <div className="space-y-4 pt-4 border-t border-[var(--border-muted)]">
+                <div>
+                  <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">Cổng Đăng Ký</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                      <label className="text-xs font-medium text-[var(--text-muted)]">Mở cổng đăng ký</label>
+                      <Input type="date" value={registrationStartDate} onChange={(e) => setRegistrationStartDate(e.target.value)} />
+                    </div>
 
-                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                    <label className="text-xs font-bold text-amber-400">Đóng cổng đăng ký</label>
-                    <Input type="date" value={registrationEndDate} onChange={(e) => setRegistrationEndDate(e.target.value)} />
+                    <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                      <label className="text-xs font-medium text-[var(--text-muted)]">Đóng cổng đăng ký</label>
+                      <Input type="date" value={registrationEndDate} onChange={(e) => setRegistrationEndDate(e.target.value)} />
+                    </div>
                   </div>
+                </div>
 
-                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                    <label className="text-xs font-bold text-cyan-400">Bắt đầu sự kiện chính thức</label>
-                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                  </div>
+                <div>
+                  <h4 className="text-xs font-mono font-bold text-[var(--accent-coordinator)] uppercase tracking-wider">Thời Gian Sự Kiện</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                      <label className="text-xs font-medium text-[var(--text-muted)]">Bắt đầu sự kiện chính thức</label>
+                      <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                    </div>
 
-                  <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
-                    <label className="text-xs font-bold text-cyan-400">Kết thúc sự kiện chính thức</label>
-                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    <div className="space-y-1 p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                      <label className="text-xs font-medium text-[var(--text-muted)]">Kết thúc sự kiện chính thức</label>
+                      <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Nhóm 3: Mô tả */}
+              {/* Mô tả */}
               <div className="space-y-1 pt-4 border-t border-[var(--border-muted)]">
                 <label className="text-xs font-medium text-[var(--text-muted)]">Mô tả chi tiết sự kiện</label>
                 <textarea
@@ -322,8 +360,14 @@ export const CoordinatorEventDetailView: React.FC = () => {
                 />
               </div>
 
-              <Button type="submit" variant="primary" accent="coordinator" className="hud-clipped font-mono text-xs flex items-center gap-2">
-                <Save className="w-4 h-4" /> LƯU THAY ĐỔI SỰ KIỆN
+              <Button
+                type="submit"
+                disabled={isLoadingEvent || isSaving}
+                variant="primary"
+                accent="coordinator"
+                className="hud-clipped font-mono text-xs flex items-center gap-2 disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" /> {isSaving ? "ĐANG LƯU THAY ĐỔI..." : "LƯU THAY ĐỔI SỰ KIỆN"}
               </Button>
             </form>
           </Card>
@@ -349,25 +393,63 @@ export const CoordinatorEventDetailView: React.FC = () => {
             </Card>
 
             <div className="space-y-4">
-              {rounds.map((rnd: any, index: number) => (
-                <Card key={rnd.id || rnd.Id || index} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Badge tone="info">Vòng {rnd.roundNumber || rnd.RoundNumber || index + 1}</Badge>
-                      <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">{rnd.roundName || rnd.RoundName}</h4>
-                    </div>
-                    <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
-                      Rule qua vòng: {rnd.advancementRule || rnd.AdvancementRule || "Chưa thiết lập"}
-                    </p>
-                  </div>
+              {rounds.map((rnd: any, index: number) => {
+                const roundId = rnd.id || rnd.Id || rnd.roundId || rnd.RoundId || `rnd-${index}`;
+                const isLastRound = index === rounds.length - 1;
 
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" className="text-xs font-mono text-[var(--color-danger)]">
-                      <Trash2 className="w-3.5 h-3.5" /> Xóa vòng
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                return (
+                  <Card key={roundId} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Badge tone="info">Vòng {rnd.roundNumber || rnd.RoundNumber || index + 1}</Badge>
+                          <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">{rnd.roundName || rnd.RoundName}</h4>
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
+                          {!isLastRound ? (
+                            `Quy tắc qua vòng: ${rnd.advancementRule || rnd.AdvancementRule || "top 10"}`
+                          ) : (
+                            "Vòng cuối — kết quả dùng để xếp hạng và trao giải, không thăng vòng."
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" onClick={() => handleDeleteRound(roundId)} className="text-xs font-mono text-[var(--color-danger)] hover:bg-red-500/10">
+                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Xóa vòng
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-2 font-mono text-[11px]">
+                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                        <div className="text-[var(--text-muted)]">Mở nộp bài</div>
+                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.startDate?.split("T")[0] || rnd.StartDate?.split("T")[0] || "Chưa đặt"}</div>
+                      </div>
+                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                        <div className="text-[var(--text-muted)]">Hạn nộp bài</div>
+                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.endDate?.split("T")[0] || rnd.EndDate?.split("T")[0] || "Chưa đặt"}</div>
+                      </div>
+                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                        <div className="text-[var(--text-muted)]">Bắt đầu chấm</div>
+                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.scoringStartDate?.split("T")[0] || rnd.ScoringStartDate?.split("T")[0] || "Chưa đặt"}</div>
+                      </div>
+                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                        <div className="text-[var(--text-muted)]">Kết thúc chấm</div>
+                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.scoringEndDate?.split("T")[0] || rnd.ScoringEndDate?.split("T")[0] || "Chưa đặt"}</div>
+                      </div>
+                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                        <div className="text-[var(--text-muted)]">Mở phúc khảo</div>
+                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.appealStartDate?.split("T")[0] || rnd.AppealStartDate?.split("T")[0] || "Chưa đặt"}</div>
+                      </div>
+                      <div className="p-2 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded">
+                        <div className="text-[var(--text-muted)]">Đóng phúc khảo</div>
+                        <div className="font-bold text-[var(--text-primary)] mt-0.5">{rnd.appealEndDate?.split("T")[0] || rnd.AppealEndDate?.split("T")[0] || "Chưa đặt"}</div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
@@ -398,7 +480,10 @@ export const CoordinatorEventDetailView: React.FC = () => {
                   </select>
                 </div>
 
-                <Input type="text" value={newTrackDesc} onChange={(e) => setNewTrackDesc(e.target.value)} placeholder="Mô tả phạm vi đề bài hạng mục..." />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input type="text" value={newTrackDesc} onChange={(e) => setNewTrackDesc(e.target.value)} placeholder="Mô tả phạm vi đề bài hạng mục..." />
+                  <Input type="text" value={newSubmissionRuleDesc} onChange={(e) => setNewSubmissionRuleDesc(e.target.value)} placeholder="Quy định nộp bài riêng của hạng mục này..." />
+                </div>
 
                 <Button type="submit" variant="primary" accent="coordinator" className="text-xs font-mono">
                   + KHỞI TẠO HẠNG MỤC
@@ -411,20 +496,28 @@ export const CoordinatorEventDetailView: React.FC = () => {
                 const trkId = trk.id || trk.Id || trk.trackId || "";
                 return (
                   <Card key={trkId || index} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
                       <h4 className="font-mono font-bold text-sm text-[var(--text-primary)] flex items-center gap-2">
                         <Target className="w-4 h-4 text-[var(--accent-team)]" />
                         {trk.trackName || trk.TrackName}
                       </h4>
-                      <Badge tone="neutral">ID: {trkId}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge tone="neutral">ID: {trkId}</Badge>
+                        <Button variant="ghost" onClick={() => handleDeleteTrack(trkId)} className="text-xs font-mono text-[var(--color-danger)] hover:bg-red-500/10">
+                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Xóa
+                        </Button>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-[var(--text-muted)] font-sans">{trk.description || trk.Description || "Chưa có mô tả"}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-sans text-[var(--text-muted)]">
+                      <div><strong className="text-[var(--text-primary)]">Mô tả:</strong> {trk.description || trk.Description || "Chưa có mô tả"}</div>
+                      <div><strong className="text-[var(--text-primary)]">Quy định nộp bài:</strong> {trk.submissionRuleDescription || trk.SubmissionRuleDescription || "Tương theo quy định chung"}</div>
+                    </div>
 
                     <div className="flex items-center gap-3 pt-2 border-t border-[var(--border-muted)]">
                       <span className="text-xs font-mono text-[var(--text-muted)] flex items-center gap-1">
                         <LayoutTemplate className="w-3.5 h-3.5 text-[var(--accent-coordinator)]" />
-                        Template: {trk.templateId ? "Đã gán" : "Chưa gán"}
+                        Template tiêu chí:
                       </span>
 
                       <select
@@ -445,22 +538,6 @@ export const CoordinatorEventDetailView: React.FC = () => {
               })}
             </div>
           </div>
-        )}
-
-        {/* Tab 4: Event Staff */}
-        {activeTab === "staff" && (
-          <Card className="p-6 space-y-4 text-center">
-            <Users className="w-10 h-10 text-[var(--accent-coordinator)] opacity-60 mx-auto" />
-            <h3 className="font-display font-bold text-base text-[var(--text-primary)] uppercase">Phân Công Nhân Sự Giám Khảo &amp; Cố Vấn</h3>
-            <p className="text-xs text-[var(--text-muted)] font-sans max-w-md mx-auto">
-              Chuyển sang trang Quản lý Nhân sự Tổng thể để thực hiện mời mới và gỡ phân công cho sự kiện này.
-            </p>
-            <Link href="/coordinator/staff">
-              <Button variant="primary" accent="coordinator" className="text-xs font-mono">
-                QUẢN LÝ NHÂN SỰ TOÀN DIỆN &gt;
-              </Button>
-            </Link>
-          </Card>
         )}
 
       </main>

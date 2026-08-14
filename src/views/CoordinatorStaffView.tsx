@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { staffRepository, useGetEventRoles } from "@/repositories/staffRepository";
 import { useMyEvents } from "@/repositories/eventsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
 import { UserCheck, UserPlus, Send, AlertCircle, CheckCircle2, Shield, Trash2, Search, Filter } from "lucide-react";
 import { Button, Card, Badge, Input } from "@/components/ui";
 
@@ -18,10 +19,12 @@ export const CoordinatorStaffView: React.FC = () => {
   }, [myEvents, selectedEventId]);
 
   const { data: eventRoles = [], refetch: refetchRoles } = useGetEventRoles(selectedEventId);
+  const { data: tracks = [] } = useGetTracksByEvent(selectedEventId);
 
   const [judgeEmail, setJudgeEmail] = useState("");
+  const [judgeTrackId, setJudgeTrackId] = useState("");
   const [mentorEmail, setMentorEmail] = useState("");
-  const [trackId, setTrackId] = useState("");
+  const [mentorTrackId, setMentorTrackId] = useState("");
   const [staffSearch, setStaffSearch] = useState("");
   
   const [judgeMessage, setJudgeMessage] = useState<{ text: string; isError: boolean } | null>(null);
@@ -33,13 +36,29 @@ export const CoordinatorStaffView: React.FC = () => {
     e.preventDefault();
     if (!judgeEmail.trim()) return;
 
+    // Check role conflict: Can't be both Mentor and Judge for the SAME track
+    const existingConflict = eventRoles.find((r: any) => {
+      const emailMatch = (r.user?.email || r.User?.Email || r.email || "").toLowerCase() === judgeEmail.trim().toLowerCase();
+      const trackMatch = (r.trackId || r.TrackId || "") === judgeTrackId;
+      const isMentor = (r.roleName || r.RoleName) === "Mentor";
+      return emailMatch && trackMatch && isMentor;
+    });
+
+    if (existingConflict) {
+      setJudgeMessage({
+        text: "Giảng viên này đã được phân công làm Cố vấn cho Hạng mục này. Một nhân sự không thể vừa làm Cố vấn vừa làm Giám khảo cùng một Hạng mục.",
+        isError: true,
+      });
+      return;
+    }
+
     setIsSubmittingJudge(true);
     setJudgeMessage(null);
 
     const res = await staffRepository.inviteJudge({
       eventId: selectedEventId,
       email: judgeEmail.trim(),
-      trackId: trackId || undefined,
+      trackId: judgeTrackId || undefined,
     });
 
     setIsSubmittingJudge(false);
@@ -63,13 +82,29 @@ export const CoordinatorStaffView: React.FC = () => {
     e.preventDefault();
     if (!mentorEmail.trim()) return;
 
+    // Check role conflict: Can't be both Mentor and Judge for the SAME track
+    const existingConflict = eventRoles.find((r: any) => {
+      const emailMatch = (r.user?.email || r.User?.Email || r.email || "").toLowerCase() === mentorEmail.trim().toLowerCase();
+      const trackMatch = (r.trackId || r.TrackId || "") === mentorTrackId;
+      const isJudge = (r.roleName || r.RoleName) === "Judge";
+      return emailMatch && trackMatch && isJudge;
+    });
+
+    if (existingConflict) {
+      setMentorMessage({
+        text: "Giảng viên này đã được phân công làm Giám khảo cho Hạng mục này. Một nhân sự không thể vừa làm Cố vấn vừa làm Giám khảo cùng một Hạng mục.",
+        isError: true,
+      });
+      return;
+    }
+
     setIsSubmittingMentor(true);
     setMentorMessage(null);
 
     const res = await staffRepository.inviteMentor({
       eventId: selectedEventId,
       email: mentorEmail.trim(),
-      trackId: trackId || undefined,
+      trackId: mentorTrackId || undefined,
     });
 
     setIsSubmittingMentor(false);
@@ -102,8 +137,12 @@ export const CoordinatorStaffView: React.FC = () => {
   const filteredRoles = eventRoles.filter((er: any) => {
     const roleName = er.roleName || er.RoleName || "";
     const isStaff = roleName === "Judge" || roleName === "Mentor";
-    const userEmail = er.user?.email || er.User?.Email || er.email || "";
-    return isStaff && userEmail.toLowerCase().includes(staffSearch.toLowerCase());
+    if (!isStaff) return false;
+    if (!staffSearch.trim()) return true;
+    const query = staffSearch.toLowerCase();
+    const email = (er.user?.email || er.User?.Email || er.email || "").toLowerCase();
+    const name = (er.user?.fullName || er.User?.FullName || er.fullName || "").toLowerCase();
+    return email.includes(query) || name.includes(query);
   });
 
   return (
@@ -179,6 +218,24 @@ export const CoordinatorStaffView: React.FC = () => {
                   />
                 </div>
 
+                <div>
+                  <label className="block font-mono text-xs text-[var(--text-muted)] uppercase mb-1">
+                    Hạng Mục Phụ Trách (Track)
+                  </label>
+                  <select
+                    value={judgeTrackId}
+                    onChange={(e) => setJudgeTrackId(e.target.value)}
+                    className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-judge)]"
+                  >
+                    <option value="">Toàn sự kiện (Chấm điểm chung tất cả Hạng mục)</option>
+                    {tracks.map((t: any) => (
+                      <option key={t.id || t.Id} value={t.id || t.Id}>
+                        {t.trackName || t.TrackName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {judgeMessage && (
                   <div
                     className={`p-3 font-mono text-xs border hud-clipped flex items-center gap-2 ${
@@ -234,6 +291,24 @@ export const CoordinatorStaffView: React.FC = () => {
                     placeholder="mentor.tech@fpt.edu.vn"
                     className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#2dd4bf]"
                   />
+                </div>
+
+                <div>
+                  <label className="block font-mono text-xs text-[var(--text-muted)] uppercase mb-1">
+                    Hạng Mục Phụ Trách (Track)
+                  </label>
+                  <select
+                    value={mentorTrackId}
+                    onChange={(e) => setMentorTrackId(e.target.value)}
+                    className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 font-mono text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#2dd4bf]"
+                  >
+                    <option value="">Toàn sự kiện (Cố vấn chung các Hạng mục)</option>
+                    {tracks.map((t: any) => (
+                      <option key={t.id || t.Id} value={t.id || t.Id}>
+                        {t.trackName || t.TrackName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {mentorMessage && (

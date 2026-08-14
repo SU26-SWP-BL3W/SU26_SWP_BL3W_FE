@@ -138,8 +138,10 @@ export function useGetPendingTeams() {
     queryKey: ["pending-teams"],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<Team[]>("/Teams/pending");
-        return res.data;
+        const res = await apiClient.get<BaseResponse<PagedResult<Team>>>("/Teams", {
+          params: { IsApproved: false, PageSize: 100 },
+        });
+        return res.data.data?.data ?? [];
       } catch {
         return [];
       }

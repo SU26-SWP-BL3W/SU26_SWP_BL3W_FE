@@ -14,7 +14,7 @@ export const uploadRepository = {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await apiClient.post<BaseResponse<UploadFileResponse>>("/Upload/file", formData, {
+      const res = await apiClient.post<BaseResponse<UploadFileResponse>>("/Storage/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

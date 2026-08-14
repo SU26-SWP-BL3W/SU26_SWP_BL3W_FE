@@ -20,42 +20,33 @@ export const roundsRepository = {
    * Cấu hình Vòng thi mới (Event Coordinator - POST /api/Rounds)
    */
   async createRound(payload: CreateRoundPayload): Promise<BaseResponse<RoundEntity>> {
-    try {
-      const res = await apiClient.post<BaseResponse<RoundEntity>>("/Rounds", payload);
-      return res.data;
-    } catch (err: any) {
-      const mockCreated: any = {
-        RoundId: `rnd-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        EventId: payload.eventId,
-        RoundName: payload.roundName,
-        RoundNumber: payload.roundNumber,
-        StartDate: payload.startDate,
-        EndDate: payload.endDate,
-        AdvancementRule: payload.advancementRule || "top 10",
-      };
-      return {
-        data: mockCreated,
-        message: "Tạo vòng thi thành công (Mock Mode)",
-        statusCode: 200,
-        success: true,
-      };
-    }
+    const res = await apiClient.post<BaseResponse<RoundEntity>>("/Rounds", payload);
+    return res.data;
   },
 
   /**
-   * Lấy danh sách Vòng thi theo EventId (GET /api/Rounds/{eventId})
+   * Cập nhật Vòng thi (PUT /api/Rounds/{id})
+   */
+  async updateRound(id: string, payload: Partial<CreateRoundPayload>): Promise<BaseResponse<RoundEntity>> {
+    const res = await apiClient.put<BaseResponse<RoundEntity>>(`/Rounds/${id}`, payload);
+    return res.data;
+  },
+
+  /**
+   * Xóa Vòng thi (DELETE /api/Rounds/{id})
+   */
+  async deleteRound(id: string): Promise<BaseResponse<boolean>> {
+    const res = await apiClient.delete<BaseResponse<boolean>>(`/Rounds/${id}`);
+    return res.data;
+  },
+
+  /**
+   * Lấy danh sách Vòng thi theo EventId (GET /api/Rounds/event?EventId=)
    */
   async getRoundsByEventId(eventId: string): Promise<BaseResponse<RoundEntity[]>> {
-    try {
-      const res = await apiClient.get<BaseResponse<RoundEntity[]>>(`/Rounds/event/${eventId}`);
-      return res.data;
-    } catch (err: any) {
-      return {
-        data: [],
-        message: "Không thể kết nối danh sách vòng thi",
-        statusCode: 500,
-        success: false,
-      };
-    }
+    const res = await apiClient.get<BaseResponse<RoundEntity[]>>("/Rounds/event", {
+      params: { EventId: eventId },
+    });
+    return res.data;
   },
 };
