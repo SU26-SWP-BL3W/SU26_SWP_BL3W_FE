@@ -11,6 +11,7 @@ import { uploadRepository } from "@/repositories/uploadRepository";
 import { staffRepository, useGetEventRoles } from "@/repositories/staffRepository";
 import { Shield, Settings, Layers, Target, Users, Save, Plus, Trash2, ArrowLeft, CheckCircle2, AlertCircle, Edit3, LayoutTemplate, Upload, Image, UserCheck, UserPlus, Send } from "lucide-react";
 import Link from "next/link";
+import { RoundTimelinePicker } from "@/components/domain/event-wizard/RoundTimelinePicker";
 
 export const CoordinatorEventDetailView: React.FC = () => {
   const params = useParams();
@@ -809,43 +810,25 @@ export const CoordinatorEventDetailView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 6 Ô Chọn Ngày Đầy Đủ */}
-                <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-3">
-                  <div className="text-xs font-mono font-bold text-[var(--accent-coordinator)] border-b border-[var(--border-muted)] pb-2">
-                    Khung Thời Gian Vòng Thi (Timeline Lifecycle)
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                      <label className="text-[11px] font-bold text-amber-400">1. Mở Nộp Bài *</label>
-                      <Input type="date" value={roundStartDate} onChange={(e) => setRoundStartDate(e.target.value)} required />
-                    </div>
-
-                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                      <label className="text-[11px] font-bold text-amber-400">2. Hạn Chót Nộp Bài *</label>
-                      <Input type="date" value={roundEndDate} onChange={(e) => setRoundEndDate(e.target.value)} required />
-                    </div>
-
-                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                      <label className="text-[11px] font-bold text-cyan-400">3. Bắt Đầu Chấm *</label>
-                      <Input type="date" value={roundScoringStartDate} onChange={(e) => setRoundScoringStartDate(e.target.value)} required />
-                    </div>
-
-                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                      <label className="text-[11px] font-bold text-cyan-400">4. Kết Thúc Chấm *</label>
-                      <Input type="date" value={roundScoringEndDate} onChange={(e) => setRoundScoringEndDate(e.target.value)} required />
-                    </div>
-
-                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                      <label className="text-[11px] font-bold text-purple-400">5. Mở Phúc Khảo (Tùy chọn)</label>
-                      <Input type="date" value={roundAppealStartDate} onChange={(e) => setRoundAppealStartDate(e.target.value)} />
-                    </div>
-
-                    <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                      <label className="text-[11px] font-bold text-purple-400">6. Đóng Phúc Khảo (Tùy chọn)</label>
-                      <Input type="date" value={roundAppealEndDate} onChange={(e) => setRoundAppealEndDate(e.target.value)} />
-                    </div>
-                  </div>
-                </div>
+                {/* Modern Timeline Picker */}
+                <RoundTimelinePicker
+                  values={{
+                    startDate: roundStartDate,
+                    endDate: roundEndDate,
+                    scoringStartDate: roundScoringStartDate,
+                    scoringEndDate: roundScoringEndDate,
+                    appealStartDate: roundAppealStartDate,
+                    appealEndDate: roundAppealEndDate,
+                  }}
+                  onChange={(field, val) => {
+                    if (field === "startDate") setRoundStartDate(val);
+                    else if (field === "endDate") setRoundEndDate(val);
+                    else if (field === "scoringStartDate") setRoundScoringStartDate(val);
+                    else if (field === "scoringEndDate") setRoundScoringEndDate(val);
+                    else if (field === "appealStartDate") setRoundAppealStartDate(val);
+                    else if (field === "appealEndDate") setRoundAppealEndDate(val);
+                  }}
+                />
 
                 <div className="flex justify-end pt-2 border-t border-[var(--border-muted)]">
                   <Button type="submit" variant="primary" accent="coordinator" className="text-xs font-mono">
@@ -960,33 +943,26 @@ export const CoordinatorEventDetailView: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* 6 Date Pickers for Edit */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-2">
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-amber-400">Mở Nộp Bài</label>
-                            <Input type="date" value={editRoundStartDate} onChange={(e) => setEditRoundStartDate(e.target.value)} required />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-amber-400">Hạn Chót Nộp Bài</label>
-                            <Input type="date" value={editRoundEndDate} onChange={(e) => setEditRoundEndDate(e.target.value)} required />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-cyan-400">Bắt Đầu Chấm</label>
-                            <Input type="date" value={editRoundScoringStartDate} onChange={(e) => setEditRoundScoringStartDate(e.target.value)} required />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-cyan-400">Kết Thúc Chấm</label>
-                            <Input type="date" value={editRoundScoringEndDate} onChange={(e) => setEditRoundScoringEndDate(e.target.value)} required />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-purple-400">Mở Phúc Khảo</label>
-                            <Input type="date" value={editRoundAppealStartDate} onChange={(e) => setEditRoundAppealStartDate(e.target.value)} />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-purple-400">Đóng Phúc Khảo</label>
-                            <Input type="date" value={editRoundAppealEndDate} onChange={(e) => setEditRoundAppealEndDate(e.target.value)} />
-                          </div>
-                        </div>
+                        {/* Modern Timeline Picker */}
+                        <RoundTimelinePicker
+                          title="Cập nhật mốc thời gian"
+                          values={{
+                            startDate: editRoundStartDate,
+                            endDate: editRoundEndDate,
+                            scoringStartDate: editRoundScoringStartDate,
+                            scoringEndDate: editRoundScoringEndDate,
+                            appealStartDate: editRoundAppealStartDate,
+                            appealEndDate: editRoundAppealEndDate,
+                          }}
+                          onChange={(field, val) => {
+                            if (field === "startDate") setEditRoundStartDate(val);
+                            else if (field === "endDate") setEditRoundEndDate(val);
+                            else if (field === "scoringStartDate") setEditRoundScoringStartDate(val);
+                            else if (field === "scoringEndDate") setEditRoundScoringEndDate(val);
+                            else if (field === "appealStartDate") setEditRoundAppealStartDate(val);
+                            else if (field === "appealEndDate") setEditRoundAppealEndDate(val);
+                          }}
+                        />
 
                         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
                           <Button variant="ghost" onClick={() => setEditingRoundId(null)} className="text-xs font-mono">Hủy Bỏ</Button>

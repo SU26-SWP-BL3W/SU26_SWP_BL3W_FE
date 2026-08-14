@@ -4,6 +4,7 @@ import React from "react";
 import { Button, Input, Card } from "@/components/ui";
 import { RoundFormState } from "@/viewModels/useCreateEventWizardViewModel";
 import { Layers, Plus, Trash2, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { RoundTimelinePicker } from "./RoundTimelinePicker";
 
 interface Step2RoundConfigProps {
   rounds: RoundFormState[];
@@ -124,72 +125,18 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
                 </div>
               </div>
 
-              {/* Timeline datetime grid */}
-              <div className="p-4 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-3">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--accent-coordinator)] border-b border-[var(--border-muted)] pb-2">
-                  <Calendar className="w-4 h-4 text-[var(--accent-coordinator)]" />
-                  <span>Mốc thời gian của vòng</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-                  {/* Nộp bài */}
-                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                    <span className="text-[11px] font-bold text-amber-400">1. Mở nộp bài</span>
-                    <Input
-                      type="date"
-                      value={round.startDate}
-                      onChange={(e) => onUpdateRound(round.id, "startDate", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                    <span className="text-[11px] font-bold text-amber-400">2. Hạn chót nộp bài</span>
-                    <Input
-                      type="date"
-                      value={round.endDate}
-                      onChange={(e) => onUpdateRound(round.id, "endDate", e.target.value)}
-                    />
-                  </div>
-
-                  {/* Chấm điểm */}
-                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                    <span className="text-[11px] font-bold text-cyan-400">3. Bắt đầu chấm</span>
-                    <Input
-                      type="date"
-                      value={round.scoringStartDate || round.endDate || ""}
-                      onChange={(e) => onUpdateRound(round.id, "scoringStartDate", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                    <span className="text-[11px] font-bold text-cyan-400">4. Kết thúc chấm</span>
-                    <Input
-                      type="date"
-                      value={round.scoringEndDate || ""}
-                      onChange={(e) => onUpdateRound(round.id, "scoringEndDate", e.target.value)}
-                    />
-                  </div>
-
-                  {/* Phúc khảo */}
-                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                    <span className="text-[11px] font-bold text-purple-400">5. Mở phúc khảo</span>
-                    <Input
-                      type="date"
-                      value={round.appealStartDate || ""}
-                      onChange={(e) => onUpdateRound(round.id, "appealStartDate", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-1 p-2 bg-[var(--bg-panel)] rounded">
-                    <span className="text-[11px] font-bold text-purple-400">6. Đóng phúc khảo</span>
-                    <Input
-                      type="date"
-                      value={round.appealEndDate || ""}
-                      onChange={(e) => onUpdateRound(round.id, "appealEndDate", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Modern Timeline Picker */}
+              <RoundTimelinePicker
+                values={{
+                  startDate: round.startDate,
+                  endDate: round.endDate,
+                  scoringStartDate: round.scoringStartDate,
+                  scoringEndDate: round.scoringEndDate,
+                  appealStartDate: round.appealStartDate,
+                  appealEndDate: round.appealEndDate,
+                }}
+                onChange={(field, val) => onUpdateRound(round.id, field as any, val)}
+              />
             </div>
           );
         })}
