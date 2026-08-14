@@ -177,7 +177,7 @@ export const AdminUsersView: React.FC = () => {
             {/* Search Input */}
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase block font-bold">
-                🔍 Tìm kiếm theo Tên / Email / Mã SV:
+                Tìm kiếm theo Tên / Email / Mã SV:
               </label>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
@@ -194,7 +194,7 @@ export const AdminUsersView: React.FC = () => {
             {/* Role Filter */}
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase block font-bold">
-                🎭 Phân loại Vai trò (Role):
+                Phân loại Vai trò (Role):
               </label>
               <select
                 value={roleFilter}
@@ -212,7 +212,7 @@ export const AdminUsersView: React.FC = () => {
             {/* Status Filter */}
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase block font-bold">
-                ⚡ Trạng thái Duyệt Hồ sơ:
+                Trạng thái Duyệt Hồ sơ:
               </label>
               <select
                 value={statusFilter}
@@ -220,9 +220,9 @@ export const AdminUsersView: React.FC = () => {
                 className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--color-danger)] cursor-pointer"
               >
                 <option value="all">Tất cả Trạng thái</option>
-                <option value="approved">✓ Đã Phê Duyệt (Approved)</option>
-                <option value="pending">⏳ Đang Chờ Duyệt (Pending)</option>
-                <option value="locked">🔒 Bị Khóa Hồ Sơ (Locked)</option>
+                <option value="approved">Đã Phê Duyệt (Approved)</option>
+                <option value="pending">Đang Chờ Duyệt (Pending)</option>
+                <option value="locked">Bị Khóa Hồ Sơ (Locked)</option>
               </select>
             </div>
           </div>
@@ -410,7 +410,7 @@ export const AdminUsersView: React.FC = () => {
                     }}
                     className="font-mono text-xs text-[var(--color-danger)] border-[var(--color-danger)]/40 hover:bg-[var(--color-danger)]/10"
                   >
-                    <UserX className="w-3.5 h-3.5" /> ✗ Từ Chối Hồ Sơ
+                    <UserX className="w-3.5 h-3.5" /> Từ Chối Hồ Sơ
                   </Button>
                   <Button
                     variant="primary"

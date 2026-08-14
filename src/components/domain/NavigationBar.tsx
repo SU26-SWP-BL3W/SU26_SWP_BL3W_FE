@@ -7,6 +7,26 @@ import { getMockTeam } from "@/viewModels/mockTeamData";
 import { SealShield } from "./SealShield";
 import { NotificationBell } from "./NotificationBell";
 import { hasEventPermission } from "@/lib/permissions";
+import {
+  Globe,
+  Users,
+  Building2,
+  PlusCircle,
+  LogOut,
+  ArrowLeft,
+  ShieldCheck,
+  Target,
+  Zap,
+  IdCard,
+  Ruler,
+  Briefcase,
+  Scale,
+  Trophy,
+  FileText,
+  Send,
+  UserPlus,
+  Compass,
+} from "lucide-react";
 
 export function NavigationBar() {
   const pathname = usePathname() || "";
@@ -59,14 +79,14 @@ export function NavigationBar() {
               href="/"
               className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--color-danger)] flex items-center gap-1.5 transition-colors"
             >
-              <span>←</span> Quay lại trang chủ
+              <ArrowLeft className="w-3 h-3" /> Quay lại trang chủ
             </Link>
           </div>
 
           {/* Admin Profile Card */}
           <div className="p-3 bg-[var(--bg-input)] border border-[var(--color-danger)]/40 hud-clipped flex flex-col gap-1">
             <span className="font-mono text-[9px] text-[var(--color-danger)] font-bold uppercase tracking-widest flex items-center gap-1">
-              👑 SYSTEM ADMIN
+              <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-danger)]" /> SYSTEM ADMIN
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.fullName || user?.FullName || "Quản Trị Viên Hệ Thống"}
@@ -90,7 +110,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🌐</span> Tổng Quan Sự Kiện
+              <Globe className="w-4 h-4 shrink-0" /> Tổng Quan Sự Kiện
             </Link>
 
             <Link
@@ -101,7 +121,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>👥</span> Quản Lý Tài Khoản
+              <Users className="w-4 h-4 shrink-0" /> Quản Lý Tài Khoản
             </Link>
 
             <Link
@@ -112,7 +132,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🏫</span> Danh Mục Trường Học
+              <Building2 className="w-4 h-4 shrink-0" /> Danh Mục Trường Học
             </Link>
 
             <Link
@@ -123,7 +143,7 @@ export function NavigationBar() {
                   : "text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
               }`}
             >
-              <span>➕</span> Tạo Event Mới (Wizard)
+              <PlusCircle className="w-4 h-4 shrink-0" /> Tạo Event Mới
             </Link>
           </nav>
         </div>
@@ -151,9 +171,9 @@ export function NavigationBar() {
           <button
             type="button"
             onClick={logout}
-            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4 flex items-center justify-center gap-1.5"
           >
-            🚪 ĐĂNG XUẤT
+            <LogOut className="w-3.5 h-3.5" /> ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -164,8 +184,6 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1A: NAVBAR DỌC DÀNH RIÊNG CHO EVENT COORDINATOR (BTC)
   // ─────────────────────────────────────────────────────────────
   if (showCoordinatorSidebar) {
-    // Khi đang ở route /coordinator/... (Control Center / Wizard Tạo Sự Kiện Mới)
-    // Event Coordinator LUÔN CÓ FULL QUYỀN khởi tạo và điều hành sự kiện
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[#a855f7]/40 flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
         <div className="flex flex-col gap-6">
@@ -182,14 +200,14 @@ export function NavigationBar() {
               href="/"
               className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[#a855f7] flex items-center gap-1.5 transition-colors"
             >
-              <span>←</span> Quay lại trang chủ
+              <ArrowLeft className="w-3 h-3" /> Quay lại trang chủ
             </Link>
           </div>
 
           {/* Coordinator Profile Card */}
           <div className="p-3 bg-[var(--bg-input)] border border-[#a855f7]/40 hud-clipped flex flex-col gap-1">
-            <span className="font-mono text-[9px] text-[#a855f7] font-bold uppercase tracking-widest">
-              EVENT COORDINATOR
+            <span className="font-mono text-[9px] text-[#a855f7] font-bold uppercase tracking-widest flex items-center gap-1">
+              <Zap className="w-3.5 h-3.5 text-[#a855f7]" /> EVENT COORDINATOR
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Trần Văn Điều Phối"}
@@ -213,7 +231,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🎯</span> Control Center BTC
+              <Target className="w-4 h-4 shrink-0" /> Control Center BTC
             </Link>
 
             <Link
@@ -224,7 +242,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>⚡</span> Tạo Sự Kiện Mới (Wizard)
+              <PlusCircle className="w-4 h-4 shrink-0" /> Tạo Sự Kiện Mới
             </Link>
 
             <Link
@@ -235,7 +253,18 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🪪</span> Duyệt Thẻ Sinh Viên
+              <IdCard className="w-4 h-4 shrink-0" /> Duyệt Thẻ Sinh Viên
+            </Link>
+
+            <Link
+              href="/coordinator/teams"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/coordinator/teams")
+                  ? "bg-[var(--accent-coordinator)] text-white shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <Users className="w-4 h-4 shrink-0" /> Duyệt Đăng Ký Đội Thi
             </Link>
 
             <Link
@@ -246,7 +275,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>📐</span> Kho Tiêu Chí RBL
+              <Ruler className="w-4 h-4 shrink-0" /> Kho Tiêu Chí RBL
             </Link>
 
             <Link
@@ -257,7 +286,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>🏆</span> Bảng Xếp Hạng Giải
+              <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng Giải
             </Link>
           </nav>
         </div>
@@ -285,9 +314,9 @@ export function NavigationBar() {
           <button
             type="button"
             onClick={logout}
-            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4 flex items-center justify-center gap-1.5"
           >
-            🚪 ĐĂNG XUẤT
+            <LogOut className="w-3.5 h-3.5" /> ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -320,7 +349,7 @@ export function NavigationBar() {
               href="/"
               className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[#2dd4bf] flex items-center gap-1.5 transition-colors"
             >
-              <span>←</span> Quay lại trang chủ
+              <ArrowLeft className="w-3 h-3" /> Quay lại trang chủ
             </Link>
           </div>
 
@@ -328,10 +357,10 @@ export function NavigationBar() {
           <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
             isAuthorizedMentor ? "border-[#2dd4bf]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
           }`}>
-            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
               isAuthorizedMentor ? "text-[#2dd4bf]" : "text-[var(--color-warning)]"
             }`}>
-              {isAuthorizedMentor ? "MENTOR CỐ VẤN" : "CHƯA PHÂN CÔNG CỐ VẤN"}
+              <Briefcase className="w-3.5 h-3.5" /> {isAuthorizedMentor ? "MENTOR CỐ VẤN" : "CHƯA PHÂN CÔNG CỐ VẤN"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Cố Vấn Chuyên Môn"}
@@ -357,7 +386,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🎯</span> Bàn Làm Việc Cố Vấn
+                  <Briefcase className="w-4 h-4 shrink-0" /> Bàn Làm Việc Cố Vấn
                 </Link>
 
                 <Link
@@ -368,7 +397,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🏆</span> Bảng Xếp Hạng Track
+                  <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng Track
                 </Link>
               </>
             ) : (
@@ -381,7 +410,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
+                  <FileText className="w-4 h-4 shrink-0" /> Thể Lệ & Chi Tiết Sự Kiện
                 </Link>
 
                 <Link
@@ -392,7 +421,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🏆</span> Bảng Xếp Hạng
+                  <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng
                 </Link>
               </>
             )}
@@ -424,9 +453,9 @@ export function NavigationBar() {
           <button
             type="button"
             onClick={logout}
-            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4 flex items-center justify-center gap-1.5"
           >
-            🚪 ĐĂNG XUẤT
+            <LogOut className="w-3.5 h-3.5" /> ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -459,7 +488,7 @@ export function NavigationBar() {
               href="/"
               className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-judge)] flex items-center gap-1.5 transition-colors"
             >
-              <span>←</span> Quay lại trang chủ
+              <ArrowLeft className="w-3 h-3" /> Quay lại trang chủ
             </Link>
           </div>
 
@@ -467,10 +496,10 @@ export function NavigationBar() {
           <div className={`p-3 bg-[var(--bg-input)] border hud-clipped flex flex-col gap-1 ${
             isAuthorizedJudge ? "border-[var(--accent-judge)]/40" : "border-[var(--color-warning)]/50 bg-[var(--color-warning)]/5"
           }`}>
-            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest ${
+            <span className={`font-mono text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
               isAuthorizedJudge ? "text-[var(--accent-judge)]" : "text-[var(--color-warning)]"
             }`}>
-              {isAuthorizedJudge ? "GIÁM KHẢO CHẤM ĐIỂM" : "CHƯA PHÂN CÔNG GIÁM KHẢO"}
+              <Scale className="w-3.5 h-3.5" /> {isAuthorizedJudge ? "GIÁM KHẢO CHẤM ĐIỂM" : "CHƯA PHÂN CÔNG GIÁM KHẢO"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Giám Khảo Chuyên Môn"}
@@ -496,7 +525,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>⚖</span> Bàn Chấm Điểm Giám Khảo
+                  <Scale className="w-4 h-4 shrink-0" /> Bàn Chấm Điểm Giám Khảo
                 </Link>
 
                 <Link
@@ -507,7 +536,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🏆</span> Bảng Xếp Hạng Kết Quả
+                  <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng Kết Quả
                 </Link>
               </>
             ) : (
@@ -520,7 +549,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
+                  <FileText className="w-4 h-4 shrink-0" /> Thể Lệ & Chi Tiết Sự Kiện
                 </Link>
 
                 <Link
@@ -531,7 +560,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🏆</span> Bảng Xếp Hạng
+                  <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng
                 </Link>
               </>
             )}
@@ -563,9 +592,9 @@ export function NavigationBar() {
           <button
             type="button"
             onClick={logout}
-            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4 flex items-center justify-center gap-1.5"
           >
-            🚪 ĐĂNG XUẤT
+            <LogOut className="w-3.5 h-3.5" /> ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -600,7 +629,7 @@ export function NavigationBar() {
               href="/"
               className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] flex items-center gap-1.5 transition-colors"
             >
-              <span>←</span> Quay lại trang chủ
+              <ArrowLeft className="w-3 h-3" /> Quay lại trang chủ
             </Link>
           </div>
 
@@ -635,7 +664,7 @@ export function NavigationBar() {
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]"
               }`}
             >
-              <span>📍</span> Thể Lệ & Chi Tiết Sự Kiện
+              <FileText className="w-4 h-4 shrink-0" /> Thể Lệ & Chi Tiết Sự Kiện
             </Link>
 
             {/* NẾU ĐÃ THAM GIA SỰ KIỆN NÀY: HIỂN THỊ CÁC CHỨC NĂNG THI ĐẤU CỦA ĐỘI */}
@@ -649,7 +678,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>👥</span> {roleName === "TeamLeader" ? "Quản Lý Đội Thi" : "Xem Đội Thi Của Tôi"}
+                  <Users className="w-4 h-4 shrink-0" /> {roleName === "TeamLeader" ? "Quản Lý Đội Thi" : "Xem Đội Thi Của Tôi"}
                 </Link>
 
                 <Link
@@ -660,7 +689,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-team)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>📤</span> {roleName === "TeamLeader" ? "Bài Nộp Của Đội" : "Xem Bài Nộp Của Đội"}
+                  <Send className="w-4 h-4 shrink-0" /> {roleName === "TeamLeader" ? "Bài Nộp Của Đội" : "Xem Bài Nộp Của Đội"}
                 </Link>
 
                 <Link
@@ -671,7 +700,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🏆</span> Bảng Xếp Hạng
+                  <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng
                 </Link>
 
                 {roleName === "TeamLeader" && (
@@ -683,7 +712,7 @@ export function NavigationBar() {
                         : "text-[var(--text-muted)] hover:text-[var(--accent-coordinator)] hover:bg-[var(--bg-input)]"
                     }`}
                   >
-                    <span>⚖</span> Phúc Khảo & Khiếu Nại
+                    <Scale className="w-4 h-4 shrink-0" /> Phúc Khảo & Khiếu Nại
                   </Link>
                 )}
               </>
@@ -696,7 +725,7 @@ export function NavigationBar() {
                   href="/register"
                   className="flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold text-[var(--accent-team)] hover:bg-[var(--accent-team)] hover:text-black border border-[var(--accent-team)]/40 mt-1"
                 >
-                  <span>🚀</span> Đăng Ký / Tạo Đội Mới
+                  <UserPlus className="w-4 h-4 shrink-0" /> Đăng Ký / Tạo Đội Mới
                 </Link>
 
                 <Link
@@ -707,7 +736,7 @@ export function NavigationBar() {
                       : "text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-input)]"
                   }`}
                 >
-                  <span>🏆</span> Bảng Xếp Hạng
+                  <Trophy className="w-4 h-4 shrink-0" /> Bảng Xếp Hạng
                 </Link>
               </>
             )}
@@ -726,9 +755,9 @@ export function NavigationBar() {
           <button
             type="button"
             onClick={logout}
-            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4"
+            className="w-full py-2 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-mono text-xs font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer relative z-50 mb-4 flex items-center justify-center gap-1.5"
           >
-            🚪 ĐĂNG XUẤT
+            <LogOut className="w-3.5 h-3.5" /> ĐĂNG XUẤT
           </button>
         </div>
       </aside>
@@ -751,54 +780,51 @@ export function NavigationBar() {
         <div className="hidden md:flex gap-5 items-center font-mono text-xs">
           <Link
             href="/"
-            className={`transition-colors ${
+            className={`transition-colors flex items-center gap-1.5 ${
               pathname === "/" || pathname.endsWith("/vi") || pathname.endsWith("/en")
                 ? "text-[var(--accent-primary)] font-bold"
                 : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
-            Trang chủ
+            <Globe className="w-3.5 h-3.5" /> Trang chủ
           </Link>
 
           <Link
             href="/events"
-            className={`transition-colors ${
+            className={`transition-colors flex items-center gap-1.5 ${
               pathname.includes("/events")
                 ? "text-[var(--accent-primary)] font-bold"
                 : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
-            Khám phá Sự kiện
+            <Compass className="w-3.5 h-3.5" /> Khám phá Sự kiện
           </Link>
 
           {/* Single Workspace Access Link for Coordinator */}
           {roleName === "Coordinator" && (
             <Link
               href="/coordinator/dashboard"
-              className="text-[#a855f7] font-bold hover:underline flex items-center gap-1 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped text-xs"
+              className="text-[#a855f7] font-bold hover:underline flex items-center gap-1.5 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1 hud-clipped text-xs"
             >
-              <span>🎯 Control Center BTC</span>
-              <span className="text-[10px]">➔</span>
+              <Target className="w-3.5 h-3.5" /> Control Center BTC
             </Link>
           )}
 
           {roleName === "Mentor" && (
             <Link
               href="/mentor/tracks"
-              className="text-[#2dd4bf] font-bold hover:underline flex items-center gap-1 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1 hud-clipped text-xs"
+              className="text-[#2dd4bf] font-bold hover:underline flex items-center gap-1.5 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-3 py-1 hud-clipped text-xs"
             >
-              <span>💼 Bàn Làm Việc Mentor</span>
-              <span className="text-[10px]">➔</span>
+              <Briefcase className="w-3.5 h-3.5" /> Bàn Làm Việc Mentor
             </Link>
           )}
 
           {roleName === "Judge" && (
             <Link
               href="/judge/scoring"
-              className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped text-xs"
+              className="text-[var(--accent-judge)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 px-3 py-1 hud-clipped text-xs"
             >
-              <span>⚖ Bàn Chấm Giám Khảo</span>
-              <span className="text-[10px]">➔</span>
+              <Scale className="w-3.5 h-3.5" /> Bàn Chấm Giám Khảo
             </Link>
           )}
 
@@ -806,20 +832,18 @@ export function NavigationBar() {
           {roleName === "Admin" && (
             <Link
               href="/admin/dashboard"
-              className="text-[var(--color-danger)] font-bold hover:underline flex items-center gap-1 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-1 hud-clipped text-xs"
+              className="text-[var(--color-danger)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-1 hud-clipped text-xs"
             >
-              <span>👑 Bảng Điều Hành Admin</span>
-              <span className="text-[10px]">➔</span>
+              <ShieldCheck className="w-3.5 h-3.5" /> Bảng Điều Hành Admin
             </Link>
           )}
 
           {(roleName === "TeamLeader" || roleName === "TeamMember") && (
             <Link
               href="/my-team"
-              className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-3 py-1 hud-clipped"
+              className="text-[var(--accent-team)] font-bold hover:underline flex items-center gap-1.5 bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-3 py-1 hud-clipped text-xs"
             >
-              <span>👥 Đội Thi Của Tôi</span>
-              <span className="text-[10px]">➔</span>
+              <Users className="w-3.5 h-3.5" /> Đội Thi Của Tôi
             </Link>
           )}
         </div>
@@ -849,9 +873,9 @@ export function NavigationBar() {
           <div className="flex items-center gap-3">
             <button
               onClick={logout}
-              className="font-mono text-xs text-[var(--color-danger)] hover:underline border border-[var(--color-danger)]/30 px-2.5 py-1 hud-clipped cursor-pointer"
+              className="font-mono text-xs text-[var(--color-danger)] hover:underline border border-[var(--color-danger)]/30 px-2.5 py-1 hud-clipped cursor-pointer flex items-center gap-1"
             >
-              Đăng xuất
+              <LogOut className="w-3.5 h-3.5" /> Đăng xuất
             </button>
           </div>
         ) : (

@@ -99,7 +99,7 @@ export const AdminSchoolsView: React.FC = () => {
               onClick={() => setShowAddModal(true)}
               className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold"
             >
-              <Plus className="w-4 h-4" /> + THÊM TRƯỜNG MỚI (POST /api/Schools) &gt;
+              <Plus className="w-4 h-4" /> Thêm Trường Mới
             </Button>
             <Button variant="ghost" onClick={() => refetch()} className="font-mono text-xs">
               <RefreshCw className="w-3.5 h-3.5" /> Làm mới

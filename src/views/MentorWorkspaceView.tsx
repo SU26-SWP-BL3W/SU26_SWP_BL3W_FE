@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui";
+import { Target, Users, Folder, MessageSquare, Search, Building2, ExternalLink, X } from "lucide-react";
 
 export function MentorWorkspaceView() {
   const [activeTab, setActiveTab] = useState<"tracks" | "teams" | "submissions">("tracks");
@@ -259,7 +260,7 @@ export function MentorWorkspaceView() {
           </div>
         </div>
 
-        {/* ── TAB CONTAINER (CHUYỂN TAB ĐỒNG BỘ 0MS TẠI CHỖ) ── */}
+        {/* ── TAB CONTAINER ── */}
         <div className="flex items-center gap-2 border-b border-[var(--border-muted)] pb-3 font-mono text-xs">
           <button
             onClick={() => setActiveTab("tracks")}
@@ -269,7 +270,7 @@ export function MentorWorkspaceView() {
                 : "text-[var(--text-muted)] hover:text-white bg-[var(--bg-panel)] border border-[var(--border-muted)]"
             }`}
           >
-            <span>🎯</span> 1. Hạng Mục Phân Công ({mockAssignedTracks.length})
+            <Target className="w-4 h-4" /> 1. Hạng Mục Phân Công ({mockAssignedTracks.length})
           </button>
 
           <button
@@ -280,7 +281,7 @@ export function MentorWorkspaceView() {
                 : "text-[var(--text-muted)] hover:text-white bg-[var(--bg-panel)] border border-[var(--border-muted)]"
             }`}
           >
-            <span>👥</span> 2. Đội Thi Cần Hỗ Trợ ({mockAiTrackTeams.length} Đội)
+            <Users className="w-4 h-4" /> 2. Đội Thi Cần Hỗ Trợ ({mockAiTrackTeams.length} Đội)
           </button>
 
           <button
@@ -291,13 +292,11 @@ export function MentorWorkspaceView() {
                 : "text-[var(--text-muted)] hover:text-white bg-[var(--bg-panel)] border border-[var(--border-muted)]"
             }`}
           >
-            <span>📁</span> 3. Tiến Độ Bài Nộp & Mã Nguồn (8 Bài)
+            <Folder className="w-4 h-4" /> 3. Tiến Độ Bài Nộp & Mã Nguồn (8 Bài)
           </button>
         </div>
 
-        {/* ─────────────────────────────────────────────────────────────
-            TAB 1: 🎯 HẠNG MỤC PHÂN CÔNG (TRACKS)
-           ───────────────────────────────────────────────────────────── */}
+        {/* TAB 1: TRACKS */}
         {activeTab === "tracks" && (
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between font-mono text-xs text-[var(--text-muted)]">
@@ -329,14 +328,12 @@ export function MentorWorkspaceView() {
                       {track.description}
                     </p>
 
-                    {/* Co-mentors */}
                     <div className="pt-3 border-t border-[var(--border-muted)]/60 font-mono text-xs flex flex-col gap-1">
                       <span className="text-[10px] text-[var(--text-muted)] uppercase">Cố Vấn Cùng Phụ Trách:</span>
                       <span className="text-[var(--text-primary)] font-bold">{track.coMentors.join(", ")}</span>
                     </div>
                   </div>
 
-                  {/* Track Stats Grid */}
                   <div className="grid grid-cols-3 gap-2 font-mono text-center pt-4 border-t border-[var(--border-muted)]">
                     <div className="p-2 bg-[var(--bg-input)] border border-[var(--border-muted)]">
                       <div className="text-xl font-bold text-[#2dd4bf]">{track.teamsCount}</div>
@@ -352,12 +349,11 @@ export function MentorWorkspaceView() {
                     </div>
                   </div>
 
-                  {/* CTA Switch to Teams Tab */}
                   <button
                     onClick={() => setActiveTab("teams")}
-                    className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                    className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    ➡️ QUẢN LÝ CỐ VẤN {track.teamsCount} ĐỘI THI
+                    <Users className="w-3.5 h-3.5" /> Quản lý cố vấn {track.teamsCount} Đội thi
                   </button>
                 </div>
               ))}
@@ -365,12 +361,9 @@ export function MentorWorkspaceView() {
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────
-            TAB 2: 👥 ĐỘI THI CẦN HỖ TRỢ (TEAMS - DATA TABLE & CARD MODES)
-           ───────────────────────────────────────────────────────────── */}
+        {/* TAB 2: TEAMS */}
         {activeTab === "teams" && (
           <div className="flex flex-col gap-6">
-            {/* Header Track & View Control Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[var(--text-muted)] font-bold uppercase">HẠNG MỤC ĐANG CỐ VẤN:</span>
@@ -379,7 +372,6 @@ export function MentorWorkspaceView() {
                 </span>
               </div>
 
-              {/* View Switcher & Counter */}
               <div className="flex items-center gap-3">
                 <span className="text-[var(--text-muted)] hidden sm:inline">
                   Hiển thị <strong className="text-white">{filteredTeams.length}</strong> / {mockAiTrackTeams.length} Đội
@@ -394,7 +386,7 @@ export function MentorWorkspaceView() {
                         : "text-[var(--text-muted)] hover:text-white"
                     }`}
                   >
-                    📊 Data Table (Gọn)
+                    Bảng dữ liệu
                   </button>
                   <button
                     onClick={() => setTeamViewMode("cards")}
@@ -404,34 +396,32 @@ export function MentorWorkspaceView() {
                         : "text-[var(--text-muted)] hover:text-white"
                     }`}
                   >
-                    🎴 Thẻ Card
+                    Thẻ Card
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Smart Search & Filter Toolbar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
-              {/* Search Box */}
               <div className="relative w-full sm:w-96">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[var(--text-muted)]" />
                 <input
                   type="text"
                   value={teamSearchQuery}
                   onChange={(e) => setTeamSearchQuery(e.target.value)}
-                  placeholder="🔍 Tìm tên đội, mã đội, trường học, email đội trưởng..."
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[#2dd4bf]"
+                  placeholder="Tìm tên đội, mã đội, trường học..."
+                  className="w-full bg-[var(--bg-input)] border border-[var(--border-muted)] pl-8 pr-8 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[#2dd4bf]"
                 />
                 {teamSearchQuery && (
                   <button
                     onClick={() => setTeamSearchQuery("")}
                     className="absolute right-2.5 top-2 text-[var(--text-muted)] hover:text-white font-bold"
                   >
-                    ✕
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
 
-              {/* Status Filter */}
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <span className="text-[var(--text-muted)] shrink-0">Lọc Trạng Thái:</span>
                 <select
@@ -446,7 +436,6 @@ export function MentorWorkspaceView() {
               </div>
             </div>
 
-            {/* MODE 1: DATA TABLE VIEW (Compact View for 100+ Teams) */}
             {teamViewMode === "table" && (
               <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
                 <table className="w-full text-left border-collapse font-mono text-xs">
@@ -480,9 +469,9 @@ export function MentorWorkspaceView() {
                           <td className="p-3 whitespace-nowrap">
                             <button
                               onClick={() => setSelectedRosterTeam(team)}
-                              className="px-2.5 py-1 bg-[var(--accent-team)]/10 text-[var(--accent-team)] border border-[var(--accent-team)]/30 font-bold text-[10px] hover:bg-[var(--accent-team)] hover:text-black transition-all cursor-pointer"
+                              className="px-2.5 py-1 bg-[var(--accent-team)]/10 text-[var(--accent-team)] border border-[var(--accent-team)]/30 font-bold text-[10px] hover:bg-[var(--accent-team)] hover:text-black transition-all cursor-pointer flex items-center gap-1"
                             >
-                              👥 {team.membersCount} Thành Viên (Xem List)
+                              <Users className="w-3 h-3" /> Thành viên ({team.membersCount})
                             </button>
                           </td>
                           <td className="p-3 text-[var(--text-primary)] font-mono text-[11px] whitespace-nowrap">
@@ -496,9 +485,9 @@ export function MentorWorkspaceView() {
                           <td className="p-3 text-right whitespace-nowrap">
                             <button
                               onClick={() => setFeedbackTeam(team.name)}
-                              className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-bold text-[11px] uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                              className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-bold text-[11px] uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer flex items-center gap-1 ml-auto"
                             >
-                              💬 GỢI Ý & TƯ VẤN
+                              <MessageSquare className="w-3 h-3" /> Gợi Ý & Tư Vấn
                             </button>
                           </td>
                         </tr>
@@ -509,7 +498,6 @@ export function MentorWorkspaceView() {
               </div>
             )}
 
-            {/* MODE 2: CARDS GRID VIEW */}
             {teamViewMode === "cards" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredTeams.map((team) => (
@@ -517,7 +505,6 @@ export function MentorWorkspaceView() {
                     key={team.id}
                     className="hud-clipped border border-[var(--border-muted)] bg-[var(--bg-panel)] p-6 flex flex-col justify-between gap-5 hover:border-[#2dd4bf]/50 transition-all shadow-sm"
                   >
-                    {/* Team Card Header */}
                     <div className="flex items-start justify-between pb-3 border-b border-[var(--border-muted)]">
                       <div>
                         <div className="flex items-center gap-2">
@@ -534,7 +521,6 @@ export function MentorWorkspaceView() {
                       </Badge>
                     </div>
 
-                    {/* Members Roster */}
                     <div className="flex flex-col gap-2 font-mono text-xs">
                       <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
                         THÀNH VIÊN ĐỘI THI ({team.membersCount} NGƯỜI):
@@ -554,18 +540,16 @@ export function MentorWorkspaceView() {
                       </div>
                     </div>
 
-                    {/* Leader Contact */}
                     <div className="p-2.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-xs flex justify-between items-center">
                       <span className="text-[var(--text-muted)]">Email Đội Trưởng:</span>
                       <span className="text-[#2dd4bf] font-bold">{team.leader.email}</span>
                     </div>
 
-                    {/* Action */}
                     <button
                       onClick={() => setFeedbackTeam(team.name)}
-                      className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer"
+                      className="w-full py-2.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] font-mono text-xs font-bold uppercase hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all hud-clipped cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      💬 GỢI Ý & TƯ VẤN CHUYÊN MÔN CHO ĐỘI
+                      <MessageSquare className="w-3.5 h-3.5" /> Gợi Ý & Tư Vấn Chuyên Môn
                     </button>
                   </div>
                 ))}
@@ -574,9 +558,7 @@ export function MentorWorkspaceView() {
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────
-            TAB 3: 📁 TIẾN ĐỘ BÀI NỘP (SUBMISSIONS)
-           ───────────────────────────────────────────────────────────── */}
+        {/* TAB 3: SUBMISSIONS */}
         {activeTab === "submissions" && (
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between font-mono text-xs text-[var(--text-muted)]">
@@ -606,7 +588,7 @@ export function MentorWorkspaceView() {
                       <td className="p-4">
                         {team.deliverables.github ? (
                           <a href={team.deliverables.github} target="_blank" rel="noreferrer" className="text-[#2dd4bf] hover:underline font-bold flex items-center gap-1">
-                            <span>📦 Repo</span> ↗
+                            GitHub Repo <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (
                           <span className="text-[var(--text-muted)]/50 italic">Chưa nộp</span>
@@ -615,7 +597,7 @@ export function MentorWorkspaceView() {
                       <td className="p-4">
                         {team.deliverables.slides ? (
                           <a href={team.deliverables.slides} target="_blank" rel="noreferrer" className="text-[var(--accent-primary)] hover:underline font-bold flex items-center gap-1">
-                            <span>📊 Slide</span> ↗
+                            Slide <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (
                           <span className="text-[var(--text-muted)]/50 italic">Chưa nộp</span>
@@ -624,7 +606,7 @@ export function MentorWorkspaceView() {
                       <td className="p-4">
                         {team.deliverables.demo ? (
                           <a href={team.deliverables.demo} target="_blank" rel="noreferrer" className="text-[var(--accent-judge)] hover:underline font-bold flex items-center gap-1">
-                            <span>🎬 Video</span> ↗
+                            Video Demo <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (
                           <span className="text-[var(--text-muted)]/50 italic">Chưa nộp</span>
@@ -633,9 +615,9 @@ export function MentorWorkspaceView() {
                       <td className="p-4 text-center">
                         <button
                           onClick={() => setFeedbackTeam(team.name)}
-                          className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all uppercase font-bold text-[10px] hud-clipped cursor-pointer"
+                          className="px-3 py-1.5 border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] hover:bg-[#2dd4bf] hover:text-[var(--bg-base)] transition-all uppercase font-bold text-[10px] hud-clipped cursor-pointer flex items-center gap-1 mx-auto"
                         >
-                          💬 PHẢN HỒI & GÓP Ý
+                          <MessageSquare className="w-3 h-3" /> Phản Hồi & Góp Ý
                         </button>
                       </td>
                     </tr>
@@ -651,14 +633,16 @@ export function MentorWorkspaceView() {
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
             <div className="bg-[var(--bg-panel)] border border-[#2dd4bf] p-6 max-w-lg w-full hud-clipped flex flex-col gap-4 shadow-2xl">
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-muted)]">
-                <h3 className="font-display font-bold text-lg text-[#2dd4bf]">
-                  💬 GỬI GÓP Ý CỐ VẤN CHO ĐỘI: {feedbackTeam}
+                <h3 className="font-display font-bold text-lg text-[#2dd4bf] flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" /> Gửi Góp Ý Cố Vấn Cho Đội: {feedbackTeam}
                 </h3>
-                <button onClick={() => setFeedbackTeam(null)} className="text-[var(--text-muted)] hover:text-white">✕</button>
+                <button onClick={() => setFeedbackTeam(null)} className="text-[var(--text-muted)] hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
               <div className="flex flex-col gap-2 font-mono text-xs">
-                <label className="text-[var(--text-muted)]">NỘI DUNG NHẬN XÉT CỐ VẤN MÃ NGUỒN & KIẾN TRÚC:</label>
+                <label className="text-[var(--text-muted)] uppercase">NỘI DUNG NHẬN XÉT CỐ VẤN MÃ NGUỒN & KIẾN TRÚC:</label>
                 <textarea
                   rows={4}
                   value={feedbackNote}
@@ -689,11 +673,10 @@ export function MentorWorkspaceView() {
           </div>
         )}
 
-        {/* ── MODAL LIGHTBOX XEM DANH SÁCH THÀNH VIÊN ĐỘI THI ── */}
+        {/* MODAL XEM DANH SÁCH THÀNH VIÊN */}
         {selectedRosterTeam && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <div className="bg-[var(--bg-panel)] border border-[#2dd4bf] p-6 max-w-xl w-full hud-clipped flex flex-col gap-5 shadow-2xl font-mono text-xs">
-              {/* Header Modal */}
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-muted)]">
                 <div>
                   <div className="flex items-center gap-2 text-[10px] text-[#2dd4bf] font-bold">
@@ -709,11 +692,10 @@ export function MentorWorkspaceView() {
                   onClick={() => setSelectedRosterTeam(null)}
                   className="text-lg text-[var(--text-muted)] hover:text-white cursor-pointer p-1"
                 >
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Roster List Table */}
               <div className="flex flex-col gap-2">
                 <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold">
                   DANH SÁCH THÀNH VIÊN ({selectedRosterTeam.membersCount} NGƯỜI):
@@ -739,13 +721,11 @@ export function MentorWorkspaceView() {
                 </div>
               </div>
 
-              {/* Leader Email Info */}
               <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] flex justify-between items-center text-xs">
                 <span className="text-[var(--text-muted)]">Email Đội Trưởng Liên Hệ:</span>
                 <span className="text-[#2dd4bf] font-bold">{selectedRosterTeam.leader.email}</span>
               </div>
 
-              {/* Footer Modal */}
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setSelectedRosterTeam(null)}
