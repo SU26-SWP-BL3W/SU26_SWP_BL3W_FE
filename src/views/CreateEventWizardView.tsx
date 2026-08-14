@@ -7,7 +7,7 @@ import { Step2RoundConfig } from "@/components/domain/event-wizard/Step2RoundCon
 import { Step3TrackConfig } from "@/components/domain/event-wizard/Step3TrackConfig";
 import { Step4TemplateCriteriaEditor } from "@/components/domain/event-wizard/Step4TemplateCriteriaEditor";
 import { Step5StaffAssignment } from "@/components/domain/event-wizard/Step5StaffAssignment";
-import { Shield, Layers, Target, Sliders, Users, AlertCircle, ArrowLeft } from "lucide-react";
+import { Shield, Layers, Target, Sliders, Users, AlertCircle, ArrowLeft, CheckCircle2, Check, Lock } from "lucide-react";
 import Link from "next/link";
 
 import { useGetTemplates } from "@/repositories/templatesRepository";
@@ -54,36 +54,72 @@ export const CreateEventWizardView: React.FC = () => {
           {steps.map((step) => {
             const isActive = wizard.currentStep === step.number;
             const isCompleted = wizard.currentStep > step.number;
+            const isPending = wizard.currentStep < step.number;
 
             return (
               <button
                 key={step.number}
                 type="button"
-                onClick={() => wizard.setCurrentStep(step.number)}
-                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-3 cursor-pointer ${
+                onClick={() => {
+                  if (isCompleted || isActive) {
+                    wizard.setCurrentStep(step.number);
+                  }
+                }}
+                disabled={isPending}
+                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-2.5 relative group ${
                   isActive
-                    ? "bg-[var(--bg-panel)] border-[var(--accent-primary)] shadow-[0_0_12px_rgba(0,217,255,0.2)] text-[var(--accent-primary)]"
+                    ? "bg-[rgba(6,182,212,0.15)] border-2 border-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.35)] text-cyan-300 scale-[1.02] z-10"
                     : isCompleted
-                    ? "bg-[var(--bg-panel)]/60 border-[var(--color-success)]/40 text-[var(--color-success)]"
-                    : "bg-[var(--bg-panel)]/30 border-[var(--border-muted)] text-[var(--text-muted)] cursor-not-allowed"
+                    ? "bg-[rgba(16,185,129,0.1)] border-[var(--color-success)] text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)] cursor-pointer"
+                    : "bg-[var(--bg-panel)]/30 border-[var(--border-muted)] text-[var(--text-muted)] opacity-50 cursor-not-allowed"
                 }`}
               >
+                {/* Status Icon / Number Badge */}
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs font-bold shrink-0 ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-all ${
                     isActive
-                      ? "bg-[var(--accent-primary)] text-[var(--bg-base)]"
+                      ? "bg-cyan-400 text-black shadow-[0_0_8px_#22d3ee] font-black"
                       : isCompleted
-                      ? "bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]"
+                      ? "bg-[var(--color-success)] text-black"
                       : "bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-muted)]"
                   }`}
                 >
-                  {step.number}
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
+                  ) : isActive ? (
+                    <span>{step.number}</span>
+                  ) : (
+                    <Lock className="w-3 h-3 text-[var(--text-muted)]" />
+                  )}
                 </div>
-                <div className="overflow-hidden">
-                  <span className="font-mono text-[10px] uppercase block tracking-widest text-[var(--text-muted)]">
-                    Bước {step.number}
+
+                <div className="overflow-hidden flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono text-[9px] uppercase tracking-widest block text-[var(--text-muted)]">
+                      Bước {step.number}
+                    </span>
+
+                    {/* Step Status Badge */}
+                    <span
+                      className={`font-mono text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                        isActive
+                          ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 animate-pulse"
+                          : isCompleted
+                          ? "bg-[var(--color-success)]/20 text-[var(--color-success)]"
+                          : "bg-gray-800 text-gray-500"
+                      }`}
+                    >
+                      {isActive ? "⚡ Đang làm" : isCompleted ? "✓ Xong" : "🔒 Chưa mở"}
+                    </span>
+                  </div>
+
+                  <span
+                    className={`font-mono font-bold text-xs truncate block mt-0.5 ${
+                      isActive ? "text-cyan-200" : isCompleted ? "text-[var(--color-success)]" : "text-[var(--text-muted)]"
+                    }`}
+                  >
+                    {step.label}
                   </span>
-                  <span className="font-mono font-bold text-xs truncate block">{step.label}</span>
                 </div>
               </button>
             );
