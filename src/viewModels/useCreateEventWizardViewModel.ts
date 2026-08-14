@@ -89,7 +89,7 @@ export function useCreateEventWizardViewModel() {
       roundNumber: 1,
       startDate: "2026-07-15",
       endDate: "2026-08-10",
-      advancementRule: "top 20",
+      advancementRule: "top:20",
     },
     {
       id: "tmp-r2",
@@ -97,7 +97,7 @@ export function useCreateEventWizardViewModel() {
       roundNumber: 2,
       startDate: "2026-08-15",
       endDate: "2026-09-20",
-      advancementRule: "minScore 7.5",
+      advancementRule: "minscore:7.5",
     },
   ]);
 
@@ -187,7 +187,7 @@ export function useCreateEventWizardViewModel() {
         roundNumber: nextNumber,
         startDate: eventData.startDate,
         endDate: eventData.endDate,
-        advancementRule: "top 10",
+        advancementRule: "top:10",
       },
     ]);
   };

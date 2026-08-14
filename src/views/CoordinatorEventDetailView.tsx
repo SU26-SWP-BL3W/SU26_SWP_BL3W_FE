@@ -7,7 +7,9 @@ import { useEventDetail, useEventRounds, eventsRepository } from "@/repositories
 import { useGetTracksByEvent, tracksRepository } from "@/repositories/tracksRepository";
 import { useGetTemplates } from "@/repositories/templatesRepository";
 import { roundsRepository } from "@/repositories/roundsRepository";
-import { Shield, Settings, Layers, Target, Users, Save, Plus, Trash2, ArrowLeft, CheckCircle2, AlertCircle, Edit3, LayoutTemplate } from "lucide-react";
+import { uploadRepository } from "@/repositories/uploadRepository";
+import { staffRepository, useGetEventRoles } from "@/repositories/staffRepository";
+import { Shield, Settings, Layers, Target, Users, Save, Plus, Trash2, ArrowLeft, CheckCircle2, AlertCircle, Edit3, LayoutTemplate, Upload, Image, UserCheck, UserPlus, Send } from "lucide-react";
 import Link from "next/link";
 
 export const CoordinatorEventDetailView: React.FC = () => {
@@ -18,11 +20,22 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const { data: rounds = [], refetch: refetchRounds } = useEventRounds(eventId);
   const { data: tracks = [], refetch: refetchTracks } = useGetTracksByEvent(eventId);
   const { data: templates = [] } = useGetTemplates();
+  const { data: eventRoles = [], refetch: refetchRoles } = useGetEventRoles(eventId);
 
   const [activeTab, setActiveTab] = useState<"general" | "rounds" | "tracks" | "staff">("general");
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
-
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // Staff State
+  const [judgeEmail, setJudgeEmail] = useState("");
+  const [judgeTrackId, setJudgeTrackId] = useState("");
+  const [mentorEmail, setMentorEmail] = useState("");
+  const [mentorTrackId, setMentorTrackId] = useState("");
+  const [judgeMessage, setJudgeMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [mentorMessage, setMentorMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [isSubmittingJudge, setIsSubmittingJudge] = useState(false);
+  const [isSubmittingMentor, setIsSubmittingMentor] = useState(false);
 
   // Form State General
   const [eventName, setEventName] = useState("");
@@ -36,6 +49,24 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const [registrationEndDate, setRegistrationEndDate] = useState("");
   const [photoEventUrl, setPhotoEventUrl] = useState("");
   const [status, setStatus] = useState<boolean>(true);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const res = await uploadRepository.uploadFile(file);
+      const url = res.data?.fileUrl || (res.data as any)?.url;
+      if (url) {
+        setPhotoEventUrl(url);
+      }
+    } catch {
+      alert("Tải ảnh lên thất bại, vui lòng thử lại.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   // Sync Form when event data arrives
   React.useEffect(() => {
@@ -57,8 +88,10 @@ export const CoordinatorEventDetailView: React.FC = () => {
 
   // Round Creation State
   const [newRoundName, setNewRoundName] = useState("");
-  const [newRoundNumber, setNewRoundNumber] = useState<number>(1);
-  const [newAdvancementRule, setNewAdvancementRule] = useState("top 10");
+  const [newRuleType, setNewRuleType] = useState<"top" | "percent" | "minscore">("top");
+  const [newRuleValue, setNewRuleValue] = useState<number>(10);
+
+  const newRoundNumber = (rounds?.length || 0) + 1;
 
   // Track Creation State
   const [newTrackName, setNewTrackName] = useState("");
@@ -100,6 +133,9 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const handleCreateRound = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoundName.trim()) return;
+
+    const formattedAdvancementRule = `${newRuleType}:${newRuleValue}`;
+
     try {
       const nowIso = new Date().toISOString();
       const nextWeekIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -109,12 +145,13 @@ export const CoordinatorEventDetailView: React.FC = () => {
         roundNumber: newRoundNumber,
         startDate: nowIso,
         endDate: nextWeekIso,
-        advancementRule: newAdvancementRule,
+        advancementRule: formattedAdvancementRule,
       });
       setNewRoundName("");
       await refetchRounds();
-    } catch {
-      alert("Khởi tạo Vòng thi thất bại.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Khởi tạo Vòng thi thất bại.";
+      alert(`Khởi tạo Vòng thi thất bại: ${msg}`);
     }
   };
 
@@ -165,6 +202,106 @@ export const CoordinatorEventDetailView: React.FC = () => {
       alert("Gán Mẫu tiêu chí thành công!");
     } catch {
       alert("Gán Mẫu tiêu chí thất bại.");
+    }
+  };
+
+  const handleInviteJudge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!judgeEmail.trim()) return;
+
+    const existingConflict = eventRoles.find((r: any) => {
+      const emailMatch = (r.user?.email || r.User?.Email || r.email || "").toLowerCase() === judgeEmail.trim().toLowerCase();
+      const trackMatch = (r.trackId || r.TrackId || "") === judgeTrackId;
+      const isMentor = (r.roleName || r.RoleName) === "Mentor";
+      return emailMatch && trackMatch && isMentor;
+    });
+
+    if (existingConflict) {
+      setJudgeMessage({
+        text: "Giảng viên này đã là Cố vấn cho Hạng mục này. Một nhân sự không thể vừa làm Cố vấn vừa làm Giám khảo cùng một Hạng mục.",
+        isError: true,
+      });
+      return;
+    }
+
+    setIsSubmittingJudge(true);
+    setJudgeMessage(null);
+
+    const res = await staffRepository.inviteJudge({
+      eventId,
+      email: judgeEmail.trim(),
+      trackId: judgeTrackId || undefined,
+    });
+
+    setIsSubmittingJudge(false);
+
+    if (res.success) {
+      setJudgeMessage({
+        text: res.message || `Đã gửi email mời Giám khảo (${judgeEmail}) thành công!`,
+        isError: false,
+      });
+      setJudgeEmail("");
+      await refetchRoles();
+    } else {
+      setJudgeMessage({
+        text: res.message || "Gửi lời mời thất bại, vui lòng thử lại.",
+        isError: true,
+      });
+    }
+  };
+
+  const handleInviteMentor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mentorEmail.trim()) return;
+
+    const existingConflict = eventRoles.find((r: any) => {
+      const emailMatch = (r.user?.email || r.User?.Email || r.email || "").toLowerCase() === mentorEmail.trim().toLowerCase();
+      const trackMatch = (r.trackId || r.TrackId || "") === mentorTrackId;
+      const isJudge = (r.roleName || r.RoleName) === "Judge";
+      return emailMatch && trackMatch && isJudge;
+    });
+
+    if (existingConflict) {
+      setMentorMessage({
+        text: "Giảng viên này đã là Giám khảo cho Hạng mục này. Một nhân sự không thể vừa làm Cố vấn vừa làm Giám khảo cùng một Hạng mục.",
+        isError: true,
+      });
+      return;
+    }
+
+    setIsSubmittingMentor(true);
+    setMentorMessage(null);
+
+    const res = await staffRepository.inviteMentor({
+      eventId,
+      email: mentorEmail.trim(),
+      trackId: mentorTrackId || undefined,
+    });
+
+    setIsSubmittingMentor(false);
+
+    if (res.success) {
+      setMentorMessage({
+        text: res.message || `Đã gửi email mời Cố vấn (${mentorEmail}) thành công!`,
+        isError: false,
+      });
+      setMentorEmail("");
+      await refetchRoles();
+    } else {
+      setMentorMessage({
+        text: res.message || "Gửi lời mời thất bại, vui lòng thử lại.",
+        isError: true,
+      });
+    }
+  };
+
+  const handleRemoveRole = async (roleId: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn gỡ vai trò nhân sự này khỏi sự kiện?`)) return;
+    try {
+      await staffRepository.removeEventRole(roleId);
+      await refetchRoles();
+    } catch {
+      alert("Gỡ vai trò thất bại.");
     }
   };
 
@@ -254,6 +391,18 @@ export const CoordinatorEventDetailView: React.FC = () => {
             <Target className="w-4 h-4" />
             Tab 3: Hạng Mục ({(tracks ?? []).length})
           </button>
+
+          <button
+            onClick={() => setActiveTab("staff")}
+            className={`px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center gap-2 border-b-2 ${
+              activeTab === "staff"
+                ? "border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] bg-[var(--accent-coordinator)]/10"
+                : "border-transparent text-[var(--text-muted)] hover:text-white"
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Tab 4: Phân Công Nhân Sự ({eventRoles.length})
+          </button>
         </div>
 
         {/* Tab 1: General Info */}
@@ -309,9 +458,46 @@ export const CoordinatorEventDetailView: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2 space-y-1">
-                    <label className="text-xs font-medium text-[var(--text-muted)]">Đường dẫn ảnh đại diện sự kiện (Photo URL)</label>
-                    <Input type="text" value={photoEventUrl} onChange={(e) => setPhotoEventUrl(e.target.value)} placeholder="https://..." />
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Ảnh đại diện sự kiện</label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                      {photoEventUrl ? (
+                        <div className="relative w-24 h-24 bg-black/40 border border-[var(--border-muted)] overflow-hidden shrink-0">
+                          <img src={photoEventUrl} alt="Preview Event" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 bg-[var(--bg-base)] border border-dashed border-[var(--border-muted)] flex flex-col items-center justify-center shrink-0 text-[var(--text-muted)]">
+                          <Image className="w-6 h-6 opacity-40 mb-1" />
+                          <span className="text-[10px] font-mono">Chưa có ảnh</span>
+                        </div>
+                      )}
+
+                      <div className="space-y-2 flex-1 w-full">
+                        <div className="flex items-center gap-3">
+                          <label className="cursor-pointer px-4 py-2 bg-[var(--accent-coordinator)] text-black font-mono text-xs font-bold uppercase hud-clipped inline-flex items-center gap-2 hover:opacity-90 transition-all">
+                            <Upload className="w-4 h-4" />
+                            <span>{isUploadingPhoto ? "Đang tải ảnh..." : "Tải ảnh từ máy tính"}</span>
+                            <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={isUploadingPhoto} className="hidden" />
+                          </label>
+                          {photoEventUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setPhotoEventUrl("")}
+                              className="text-xs font-mono text-[var(--color-danger)] hover:underline"
+                            >
+                              Xóa ảnh
+                            </button>
+                          )}
+                        </div>
+                        <Input
+                          type="text"
+                          value={photoEventUrl}
+                          onChange={(e) => setPhotoEventUrl(e.target.value)}
+                          placeholder="Hoặc dán URL ảnh tại đây (https://...)"
+                          className="text-xs font-mono"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -382,13 +568,59 @@ export const CoordinatorEventDetailView: React.FC = () => {
                 Thêm Vòng Thi Mới Vào Sự Kiện
               </h3>
 
-              <form onSubmit={handleCreateRound} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Input type="text" value={newRoundName} onChange={(e) => setNewRoundName(e.target.value)} placeholder="Tên vòng (e.g. Vòng sơ loại)" required />
-                <Input type="number" value={newRoundNumber} onChange={(e) => setNewRoundNumber(Number(e.target.value))} placeholder="Số thứ tự vòng" />
-                <Input type="text" value={newAdvancementRule} onChange={(e) => setNewAdvancementRule(e.target.value)} placeholder="Quy tắc qua vòng (top 10)" />
-                <Button type="submit" variant="primary" accent="coordinator" className="text-xs font-mono">
-                  + KÍCH HOẠT VÒNG
-                </Button>
+              <form onSubmit={handleCreateRound} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  {/* Cột 1: Tên vòng thi */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Tên Vòng Thi *</label>
+                    <Input
+                      type="text"
+                      value={newRoundName}
+                      onChange={(e) => setNewRoundName(e.target.value)}
+                      placeholder="Ví dụ: Vòng Sơ Loại, Vòng Bán Kết"
+                      required
+                    />
+                  </div>
+
+                  {/* Cột 2: Thứ tự vòng (Tự Động) */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Thứ Tự (Tự Động)</label>
+                    <div className="px-3 py-2 bg-[var(--bg-base)] border border-[var(--border-muted)] font-mono text-xs text-[var(--accent-coordinator)] font-bold hud-clipped flex items-center justify-between">
+                      <span>VÒNG THI SỐ {newRoundNumber}</span>
+                    </div>
+                  </div>
+
+                  {/* Cột 3 & 4: Điều kiện thăng vòng */}
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-medium text-[var(--text-muted)]">Điều Kiện Thăng Vòng (`AdvancementRule`)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        value={newRuleType}
+                        onChange={(e) => setNewRuleType(e.target.value as any)}
+                        className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+                      >
+                        <option value="top">Top N đội cao điểm nhất (top:N)</option>
+                        <option value="percent">Top N% số đội (percent:P)</option>
+                        <option value="minscore">Điểm tối thiểu N (minscore:X)</option>
+                      </select>
+                      <Input
+                        type="number"
+                        step={newRuleType === "minscore" ? "0.1" : "1"}
+                        min="1"
+                        value={newRuleValue}
+                        onChange={(e) => setNewRuleValue(Number(e.target.value))}
+                        placeholder={newRuleType === "top" ? "Số đội (VD: 10)" : newRuleType === "percent" ? "Tỷ lệ % (VD: 50)" : "Điểm (VD: 7.5)"}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2 border-t border-[var(--border-muted)]">
+                  <Button type="submit" variant="primary" accent="coordinator" className="text-xs font-mono">
+                    + KÍCH HOẠT VÒNG THI SỐ {newRoundNumber}
+                  </Button>
+                </div>
               </form>
             </Card>
 
@@ -537,6 +769,179 @@ export const CoordinatorEventDetailView: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Tab 4: Event Staff Invitations */}
+        {activeTab === "staff" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card Form 1: Invite Judge */}
+              <Card className="p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-[var(--border-muted)] pb-3">
+                  <div className="w-9 h-9 bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/30 flex items-center justify-center">
+                    <UserCheck className="w-4 h-4 text-[var(--accent-judge)]" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-base text-[var(--text-primary)] uppercase">Mời Giám Khảo (Judge)</h3>
+                    <p className="text-xs text-[var(--text-muted)]">Gửi email mời Giám khảo chấm thi sự kiện này.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleInviteJudge} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-mono text-[var(--text-muted)] uppercase mb-1">Email Giám Khảo *</label>
+                    <Input
+                      type="email"
+                      required
+                      value={judgeEmail}
+                      onChange={(e) => setJudgeEmail(e.target.value)}
+                      placeholder="judge.ai@fpt.edu.vn"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-[var(--text-muted)] uppercase mb-1">Hạng Mục Phụ Trách (Track)</label>
+                    <select
+                      value={judgeTrackId}
+                      onChange={(e) => setJudgeTrackId(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs"
+                    >
+                      <option value="">Toàn sự kiện (Chấm tất cả Hạng mục)</option>
+                      {(tracks ?? []).map((t: any) => (
+                        <option key={t.id || t.Id} value={t.id || t.Id}>
+                          {t.trackName || t.TrackName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {judgeMessage && (
+                    <div className={`p-3 font-mono text-xs border flex items-center gap-2 ${judgeMessage.isError ? "bg-[var(--color-danger)]/10 border-[var(--color-danger)]/30 text-[var(--color-danger)]" : "bg-[var(--accent-judge)]/10 border-[var(--accent-judge)]/30 text-[var(--accent-judge)]"}`}>
+                      {judgeMessage.isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                      <span>{judgeMessage.text}</span>
+                    </div>
+                  )}
+
+                  <Button type="submit" disabled={isSubmittingJudge} variant="primary" accent="judge" className="w-full font-mono text-xs flex items-center justify-center gap-2">
+                    <Send className="w-4 h-4" /> {isSubmittingJudge ? "ĐANG GỬI..." : "GỬI LỜI MỜI GIÁM KHẢO"}
+                  </Button>
+                </form>
+              </Card>
+
+              {/* Card Form 2: Invite Mentor */}
+              <Card className="p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-[var(--border-muted)] pb-3">
+                  <div className="w-9 h-9 bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 flex items-center justify-center">
+                    <UserPlus className="w-4 h-4 text-[#2dd4bf]" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-base text-[var(--text-primary)] uppercase">Mời Cố Vấn (Mentor)</h3>
+                    <p className="text-xs text-[var(--text-muted)]">Gửi email mời Cố vấn hỗ trợ các Đội thi.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleInviteMentor} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-mono text-[var(--text-muted)] uppercase mb-1">Email Cố Vấn *</label>
+                    <Input
+                      type="email"
+                      required
+                      value={mentorEmail}
+                      onChange={(e) => setMentorEmail(e.target.value)}
+                      placeholder="mentor.tech@fpt.edu.vn"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-[var(--text-muted)] uppercase mb-1">Hạng Mục Phụ Trách (Track)</label>
+                    <select
+                      value={mentorTrackId}
+                      onChange={(e) => setMentorTrackId(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs"
+                    >
+                      <option value="">Toàn sự kiện (Cố vấn tất cả Hạng mục)</option>
+                      {(tracks ?? []).map((t: any) => (
+                        <option key={t.id || t.Id} value={t.id || t.Id}>
+                          {t.trackName || t.TrackName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {mentorMessage && (
+                    <div className={`p-3 font-mono text-xs border flex items-center gap-2 ${mentorMessage.isError ? "bg-[var(--color-danger)]/10 border-[var(--color-danger)]/30 text-[var(--color-danger)]" : "bg-[#2dd4bf]/10 border-[#2dd4bf]/30 text-[#2dd4bf]"}`}>
+                      {mentorMessage.isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                      <span>{mentorMessage.text}</span>
+                    </div>
+                  )}
+
+                  <Button type="submit" disabled={isSubmittingMentor} variant="secondary" className="w-full font-mono text-xs flex items-center justify-center gap-2 border-[#2dd4bf]/50 text-[#2dd4bf] hover:bg-[#2dd4bf]/10">
+                    <Send className="w-4 h-4" /> {isSubmittingMentor ? "ĐANG GỬI..." : "GỬI LỜI MỜI CỐ VẤN"}
+                  </Button>
+                </form>
+              </Card>
+            </div>
+
+            {/* List of Assigned Staff for this Event */}
+            <Card className="p-6 space-y-4">
+              <h3 className="font-display font-bold text-base text-[var(--text-primary)] uppercase flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[var(--accent-coordinator)]" />
+                Danh Sách Nhân Sự Đã Phân Công Sự Kiện Này ({eventRoles.length})
+              </h3>
+
+              {eventRoles.length === 0 ? (
+                <div className="p-6 text-center text-xs font-mono text-[var(--text-muted)]">
+                  Chưa có nhân sự Giám khảo / Cố vấn nào được gán cho sự kiện này.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-[var(--border-muted)] bg-[var(--bg-input)] text-[var(--text-muted)] uppercase text-[10px]">
+                        <th className="p-3">Họ &amp; Tên / Email</th>
+                        <th className="p-3">Vai Trò</th>
+                        <th className="p-3">Hạng Mục (Track)</th>
+                        <th className="p-3 text-right">Thao Tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-muted)]">
+                      {eventRoles.map((er: any, idx: number) => {
+                        const roleId = er.id || er.Id || er.eventRoleId || er.EventRoleId || `er-${idx}`;
+                        const email = er.user?.email || er.User?.Email || er.email || "staff@fpt.edu.vn";
+                        const fullName = er.user?.fullName || er.User?.FullName || er.fullName || email.split("@")[0];
+                        const roleName = er.roleName || er.RoleName || "Staff";
+                        const trackName = er.track?.trackName || er.Track?.TrackName || "Toàn bộ sự kiện";
+
+                        return (
+                          <tr key={roleId} className="hover:bg-[var(--bg-panel)] transition-colors">
+                            <td className="p-3">
+                              <div className="font-bold text-[var(--text-primary)]">{fullName}</div>
+                              <div className="text-[10px] text-[var(--text-muted)]">{email}</div>
+                            </td>
+                            <td className="p-3">
+                              <Badge tone={roleName === "Judge" ? "warning" : "info"}>
+                                {roleName === "Judge" ? "Giám khảo (Judge)" : "Cố vấn (Mentor)"}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-[var(--text-muted)]">{trackName}</td>
+                            <td className="p-3 text-right">
+                              <Button
+                                variant="ghost"
+                                onClick={() => handleRemoveRole(roleId)}
+                                className="text-[11px] font-mono text-[var(--color-danger)] hover:bg-red-500/10"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Gỡ vai trò
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
           </div>
         )}
 

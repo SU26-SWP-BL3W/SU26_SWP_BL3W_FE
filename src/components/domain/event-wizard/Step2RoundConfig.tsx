@@ -28,7 +28,7 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
         <div>
           <h3 className="font-display font-bold text-lg text-[var(--text-primary)] tracking-wider flex items-center gap-2">
             <Layers className="w-5 h-5 text-[var(--accent-coordinator)]" />
-            Bước 2: Cấu Hình Vòng Thi & Mốc Thời Gian
+            Bước 2: Cấu Hình Vòng Thi &amp; Mốc Thời Gian
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
             Thiết lập danh sách các vòng thi, mốc nộp bài, thời gian chấm điểm, phúc khảo và quy tắc chuyển vòng.
@@ -41,7 +41,7 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
       </div>
 
       <div className="space-y-6">
-        {rounds.map((round, index) => (
+        {rounds.map((round) => (
           <div
             key={round.id}
             className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hover:border-[var(--accent-coordinator)]/50 transition-all hud-clipped space-y-4"
@@ -74,40 +74,41 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
                   type="text"
                   value={round.roundName}
                   onChange={(e) => onUpdateRound(round.id, "roundName", e.target.value)}
-                  placeholder="Ví dụ: Vòng Sơ Loại / Vòng Chung Kết"
+                  placeholder="Ví dụ: Vòng Sơ Loại / Vòng Bán Kết"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--text-muted)]">Quy tắc thăng vòng *</label>
+                <label className="text-xs font-medium text-[var(--text-muted)]">Quy tắc thăng vòng * (`AdvancementRule`)</label>
                 <div className="flex gap-2">
                   <select
                     value={
-                      round.advancementRule.startsWith("top")
-                        ? "top"
-                        : round.advancementRule.startsWith("percent")
+                      round.advancementRule.startsWith("percent")
                         ? "percent"
-                        : "minScore"
+                        : round.advancementRule.toLowerCase().startsWith("minscore")
+                        ? "minscore"
+                        : "top"
                     }
                     onChange={(e) => {
                       const prefix = e.target.value;
-                      onUpdateRound(round.id, "advancementRule", `${prefix} 10`);
+                      const val = round.advancementRule.split(/[:\s]/)[1] || "10";
+                      onUpdateRound(round.id, "advancementRule", `${prefix}:${val}`);
                     }}
                     className="px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
                   >
-                    <option value="top">Top N đội thi</option>
-                    <option value="percent">% Số lượng đội</option>
-                    <option value="minScore">Điểm tối thiểu</option>
+                    <option value="top">Top N đội thi (top:N)</option>
+                    <option value="percent">Top N% số đội (percent:P)</option>
+                    <option value="minscore">Điểm tối thiểu N (minscore:X)</option>
                   </select>
                   <Input
                     type="text"
                     value={round.advancementRule}
                     onChange={(e) => onUpdateRound(round.id, "advancementRule", e.target.value)}
-                    placeholder="e.g. top 10"
-                    className="flex-1"
+                    placeholder="e.g. top:10, percent:50"
+                    className="flex-1 font-mono text-xs"
                   />
                 </div>
-                <p className="text-[11px] text-[var(--text-muted)] mt-1">Gợi ý: "top 10" (Lấy 10 đội dẫn đầu) hoặc "percent 50" (Lấy 50% đội)</p>
+                <p className="text-[11px] text-[var(--text-muted)] mt-1">Cú pháp Backend: "top:10" (Top 10 đội), "percent:50" (Top 50%), "minscore:7.5" (Điểm ≥ 7.5)</p>
               </div>
             </div>
 
