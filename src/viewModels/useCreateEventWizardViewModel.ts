@@ -150,6 +150,20 @@ export function useCreateEventWizardViewModel() {
     },
   ]);
 
+  const [criteriasByTrack, setCriteriasByTrack] = useState<Record<string, TemplateCriteriaFormState[]>>({});
+
+  const setCriteriasForTrack = (trackId: string, list: TemplateCriteriaFormState[]) => {
+    setCriteriasByTrack((prev) => ({ ...prev, [trackId]: list }));
+  };
+
+  const applyCriteriasToAllTracks = (list: TemplateCriteriaFormState[]) => {
+    const nextMap: Record<string, TemplateCriteriaFormState[]> = {};
+    tracks.forEach((t) => {
+      nextMap[t.id] = list;
+    });
+    setCriteriasByTrack(nextMap);
+  };
+
   // Step 5 State: Staff Assignments (Judges / Mentors)
   const [staffInvites, setStaffInvites] = useState<StaffInviteFormState[]>([
     {
@@ -423,51 +437,85 @@ export function useCreateEventWizardViewModel() {
         setIsSubmitting(false);
       }
     } else if (currentStep === 4) {
-      if (!isValidWeight100) {
-        setErrorMessage(`Tổng trọng số tiêu chí phải đạt ĐÚNG 100%! Hiện tại là ${totalWeight}%.`);
-        return;
+      const createdTrackList: any[] = (window as any).__createdTrackList__ || [];
+      
+      // Validate 100% weight for each configured track
+      for (const item of createdTrackList) {
+        const trackCriterias = criteriasByTrack[item.clientTrackId] || criterias;
+        const trackWeight = trackCriterias.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
+        if (Math.abs(trackWeight - 100) > 0.01) {
+          const trackObj = tracks.find((t) => t.id === item.clientTrackId);
+          setErrorMessage(`Tổng trọng số tiêu chí cho Hạng mục "${trackObj?.trackName || 'này'}" phải đạt ĐÚNG 100%! (Hiện tại: ${trackWeight}%).`);
+          return;
+        }
       }
 
       setIsSubmitting(true);
       try {
-        const resTpl = await templatesRepository.createTemplate({
-          templateName: templateName || "Mẫu Tiêu Chí Chuẩn SEAL 2026",
-          description: "Mẫu tiêu chí tổng hợp 100% trọng số",
-        });
-        const templateId = (resTpl.data as any)?.id || (resTpl.data as any)?.Id || resTpl.data?.TemplateId;
-        if (templateId) {
-          for (const crit of criterias) {
-            let targetCriteriaId = crit.criteriaId;
+        const allTemplatesRes = await templatesRepository.getAllTemplates();
+        const availableTemplates = allTemplatesRes?.data || [];
 
-            // If criteriaId is missing or a client dummy ID (crit-1, crit-timestamp, etc.), create a real Criteria in DB first!
-            if (!targetCriteriaId || targetCriteriaId.startsWith("crit-") || targetCriteriaId.length < 20) {
-              const resCrit = await templatesRepository.createCriteria({
-                criterionName: crit.criterionName,
-                description: crit.description || "",
-                maxScore: crit.maxScore || 10,
-              });
-              const createdCritObj: any = resCrit?.data || resCrit;
-              targetCriteriaId = createdCritObj?.id || createdCritObj?.Id || createdCritObj?.criteriaId || createdCritObj?.CriteriaId;
+        for (const item of createdTrackList) {
+          const trackObj = tracks.find((t) => t.id === item.clientTrackId);
+          const trackCriterias = criteriasByTrack[item.clientTrackId] || criterias;
+          const inheritedTemplate = availableTemplates.find(
+            (t: any) => (t.id || t.Id || t.templateId || t.TemplateId) === item.templateId
+          );
+
+          // Check if user edited criteria from inherited template
+          const hasEdited = !inheritedTemplate || (criteriasByTrack[item.clientTrackId] && criteriasByTrack[item.clientTrackId].length > 0);
+
+          if (inheritedTemplate && !hasEdited) {
+            // Branch 1: Unmodified existing template -> Assign directly, no new template created
+            if (item.realTrackId) {
+              await tracksRepository.assignTemplateToTrack(item.realTrackId, item.templateId);
             }
+          } else {
+            // Branch 2 & 3: Modified inherited template or custom -> Clone/Create new template
+            const newTplName = inheritedTemplate
+              ? `${inheritedTemplate.templateName || inheritedTemplate.TemplateName} - ${eventData.eventName}`
+              : `Tiêu chí - ${trackObj?.trackName || 'Hạng mục'}`;
 
-            if (targetCriteriaId) {
-              await templatesRepository.addCriteriaToTemplate({
-                templateId,
-                criteriaId: targetCriteriaId,
-                weight: crit.weight,
-                maxScore: crit.maxScore,
-              });
-            }
-          }
+            const resTpl = await templatesRepository.createTemplate({
+              templateName: newTplName,
+              description: inheritedTemplate
+                ? `Mẫu tiêu chí kế thừa từ "${inheritedTemplate.templateName || inheritedTemplate.TemplateName}"`
+                : `Mẫu tiêu chí riêng cho hạng mục ${trackObj?.trackName}`,
+            });
 
-          // Assign newly created template to tracks that chose __custom__
-          const createdTrackList: any[] = (window as any).__createdTrackList__ || [];
-          for (const item of createdTrackList) {
-            if (item.templateId === "__custom__" && item.realTrackId) {
-              await tracksRepository.assignTemplateToTrack(item.realTrackId, templateId);
+            const newTemplateId = (resTpl.data as any)?.id || (resTpl.data as any)?.Id || resTpl.data?.TemplateId;
+
+            if (newTemplateId) {
+              for (const crit of trackCriterias) {
+                let targetCriteriaId = crit.criteriaId;
+
+                if (!targetCriteriaId || targetCriteriaId.startsWith("crit-") || targetCriteriaId.length < 20) {
+                  const resCrit = await templatesRepository.createCriteria({
+                    criterionName: crit.criterionName,
+                    description: crit.description || "",
+                    maxScore: crit.maxScore || 10,
+                  });
+                  const createdCritObj: any = resCrit?.data || resCrit;
+                  targetCriteriaId = createdCritObj?.id || createdCritObj?.Id || createdCritObj?.criteriaId || createdCritObj?.CriteriaId;
+                }
+
+                if (targetCriteriaId) {
+                  await templatesRepository.addCriteriaToTemplate({
+                    templateId: newTemplateId,
+                    criteriaId: targetCriteriaId,
+                    weight: crit.weight,
+                    maxScore: crit.maxScore,
+                  });
+                }
+              }
+
+              if (item.realTrackId) {
+                await tracksRepository.assignTemplateToTrack(item.realTrackId, newTemplateId);
+              }
             }
           }
         }
+
         setCurrentStep(5);
       } catch (err: any) {
         setErrorMessage(err?.response?.data?.message || "Lỗi khi lưu Mẫu tiêu chí đánh giá RBL!");
@@ -530,6 +578,9 @@ export function useCreateEventWizardViewModel() {
     templateName,
     setTemplateName,
     criterias,
+    criteriasByTrack,
+    setCriteriasForTrack,
+    applyCriteriasToAllTracks,
     totalWeight,
     isValidWeight100,
     staffInvites,

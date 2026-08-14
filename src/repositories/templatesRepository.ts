@@ -96,6 +96,20 @@ export const MOCK_DEFAULT_TEMPLATES: TemplateEntity[] = [
 ];
 
 export const templatesRepository = {
+  async getAllTemplates(): Promise<BaseResponse<TemplateEntity[]>> {
+    try {
+      const res = await apiClient.get<BaseResponse<TemplateEntity[]>>("/Templates");
+      return res.data;
+    } catch {
+      return {
+        data: MOCK_DEFAULT_TEMPLATES,
+        message: "Lấy danh sách mẫu tiêu chí",
+        statusCode: 200,
+        success: true,
+      };
+    }
+  },
+
   async getAllCriterias(): Promise<BaseResponse<CriteriaEntity[]>> {
     try {
       const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");

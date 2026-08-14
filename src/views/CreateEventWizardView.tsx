@@ -10,8 +10,11 @@ import { Step5StaffAssignment } from "@/components/domain/event-wizard/Step5Staf
 import { Shield, Layers, Target, Sliders, Users, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+import { useGetTemplates } from "@/repositories/templatesRepository";
+
 export const CreateEventWizardView: React.FC = () => {
   const wizard = useCreateEventWizardViewModel();
+  const { data: templates = [] } = useGetTemplates();
 
   const steps = [
     { number: 1, label: "Tạo Event", icon: Shield },
@@ -131,6 +134,11 @@ export const CreateEventWizardView: React.FC = () => {
 
           {wizard.currentStep === 4 && (
             <Step4TemplateCriteriaEditor
+              tracks={wizard.tracks}
+              templates={templates}
+              criteriasByTrack={wizard.criteriasByTrack}
+              onUpdateTrackCriterias={wizard.setCriteriasForTrack}
+              onApplyToAllTracks={wizard.applyCriteriasToAllTracks}
               templateName={wizard.templateName}
               onUpdateTemplateName={wizard.setTemplateName}
               criterias={wizard.criterias}
