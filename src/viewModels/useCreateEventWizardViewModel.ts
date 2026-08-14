@@ -15,6 +15,7 @@ export interface EventFormState {
   registrationStartDate: string;
   registrationEndDate: string;
   maxTeams: number;
+  tagline?: string;
   description: string;
 }
 
@@ -70,11 +71,12 @@ export function useCreateEventWizardViewModel() {
     eventName: "SEAL Hackathon 2026",
     season: "Mùa Hè",
     year: 2026,
-    startDate: "2026-07-15",
-    endDate: "2026-09-20",
-    registrationStartDate: "2026-06-01",
-    registrationEndDate: "2026-07-10",
+    startDate: "2026-07-15T08:00",
+    endDate: "2026-09-20T17:00",
+    registrationStartDate: "2026-06-01T08:00",
+    registrationEndDate: "2026-07-10T17:00",
     maxTeams: 50,
+    tagline: "Đấu trường công nghệ RBL quy mô sinh viên toàn quốc",
     description: "Đấu trường công nghệ dành cho sinh viên toàn quốc quy mô lớn nhất trong năm của SEAL.",
   });
 
@@ -379,6 +381,18 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Vui lòng nhập Tên sự kiện!");
         return;
       }
+      if (!eventData.registrationStartDate || !eventData.registrationEndDate) {
+        setErrorMessage("Vui lòng thiết lập đầy đủ Thời gian Mở và Đóng cổng đăng ký!");
+        return;
+      }
+      if (new Date(eventData.registrationStartDate) >= new Date(eventData.registrationEndDate)) {
+        setErrorMessage("Thời gian Mở cổng đăng ký phải diễn ra trước Thời gian Đóng cổng đăng ký!");
+        return;
+      }
+      if (!eventData.startDate || !eventData.endDate) {
+        setErrorMessage("Vui lòng thiết lập đầy đủ Thời gian Bắt đầu và Kết thúc sự kiện!");
+        return;
+      }
       if (new Date(eventData.startDate) > new Date(eventData.endDate)) {
         setErrorMessage("Ngày bắt đầu sự kiện phải diễn ra trước ngày kết thúc!");
         return;
@@ -395,10 +409,13 @@ export function useCreateEventWizardViewModel() {
         return;
       }
 
-      // Call API create event
+      // Call API create event in Draft mode (status: false)
       setIsSubmitting(true);
       try {
-        const res = await eventsRepository.createEvent(eventData);
+        const res = await eventsRepository.createEvent({
+          ...eventData,
+          status: false,
+        });
         setIsSubmitting(false);
         const createdObj = res?.data || res;
         const realEventId = createdObj?.id || createdObj?.Id || createdObj?.eventId || createdObj?.EventId;
