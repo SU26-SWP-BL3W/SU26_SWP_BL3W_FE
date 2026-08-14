@@ -7,6 +7,9 @@ import { staffRepository } from "@/repositories/staffRepository";
 import { ShieldAlert, Plus, Users, School, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
+import { useEvents } from "@/repositories/eventsRepository";
+import { usersRepository } from "@/repositories/usersRepository";
+
 function HudLabel({ children }: { children: React.ReactNode }) {
   return (
     <span className="font-mono text-[10px] tracking-[0.2em] text-[var(--color-danger)] uppercase">
@@ -27,7 +30,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export const AdminDashboardView: React.FC = () => {
-  const [selectedEvent, setSelectedEvent] = useState<MockEvent | null>(null);
+  const { data: rawEvents = [] } = useEvents();
+  const realEvents = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data ?? [];
+
+  const displayEvents = realEvents.length > 0 ? realEvents : MOCK_EVENTS;
+
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [ecEmail, setEcEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignSuccessMessage, setAssignSuccessMessage] = useState<string | null>(null);
@@ -43,15 +51,21 @@ export const AdminDashboardView: React.FC = () => {
     if (!ecEmail.trim() || !selectedEvent) return;
 
     setIsSubmitting(true);
+    const eventId = selectedEvent.id || selectedEvent.Id || selectedEvent.eventId || selectedEvent.EventId || "";
+    const eventName = selectedEvent.eventName || selectedEvent.EventName || "Sự kiện";
+
+    const foundUser = await usersRepository.findUserByEmail(ecEmail.trim());
+    const realUserId = foundUser?.id || (foundUser as any)?.Id || (foundUser as any)?.userId || (foundUser as any)?.UserId || "usr-ec-01";
+
     const res = await staffRepository.assignRoleDirectly({
-      userId: `usr-ec-${Date.now()}`,
-      eventId: selectedEvent.id,
+      userId: realUserId,
+      eventId: eventId,
       roleName: "EventCoordinator",
     });
     setIsSubmitting(false);
 
-    if (res.success) {
-      setAssignSuccessMessage(`Đã phân công ${ecEmail} làm Event Coordinator cho sự kiện "${selectedEvent.eventName}" thành công!`);
+    if (res && res.success !== false) {
+      setAssignSuccessMessage(`Đã phân công ${ecEmail} làm Event Coordinator cho sự kiện "${eventName}" thành công!`);
       setTimeout(() => {
         setSelectedEvent(null);
         setAssignSuccessMessage(null);
@@ -89,12 +103,12 @@ export const AdminDashboardView: React.FC = () => {
             </span>
             <div className="flex items-baseline justify-between">
               <span className="font-mono font-bold text-2xl text-[var(--color-danger)]">
-                {MOCK_EVENTS.length}
+                {displayEvents.length}
               </span>
               <Shield className="w-5 h-5 text-[var(--color-danger)] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--color-success)] block">
-              ● {MOCK_EVENTS.length} Sự kiện active trên hệ thống
+              ● {displayEvents.length} Sự kiện active trên hệ thống
             </span>
           </Card>
 
@@ -146,7 +160,7 @@ export const AdminDashboardView: React.FC = () => {
 
         {/* All Events Admin Table */}
         <Card className="p-6 space-y-4 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)]">
-          <SectionTitle>DANH SÁCH TẤT CẢ SỰ KIỆN TRONG HỆ THỐNG ({MOCK_EVENTS.length})</SectionTitle>
+          <SectionTitle>DANH SÁCH TẤT CẢ SỰ KIỆN TRONG HỆ THỐNG ({displayEvents.length})</SectionTitle>
 
           <div className="overflow-x-auto">
             <Table>
@@ -161,41 +175,50 @@ export const AdminDashboardView: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {MOCK_EVENTS.map((ev, index) => (
-                  <tr key={ev.id}>
-                    <td>
-                      <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{ev.eventName}</div>
-                      <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{ev.id}</div>
-                    </td>
-                    <td>
-                      <Badge tone="team">{ev.season} {ev.year}</Badge>
-                    </td>
-                    <td>
-                      <span className="font-mono text-xs text-[var(--text-primary)]">
-                        {ev.rounds.length} Vòng Thi
-                      </span>
-                    </td>
-                    <td>
-                      <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold">
-                        EC. {index % 2 === 0 ? "Phúc HNV (ec.coordinator@seal.edu.vn)" : "Tuấn NVA (ec.tuan@seal.edu.vn)"}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
-                        ACTIVE
-                      </span>
-                    </td>
-                    <td className="text-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleOpenAssignModal(ev)}
-                        className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
-                      >
-                        <UserCheck className="w-3.5 h-3.5" /> Gán EC
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {displayEvents.map((ev: any, index: number) => {
+                  const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-admin-${index}`;
+                  const name = ev.eventName || ev.EventName || "Sự kiện Hackathon";
+                  const season = ev.season || ev.Season || "Mùa Hè";
+                  const year = ev.year || ev.Year || 2026;
+                  const roundsCount = ev.rounds?.length ?? ev.Rounds?.length ?? 1;
+                  const ecInfo = ev.coordinatorEmail || ev.CoordinatorEmail || (index % 2 === 0 ? "ec.coordinator@seal.edu.vn" : "ec.tuan@seal.edu.vn");
+
+                  return (
+                    <tr key={id}>
+                      <td>
+                        <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{name}</div>
+                        <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{id}</div>
+                      </td>
+                      <td>
+                        <Badge tone="team">{season} {year}</Badge>
+                      </td>
+                      <td>
+                        <span className="font-mono text-xs text-[var(--text-primary)]">
+                          {roundsCount} Vòng Thi
+                        </span>
+                      </td>
+                      <td>
+                        <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold">
+                          EC. {ecInfo}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
+                          ACTIVE
+                        </span>
+                      </td>
+                      <td className="text-center">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleOpenAssignModal(ev)}
+                          className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" /> Gán EC
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </div>
