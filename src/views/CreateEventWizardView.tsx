@@ -54,24 +54,18 @@ export const CreateEventWizardView: React.FC = () => {
           {steps.map((step) => {
             const isActive = wizard.currentStep === step.number;
             const isCompleted = wizard.currentStep > step.number;
-            const isPending = wizard.currentStep < step.number;
 
             return (
               <button
                 key={step.number}
                 type="button"
-                onClick={() => {
-                  if (isCompleted || isActive) {
-                    wizard.setCurrentStep(step.number);
-                  }
-                }}
-                disabled={isPending}
-                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-2.5 relative group ${
+                onClick={() => wizard.setCurrentStep(step.number)}
+                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-2.5 relative group cursor-pointer ${
                   isActive
                     ? "bg-[rgba(6,182,212,0.15)] border-2 border-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.35)] text-cyan-300 scale-[1.02] z-10"
                     : isCompleted
-                    ? "bg-[rgba(16,185,129,0.1)] border-[var(--color-success)] text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)] cursor-pointer"
-                    : "bg-[var(--bg-panel)]/30 border-[var(--border-muted)] text-[var(--text-muted)] opacity-50 cursor-not-allowed"
+                    ? "bg-[rgba(16,185,129,0.1)] border-[var(--color-success)] text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)]"
+                    : "bg-[var(--bg-panel)]/40 border-[var(--border-muted)] text-[var(--text-muted)] hover:border-slate-500 hover:text-[var(--text-primary)]"
                 }`}
               >
                 {/* Status Icon / Number Badge */}
@@ -86,10 +80,8 @@ export const CreateEventWizardView: React.FC = () => {
                 >
                   {isCompleted ? (
                     <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
-                  ) : isActive ? (
-                    <span>{step.number}</span>
                   ) : (
-                    <Lock className="w-3 h-3 text-[var(--text-muted)]" />
+                    <span>{step.number}</span>
                   )}
                 </div>
 
@@ -106,10 +98,10 @@ export const CreateEventWizardView: React.FC = () => {
                           ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 animate-pulse"
                           : isCompleted
                           ? "bg-[var(--color-success)]/20 text-[var(--color-success)]"
-                          : "bg-gray-800 text-gray-500"
+                          : "bg-slate-800 text-slate-400"
                       }`}
                     >
-                      {isActive ? "⚡ Đang làm" : isCompleted ? "✓ Xong" : "🔒 Chưa mở"}
+                      {isActive ? "⚡ Đang làm" : isCompleted ? "✓ Xong" : "Chờ"}
                     </span>
                   </div>
 
