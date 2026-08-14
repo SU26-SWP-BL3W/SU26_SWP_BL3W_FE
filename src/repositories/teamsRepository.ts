@@ -69,7 +69,7 @@ export function useMyTeam() {
 export function useCreateTeam() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { TeamName: string; Description?: string; EventId: string }) => {
+    mutationFn: async (data: { TeamName: string; Description?: string; EventId: string; TrackId?: string }) => {
       const res = await apiClient.post<Team>("/Teams", data);
       return res.data;
     },

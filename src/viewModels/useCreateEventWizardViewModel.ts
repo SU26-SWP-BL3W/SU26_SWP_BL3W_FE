@@ -29,7 +29,7 @@ export interface RoundFormState {
 
 export interface TrackFormState {
   id: string; // temporary client ID
-  roundId: string; // references round client ID or real ID
+  eventId?: string;
   trackName: string;
   templateId: string;
   description: string;
@@ -97,14 +97,12 @@ export function useCreateEventWizardViewModel() {
   const [tracks, setTracks] = useState<TrackFormState[]>([
     {
       id: "tmp-t1",
-      roundId: "tmp-r1",
       trackName: "AI & Machine Learning",
       templateId: "tpl-default-ai",
       description: "Hạng mục phát triển mô hình & ứng dụng Trí tuệ nhân tạo",
     },
     {
       id: "tmp-t2",
-      roundId: "tmp-r1",
       trackName: "Phát triển Web & Mobile",
       templateId: "tpl-default-web",
       description: "Hạng mục xây dựng giải pháp web hoàn chỉnh",
@@ -331,7 +329,7 @@ export function useCreateEventWizardViewModel() {
       try {
         for (const trk of tracks) {
           await tracksRepository.createTrack({
-            roundId: trk.roundId || "rnd-1",
+            eventId: realEventId || "ev-1",
             trackName: trk.trackName,
             description: trk.description,
           });

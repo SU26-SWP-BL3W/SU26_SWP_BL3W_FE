@@ -228,6 +228,7 @@ export interface Event {
   teamCount?: number;
   totalPrizeVnd?: number;
   rounds?: Round[];
+  tracks?: Track[];
   success?: boolean;
   data?: any;
   message?: string | null;
@@ -260,6 +261,8 @@ export interface Track {
   id?: string;
   trackId?: string;
   TrackId?: string;
+  eventId?: string;
+  EventId?: string;
   roundId?: string;
   RoundId?: string;
   name?: string;
