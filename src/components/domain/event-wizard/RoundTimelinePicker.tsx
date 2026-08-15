@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui";
 import {
   Calendar,
@@ -17,6 +17,9 @@ import {
   Sun,
   Sunset,
   Moon,
+  Sliders,
+  Sparkles,
+  HelpCircle,
 } from "lucide-react";
 
 export interface RoundTimelineValues {
@@ -35,6 +38,16 @@ interface RoundTimelinePickerProps {
   defaultAnchorDate?: string;
 }
 
+export type TimeUnit = "hours" | "days" | "weeks" | "months" | "years";
+
+export const TIME_UNIT_LABELS: Record<TimeUnit, string> = {
+  hours: "Giờ",
+  days: "Ngày",
+  weeks: "Tuần",
+  months: "Tháng",
+  years: "Năm",
+};
+
 // Format date to YYYY-MM-DDTHH:mm
 const toDateTimeLocal = (val?: string, defaultTime = "08:00") => {
   if (!val) return "";
@@ -45,6 +58,33 @@ const toDateTimeLocal = (val?: string, defaultTime = "08:00") => {
     return `${datePart}T${timePart}`;
   }
   return `${val}T${defaultTime}`;
+};
+
+// Add duration to date based on unit while preserving time
+export const addDurationToDate = (baseStr: string, amount: number, unit: TimeUnit, defaultTime = "23:59"): string => {
+  if (!baseStr) return "";
+  const d = new Date(baseStr);
+  if (isNaN(d.getTime())) return "";
+
+  if (unit === "hours") {
+    d.setHours(d.getHours() + amount);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  if (unit === "days") {
+    d.setDate(d.getDate() + amount);
+  } else if (unit === "weeks") {
+    d.setDate(d.getDate() + amount * 7);
+  } else if (unit === "months") {
+    d.setMonth(d.getMonth() + amount);
+  } else if (unit === "years") {
+    d.setFullYear(d.getFullYear() + amount);
+  }
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const timePart = baseStr.includes("T") ? baseStr.split("T")[1]?.substring(0, 5) || defaultTime : defaultTime;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${timePart}`;
 };
 
 // Set specific time (HH:mm) on an existing date string
@@ -111,599 +151,749 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
   title = "Mốc thời gian của vòng thi",
   defaultAnchorDate,
 }) => {
+  // Mode: "duration" (default) or "precision"
+  const [activeMode, setActiveMode] = useState<"duration" | "precision">("duration");
   const [hasAppeal, setHasAppeal] = useState(Boolean(values.appealStartDate && values.appealEndDate));
+
+  // Duration State
+  const [subDuration, setSubDuration] = useState({ amount: 2, unit: "weeks" as TimeUnit });
+  const [scoreDuration, setScoreDuration] = useState({ amount: 1, unit: "weeks" as TimeUnit });
+  const [appealDuration, setAppealDuration] = useState({ amount: 3, unit: "days" as TimeUnit });
 
   // Quick Time Chips
   const TIME_CHIPS = [
     { label: "08:00", icon: Sunrise, title: "Sáng (08:00)" },
     { label: "12:00", icon: Sun, title: "Trưa (12:00)" },
     { label: "17:30", icon: Sunset, title: "Chiều (17:30)" },
-    { label: "23:59", icon: Moon, title: "Đêm (23:59)" },
+    { label: "23:59", icon: Moon, title: "Đêm chót (23:59)" },
   ];
 
-  // Smart Cascade Handlers
-  const handleStartDateChange = (val: string) => {
-    onChange("startDate", val);
-    // If endDate is empty or before start, set endDate = start + 14 days
-    if (!values.endDate || values.endDate <= val) {
-      onChange("endDate", addDaysPreserveTime(val, 14, "23:59"));
+  // Auto-initialize anchor date if empty
+  useEffect(() => {
+    if (!values.startDate) {
+      const anchor = defaultAnchorDate || toDateTimeLocal(new Date().toISOString(), "08:00");
+      onChange("startDate", anchor);
     }
-  };
+  }, [defaultAnchorDate, values.startDate]);
 
-  const handleEndDateChange = (val: string) => {
-    onChange("endDate", val);
-    // Smart Cascade: align scoringStartDate to endDate
-    if (!values.scoringStartDate || values.scoringStartDate <= val) {
-      onChange("scoringStartDate", val);
-    }
-    // If scoringEndDate is before new scoringStartDate, push scoringEndDate
-    if (!values.scoringEndDate || values.scoringEndDate <= val) {
-      onChange("scoringEndDate", addDaysPreserveTime(val, 7, "23:59"));
-    }
-  };
+  // Recalculate all dates in Duration Mode
+  const applyDurationCascade = (
+    anchorStart: string,
+    sub = subDuration,
+    score = scoreDuration,
+    appeal = appealDuration,
+    enableAppeal = hasAppeal
+  ) => {
+    if (!anchorStart) return;
 
-  const handleScoringStartDateChange = (val: string) => {
-    onChange("scoringStartDate", val);
-    if (!values.scoringEndDate || values.scoringEndDate <= val) {
-      onChange("scoringEndDate", addDaysPreserveTime(val, 7, "23:59"));
-    }
-  };
+    // 1. Submission Phase
+    const computedEndDate = addDurationToDate(anchorStart, sub.amount, sub.unit, "23:59");
+    onChange("startDate", anchorStart);
+    onChange("endDate", computedEndDate);
 
-  const handleScoringEndDateChange = (val: string) => {
-    onChange("scoringEndDate", val);
-    if (hasAppeal) {
-      if (!values.appealStartDate || values.appealStartDate <= val) {
-        onChange("appealStartDate", val);
-      }
-      if (!values.appealEndDate || values.appealEndDate <= val) {
-        onChange("appealEndDate", addDaysPreserveTime(val, 3, "23:59"));
-      }
-    }
-  };
+    // 2. Scoring Phase
+    const computedScoreStart = computedEndDate;
+    const computedScoreEnd = addDurationToDate(computedScoreStart, score.amount, score.unit, "23:59");
+    onChange("scoringStartDate", computedScoreStart);
+    onChange("scoringEndDate", computedScoreEnd);
 
-  const handleAppealStartDateChange = (val: string) => {
-    onChange("appealStartDate", val);
-    if (!values.appealEndDate || values.appealEndDate <= val) {
-      onChange("appealEndDate", addDaysPreserveTime(val, 3, "23:59"));
-    }
-  };
-
-  const handleAppealEndDateChange = (val: string) => {
-    onChange("appealEndDate", val);
-  };
-
-  // Quick Presets
-  const applyPreset = (presetType: "hackathon" | "sprint" | "capstone" | "finals") => {
-    const anchor = values.startDate || defaultAnchorDate || toDateTimeLocal(new Date().toISOString(), "08:00");
-    const sDate = toDateTimeLocal(anchor, "08:00");
-
-    if (presetType === "sprint") {
-      // 48h Sprint: Nộp 48h (2 ngày) đến 17:30, Chấm 1 ngày đến 21:00
-      const eDate = setTimeToDateStr(addDaysPreserveTime(sDate, 2), "17:30");
-      const scStart = eDate;
-      const scEnd = setTimeToDateStr(addDaysPreserveTime(scStart, 1), "21:00");
-
-      onChange("startDate", sDate);
-      onChange("endDate", eDate);
-      onChange("scoringStartDate", scStart);
-      onChange("scoringEndDate", scEnd);
-      onChange("appealStartDate", "");
-      onChange("appealEndDate", "");
-      setHasAppeal(false);
-    } else if (presetType === "capstone") {
-      // Capstone 8 Tuần: Nộp 30 ngày, Chấm 14 ngày, Phúc khảo 7 ngày
-      const eDate = setTimeToDateStr(addDaysPreserveTime(sDate, 30), "23:59");
-      const scStart = setTimeToDateStr(eDate, "08:00");
-      const scEnd = setTimeToDateStr(addDaysPreserveTime(scStart, 14), "23:59");
-      const apStart = setTimeToDateStr(scEnd, "08:00");
-      const apEnd = setTimeToDateStr(addDaysPreserveTime(apStart, 7), "23:59");
-
-      onChange("startDate", sDate);
-      onChange("endDate", eDate);
-      onChange("scoringStartDate", scStart);
-      onChange("scoringEndDate", scEnd);
-      onChange("appealStartDate", apStart);
-      onChange("appealEndDate", apEnd);
-      setHasAppeal(true);
-    } else if (presetType === "finals") {
-      // Chung kết 1 Tuần: Nộp 5 ngày đến 17:00, Chấm 2 ngày đến 20:00
-      const eDate = setTimeToDateStr(addDaysPreserveTime(sDate, 5), "17:00");
-      const scStart = setTimeToDateStr(eDate, "08:00");
-      const scEnd = setTimeToDateStr(addDaysPreserveTime(scStart, 2), "20:00");
-
-      onChange("startDate", sDate);
-      onChange("endDate", eDate);
-      onChange("scoringStartDate", scStart);
-      onChange("scoringEndDate", scEnd);
-      onChange("appealStartDate", "");
-      onChange("appealEndDate", "");
-      setHasAppeal(false);
+    // 3. Appeal Phase
+    if (enableAppeal) {
+      const computedAppealStart = computedScoreEnd;
+      const computedAppealEnd = addDurationToDate(computedAppealStart, appeal.amount, appeal.unit, "23:59");
+      onChange("appealStartDate", computedAppealStart);
+      onChange("appealEndDate", computedAppealEnd);
     } else {
-      // Hackathon 4 Tuần: Nộp 14 ngày, Chấm 7 ngày, Phúc khảo 3 ngày
-      const eDate = setTimeToDateStr(addDaysPreserveTime(sDate, 14), "23:59");
-      const scStart = setTimeToDateStr(eDate, "08:00");
-      const scEnd = setTimeToDateStr(addDaysPreserveTime(scStart, 7), "23:59");
-      const apStart = setTimeToDateStr(scEnd, "08:00");
-      const apEnd = setTimeToDateStr(addDaysPreserveTime(apStart, 3), "23:59");
-
-      onChange("startDate", sDate);
-      onChange("endDate", eDate);
-      onChange("scoringStartDate", scStart);
-      onChange("scoringEndDate", scEnd);
-      onChange("appealStartDate", apStart);
-      onChange("appealEndDate", apEnd);
-      setHasAppeal(true);
+      onChange("appealStartDate", "");
+      onChange("appealEndDate", "");
     }
   };
 
-  // Validation Warnings
-  let warningMessage: string | null = null;
-  if (values.startDate && values.endDate && values.startDate > values.endDate) {
-    warningMessage = "Ngày mở nộp bài phải diễn ra trước hạn chót nộp bài!";
-  } else if (values.endDate && values.scoringStartDate && values.scoringStartDate < values.endDate) {
-    warningMessage = "Thời gian bắt đầu chấm điểm không nên diễn ra trước hạn nộp bài!";
-  } else if (values.scoringStartDate && values.scoringEndDate && values.scoringStartDate > values.scoringEndDate) {
-    warningMessage = "Thời gian kết thúc chấm điểm phải diễn ra sau thời gian bắt đầu chấm!";
-  } else if (values.appealStartDate && values.appealEndDate && values.appealStartDate > values.appealEndDate) {
-    warningMessage = "Thời gian đóng phúc khảo phải diễn ra sau thời gian mở phúc khảo!";
-  }
+  // 1-Click Presets
+  const applyPreset = (type: "hackathon" | "sprint" | "semester" | "finals") => {
+    const anchor = values.startDate || defaultAnchorDate || toDateTimeLocal(new Date().toISOString(), "08:00");
+    if (type === "hackathon") {
+      const sub = { amount: 2, unit: "weeks" as TimeUnit };
+      const score = { amount: 1, unit: "weeks" as TimeUnit };
+      const appeal = { amount: 3, unit: "days" as TimeUnit };
+      setSubDuration(sub);
+      setScoreDuration(score);
+      setAppealDuration(appeal);
+      setHasAppeal(true);
+      applyDurationCascade(anchor, sub, score, appeal, true);
+    } else if (type === "sprint") {
+      const sub = { amount: 48, unit: "hours" as TimeUnit };
+      const score = { amount: 24, unit: "hours" as TimeUnit };
+      const appeal = { amount: 0, unit: "days" as TimeUnit };
+      setSubDuration(sub);
+      setScoreDuration(score);
+      setAppealDuration(appeal);
+      setHasAppeal(false);
+      applyDurationCascade(anchor, sub, score, appeal, false);
+    } else if (type === "semester") {
+      const sub = { amount: 4, unit: "weeks" as TimeUnit };
+      const score = { amount: 2, unit: "weeks" as TimeUnit };
+      const appeal = { amount: 1, unit: "weeks" as TimeUnit };
+      setSubDuration(sub);
+      setScoreDuration(score);
+      setAppealDuration(appeal);
+      setHasAppeal(true);
+      applyDurationCascade(anchor, sub, score, appeal, true);
+    } else if (type === "finals") {
+      const sub = { amount: 1, unit: "weeks" as TimeUnit };
+      const score = { amount: 3, unit: "days" as TimeUnit };
+      const appeal = { amount: 2, unit: "days" as TimeUnit };
+      setSubDuration(sub);
+      setScoreDuration(score);
+      setAppealDuration(appeal);
+      setHasAppeal(true);
+      applyDurationCascade(anchor, sub, score, appeal, true);
+    }
+  };
 
-  // Durations & Gantt Stats
-  const subDur = formatDetailedDuration(values.startDate, values.endDate);
-  const scoreDur = formatDetailedDuration(values.scoringStartDate || values.endDate, values.scoringEndDate);
-  const appealDur = hasAppeal ? formatDetailedDuration(values.appealStartDate, values.appealEndDate) : null;
+  // Duration metrics for Gantt bar
+  const subDays = getDaysBetween(values.startDate, values.endDate);
+  const scoreDays = getDaysBetween(values.scoringStartDate, values.scoringEndDate);
+  const appealDays = hasAppeal ? getDaysBetween(values.appealStartDate, values.appealEndDate) : 0;
+  const totalDays = Math.max(1, subDays + scoreDays + appealDays);
 
-  const subDaysCount = getDaysBetween(values.startDate, values.endDate) || 1;
-  const scoreDaysCount = getDaysBetween(values.scoringStartDate || values.endDate, values.scoringEndDate) || 1;
-  const appealDaysCount = hasAppeal ? getDaysBetween(values.appealStartDate, values.appealEndDate) : 0;
-  const totalDays = subDaysCount + scoreDaysCount + appealDaysCount;
-
-  const subPercent = totalDays > 0 ? Math.round((subDaysCount / totalDays) * 100) : 50;
-  const scorePercent = totalDays > 0 ? Math.round((scoreDaysCount / totalDays) * 100) : 30;
-  const appealPercent = totalDays > 0 && hasAppeal ? 100 - subPercent - scorePercent : 0;
+  const subPct = Math.round((subDays / totalDays) * 100);
+  const scorePct = Math.round((scoreDays / totalDays) * 100);
+  const appealPct = 100 - subPct - scorePct;
 
   return (
-    <div className="p-5 bg-[var(--bg-base)] border border-[var(--border-muted)] hud-clipped space-y-6">
-      {/* Top Header & Presets */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[var(--border-muted)] pb-4">
+    <div className="space-y-4">
+      {/* Header & Mode Switcher Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--bg-panel)] p-3 border border-[var(--border-muted)] rounded-lg">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[var(--accent-coordinator)]/10 border border-[var(--accent-coordinator)]/30 flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-[var(--accent-coordinator)]" />
-            </div>
-            <h4 className="font-mono font-bold text-xs uppercase tracking-wider text-[var(--text-primary)]">
-              {title}
-            </h4>
-          </div>
-          <p className="text-[11px] text-[var(--text-muted)] font-mono mt-1">
-            Chỉnh sửa trực tiếp Ngày, Giờ &amp; Phút tại từng mốc. Dùng phím tắt giờ nhanh hoặc nút cộng ngày để thao tác nhanh.
-          </p>
-        </div>
-
-        {/* 1-Click Quick Presets */}
-        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
-          <span className="text-[var(--text-muted)] flex items-center gap-1 mr-1">
-            <Zap className="w-3 h-3 text-amber-400" /> Mẫu:
-          </span>
-          <button
-            type="button"
-            onClick={() => applyPreset("hackathon")}
-            className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 rounded font-bold transition-all cursor-pointer"
-          >
-            🚀 Hackathon 4T
-          </button>
-          <button
-            type="button"
-            onClick={() => applyPreset("sprint")}
-            className="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 rounded font-bold transition-all cursor-pointer"
-          >
-            ⚡ Sprint 48h
-          </button>
-          <button
-            type="button"
-            onClick={() => applyPreset("capstone")}
-            className="px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded font-bold transition-all cursor-pointer"
-          >
-            🎓 Học kỳ 8T
-          </button>
-          <button
-            type="button"
-            onClick={() => applyPreset("finals")}
-            className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 rounded font-bold transition-all cursor-pointer"
-          >
-            🏆 Chung kết 1T
-          </button>
-        </div>
-      </div>
-
-      {/* 📊 Visual Timeline Gantt Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-[11px] font-mono">
-          <span className="text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" /> Tổng thời gian vòng:{" "}
-            <strong className="text-[var(--text-primary)]">~{Math.round(totalDays)} ngày</strong>
-          </span>
+          <h4 className="text-xs font-bold font-mono text-[var(--text-primary)] uppercase flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-[var(--accent-coordinator)]" />
+            {title}
+          </h4>
           <span className="text-[10px] text-[var(--text-muted)] font-mono">
-            {values.startDate ? new Date(values.startDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"} ──▶ {values.scoringEndDate ? new Date(values.scoringEndDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+            {activeMode === "duration"
+              ? "⚡ Nhập lịch bằng số ngày/tuần/tháng — Hệ thống tự tính toàn bộ mốc liên hoàn."
+              : "📅 Tinh chỉnh trực tiếp ngày giờ từng mốc chi tiết đến từng phút."}
           </span>
         </div>
 
-        <div className="h-4 w-full bg-slate-900 rounded-full overflow-hidden flex border border-[var(--border-muted)]">
-          <div
-            style={{ width: `${subPercent}%` }}
-            className="bg-amber-500 hover:bg-amber-400 transition-all flex items-center justify-center text-[9px] font-black text-black font-mono truncate px-1"
-            title={`Nộp bài: ${subDur || `${subDaysCount}d`} (${subPercent}%)`}
+        {/* Mode Switcher Tabs */}
+        <div className="flex items-center bg-[var(--bg-base)] p-1 rounded-lg border border-[var(--border-muted)] font-mono text-xs">
+          <button
+            type="button"
+            onClick={() => setActiveMode("duration")}
+            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeMode === "duration"
+                ? "bg-[var(--accent-coordinator)] text-black shadow-md"
+                : "text-[var(--text-muted)] hover:text-white"
+            }`}
           >
-            Nộp: {subDur || `${subDaysCount}d`}
-          </div>
-          <div
-            style={{ width: `${scorePercent}%` }}
-            className="bg-cyan-500 hover:bg-cyan-400 transition-all flex items-center justify-center text-[9px] font-black text-black font-mono truncate px-1"
-            title={`Chấm điểm: ${scoreDur || `${scoreDaysCount}d`} (${scorePercent}%)`}
+            <Zap className="w-3.5 h-3.5" />
+            Nhập Thời Lượng
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode("precision")}
+            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeMode === "precision"
+                ? "bg-[var(--accent-coordinator)] text-black shadow-md"
+                : "text-[var(--text-muted)] hover:text-white"
+            }`}
           >
-            Chấm: {scoreDur || `${scoreDaysCount}d`}
-          </div>
-          {hasAppeal && appealPercent > 0 && (
-            <div
-              style={{ width: `${appealPercent}%` }}
-              className="bg-purple-500 hover:bg-purple-400 transition-all flex items-center justify-center text-[9px] font-black text-black font-mono truncate px-1"
-              title={`Phúc khảo: ${appealDur || `${appealDaysCount}d`} (${appealPercent}%)`}
-            >
-              PK: {appealDur || `${appealDaysCount}d`}
-            </div>
-          )}
+            <Sliders className="w-3.5 h-3.5" />
+            Tinh Chỉnh Chi Tiết
+          </button>
         </div>
       </div>
 
-      {/* 3 Interactive Phase Cards (with Exact Date/Time & Quick Time Chips) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Phase 1: Submission */}
-        <div className="p-4 rounded-lg bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 space-y-4 relative">
-          <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
-            <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400">
-              <UploadCloud className="w-4 h-4 text-amber-400" />
-              <span>GIAI ĐOẠN 1: NỘP BÀI</span>
-            </div>
-            {subDur && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {subDur}
-              </span>
-            )}
-          </div>
+      {/* 1-Click Presets Bar */}
+      <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+        <span className="text-[var(--text-muted)] text-[10px] uppercase font-bold flex items-center gap-1">
+          <Sparkles className="w-3 h-3 text-amber-400" />
+          Mẫu Nhanh:
+        </span>
+        <button
+          type="button"
+          onClick={() => applyPreset("hackathon")}
+          className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+        >
+          🚀 Hackathon 4T
+        </button>
+        <button
+          type="button"
+          onClick={() => applyPreset("sprint")}
+          className="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+        >
+          ⚡ Sprint 48h
+        </button>
+        <button
+          type="button"
+          onClick={() => applyPreset("semester")}
+          className="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+        >
+          🎓 Học kỳ 8T
+        </button>
+        <button
+          type="button"
+          onClick={() => applyPreset("finals")}
+          className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+        >
+          🏆 Chung kết 1T
+        </button>
+      </div>
 
-          {/* Mở nộp bài */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
-              <span className="text-amber-300 font-bold">1. Mở nộp bài (Giờ &amp; Ngày) *</span>
-            </label>
-            <Input
-              type="datetime-local"
-              value={toDateTimeLocal(values.startDate, "08:00")}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              className="font-mono text-xs border-amber-500/40 bg-[var(--bg-input)] text-[var(--text-primary)]"
-            />
-            {/* Quick Time Chips for Start */}
-            <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-              <span className="text-[var(--text-muted)]">Giờ:</span>
-              {TIME_CHIPS.map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => handleStartDateChange(setTimeToDateStr(values.startDate, chip.label))}
-                  className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
-                  title={chip.title}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Center Extend Duration Quick Buttons */}
-          <div className="py-1 px-2.5 bg-black/40 border border-amber-500/20 rounded flex items-center justify-between text-[10px] font-mono">
-            <span className="text-[var(--text-muted)]">Tăng hạn nộp:</span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => handleEndDateChange(addDaysPreserveTime(values.endDate || values.startDate, 1))}
-                className="px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-200 rounded font-bold cursor-pointer"
-              >
-                +1 Ngày
-              </button>
-              <button
-                type="button"
-                onClick={() => handleEndDateChange(addDaysPreserveTime(values.endDate || values.startDate, 3))}
-                className="px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-200 rounded font-bold cursor-pointer"
-              >
-                +3 Ngày
-              </button>
-              <button
-                type="button"
-                onClick={() => handleEndDateChange(addDaysPreserveTime(values.endDate || values.startDate, 7))}
-                className="px-1.5 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-200 rounded font-bold cursor-pointer"
-              >
-                +7 Ngày
-              </button>
-            </div>
-          </div>
-
-          {/* Hạn chót nộp bài */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
-              <span className="text-amber-300 font-bold">2. Hạn chót nộp bài (Khóa Form) *</span>
-            </label>
-            <Input
-              type="datetime-local"
-              value={toDateTimeLocal(values.endDate, "23:59")}
-              onChange={(e) => handleEndDateChange(e.target.value)}
-              className="font-mono text-xs border-amber-500/40 bg-[var(--bg-input)] text-[var(--text-primary)]"
-            />
-            {/* Quick Time Chips for End */}
-            <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-              <span className="text-[var(--text-muted)]">Giờ:</span>
-              {TIME_CHIPS.map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => handleEndDateChange(setTimeToDateStr(values.endDate, chip.label))}
-                  className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
-                  title={chip.title}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Phase 2: Scoring */}
-        <div className="p-4 rounded-lg bg-gradient-to-b from-cyan-500/10 via-cyan-500/5 to-transparent border border-cyan-500/30 space-y-4 relative">
-          <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-            <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-400">
-              <FileCheck className="w-4 h-4 text-cyan-400" />
-              <span>GIAI ĐOẠN 2: CHẤM ĐIỂM</span>
-            </div>
-            {scoreDur && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-semibold flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {scoreDur}
-              </span>
-            )}
-          </div>
-
-          {/* Bắt đầu chấm */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
-              <span className="text-cyan-300 font-bold">3. Mở chấm điểm (Mở Form Giám Khảo) *</span>
-            </label>
-            <Input
-              type="datetime-local"
-              value={toDateTimeLocal(values.scoringStartDate || values.endDate, "08:00")}
-              onChange={(e) => handleScoringStartDateChange(e.target.value)}
-              className="font-mono text-xs border-cyan-500/40 bg-[var(--bg-input)] text-[var(--text-primary)]"
-            />
-            <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-              <span className="text-[var(--text-muted)]">Giờ:</span>
-              {TIME_CHIPS.map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => handleScoringStartDateChange(setTimeToDateStr(values.scoringStartDate || values.endDate, chip.label))}
-                  className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
-                  title={chip.title}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Center Extend Duration Quick Buttons */}
-          <div className="py-1 px-2.5 bg-black/40 border border-cyan-500/20 rounded flex items-center justify-between text-[10px] font-mono">
-            <span className="text-[var(--text-muted)]">Tăng thời gian chấm:</span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => handleScoringEndDateChange(addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 1))}
-                className="px-1.5 py-0.5 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-200 rounded font-bold cursor-pointer"
-              >
-                +1 Ngày
-              </button>
-              <button
-                type="button"
-                onClick={() => handleScoringEndDateChange(addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 3))}
-                className="px-1.5 py-0.5 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-200 rounded font-bold cursor-pointer"
-              >
-                +3 Ngày
-              </button>
-              <button
-                type="button"
-                onClick={() => handleScoringEndDateChange(addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 7))}
-                className="px-1.5 py-0.5 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-200 rounded font-bold cursor-pointer"
-              >
-                +7 Ngày
-              </button>
-            </div>
-          </div>
-
-          {/* Kết thúc chấm */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
-              <span className="text-cyan-300 font-bold">4. Khóa chấm điểm (Khóa Form Giám Khảo) *</span>
-            </label>
-            <Input
-              type="datetime-local"
-              value={toDateTimeLocal(values.scoringEndDate, "23:59")}
-              onChange={(e) => handleScoringEndDateChange(e.target.value)}
-              className="font-mono text-xs border-cyan-500/40 bg-[var(--bg-input)] text-[var(--text-primary)]"
-            />
-            <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-              <span className="text-[var(--text-muted)]">Giờ:</span>
-              {TIME_CHIPS.map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => handleScoringEndDateChange(setTimeToDateStr(values.scoringEndDate, chip.label))}
-                  className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
-                  title={chip.title}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Phase 3: Appeal */}
-        <div className="p-4 rounded-lg bg-gradient-to-b from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/30 space-y-4 relative">
-          <div className="flex items-center justify-between border-b border-purple-500/20 pb-2">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-purple-400">
-              <input
-                type="checkbox"
-                id={`appeal-chk-${title}`}
-                checked={hasAppeal}
-                onChange={(e) => {
-                  const chk = e.target.checked;
-                  setHasAppeal(chk);
-                  if (chk) {
-                    const apStart = values.scoringEndDate || toDateTimeLocal(new Date().toISOString(), "08:00");
-                    const apEnd = addDaysPreserveTime(apStart, 3, "23:59");
-                    onChange("appealStartDate", apStart);
-                    onChange("appealEndDate", apEnd);
-                  } else {
-                    onChange("appealStartDate", "");
-                    onChange("appealEndDate", "");
-                  }
-                }}
-                className="rounded cursor-pointer"
-              />
-              <label htmlFor={`appeal-chk-${title}`} className="flex items-center gap-1 cursor-pointer">
-                <Scale className="w-4 h-4 text-purple-400" />
-                <span>GIAI ĐOẠN 3: PHÚC KHẢO</span>
+      {/* ─────────────────────────────────────────────────────────────
+          MODE 1: DURATION BUILDER (Số + Đơn Vị Giờ/Ngày/Tuần/Tháng/Năm)
+      ───────────────────────────────────────────────────────────── */}
+      {activeMode === "duration" && (
+        <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-4 font-mono text-xs">
+          {/* Anchor Date Input */}
+          <div className="p-3 bg-[var(--bg-base)] border border-cyan-500/40 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-cyan-400" />
+                Mốc Neo — Thời Gian Mở Cổng Nộp Bài (Ngày Tuyệt Đối Duy Nhất) *
               </label>
+              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                Mọi giai đoạn tiếp theo sẽ tự động tính toán nối tiếp từ mốc neo này.
+              </p>
             </div>
-            {hasAppeal && appealDur ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-semibold flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {appealDur}
-              </span>
-            ) : (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400">
-                Tùy chọn
-              </span>
-            )}
+            <div className="w-full sm:w-64">
+              <Input
+                type="datetime-local"
+                value={toDateTimeLocal(values.startDate)}
+                onChange={(e) => {
+                  const newAnchor = e.target.value;
+                  applyDurationCascade(newAnchor);
+                }}
+                className="bg-black/60 border-cyan-500/50 text-cyan-300 text-xs font-bold"
+              />
+            </div>
           </div>
 
-          {hasAppeal ? (
-            <>
-              {/* Mở phúc khảo */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
-                  <span className="text-purple-300 font-bold">5. Mở nhận khiếu nại (Giờ &amp; Ngày)</span>
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(values.appealStartDate, "08:00")}
-                  onChange={(e) => handleAppealStartDateChange(e.target.value)}
-                  className="font-mono text-xs border-purple-500/40 bg-[var(--bg-input)] text-[var(--text-primary)]"
-                />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {TIME_CHIPS.map((chip) => (
-                    <button
-                      key={chip.label}
-                      type="button"
-                      onClick={() => handleAppealStartDateChange(setTimeToDateStr(values.appealStartDate, chip.label))}
-                      className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
-                      title={chip.title}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
+          {/* 3 Duration Control Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* 1. Submission Duration */}
+            <div className="p-3.5 bg-[var(--bg-base)] border border-amber-500/30 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-amber-300 uppercase flex items-center gap-1">
+                  <UploadCloud className="w-3.5 h-3.5 text-amber-400" />
+                  1. Nộp Bài
+                </span>
+                <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  {formatDetailedDuration(values.startDate, values.endDate) || "Chưa tính"}
+                </span>
               </div>
 
-              {/* Center Extend Duration Quick Buttons */}
-              <div className="py-1 px-2.5 bg-black/40 border border-purple-500/20 rounded flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[var(--text-muted)]">Tăng hạn phúc khảo:</span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleAppealEndDateChange(addDaysPreserveTime(values.appealEndDate || values.appealStartDate, 1))}
-                    className="px-1.5 py-0.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 rounded font-bold cursor-pointer"
-                  >
-                    +1 Ngày
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAppealEndDateChange(addDaysPreserveTime(values.appealEndDate || values.appealStartDate, 3))}
-                    className="px-1.5 py-0.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 rounded font-bold cursor-pointer"
-                  >
-                    +3 Ngày
-                  </button>
-                </div>
-              </div>
-
-              {/* Đóng phúc khảo */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--text-muted)] flex items-center justify-between">
-                  <span className="text-purple-300 font-bold">6. Đóng khiếu nại (Khóa Form)</span>
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(values.appealEndDate, "23:59")}
-                  onChange={(e) => handleAppealEndDateChange(e.target.value)}
-                  className="font-mono text-xs border-purple-500/40 bg-[var(--bg-input)] text-[var(--text-primary)]"
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={subDuration.amount}
+                  onChange={(e) => {
+                    const newSub = { ...subDuration, amount: Math.max(1, Number(e.target.value)) };
+                    setSubDuration(newSub);
+                    applyDurationCascade(values.startDate, newSub);
+                  }}
+                  className="w-20 px-2.5 py-1.5 bg-black/60 border border-amber-500/40 text-amber-300 rounded font-bold text-xs text-center"
                 />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {TIME_CHIPS.map((chip) => (
-                    <button
-                      key={chip.label}
-                      type="button"
-                      onClick={() => handleAppealEndDateChange(setTimeToDateStr(values.appealEndDate, chip.label))}
-                      className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
-                      title={chip.title}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={subDuration.unit}
+                  onChange={(e) => {
+                    const newSub = { ...subDuration, unit: e.target.value as TimeUnit };
+                    setSubDuration(newSub);
+                    applyDurationCascade(values.startDate, newSub);
+                  }}
+                  className="flex-1 px-2.5 py-1.5 bg-black/60 border border-amber-500/40 text-amber-300 rounded text-xs cursor-pointer"
+                >
+                  <option value="hours">Giờ</option>
+                  <option value="days">Ngày</option>
+                  <option value="weeks">Tuần</option>
+                  <option value="months">Tháng</option>
+                  <option value="years">Năm</option>
+                </select>
               </div>
-            </>
-          ) : (
-            <div className="py-12 text-center text-xs font-mono text-[var(--text-muted)] border border-dashed border-purple-500/20 rounded-lg space-y-2">
-              <p>Giai đoạn Phúc Khảo đang được tắt.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setHasAppeal(true);
-                  const apStart = values.scoringEndDate || toDateTimeLocal(new Date().toISOString(), "08:00");
-                  const apEnd = addDaysPreserveTime(apStart, 3, "23:59");
-                  onChange("appealStartDate", apStart);
-                  onChange("appealEndDate", apEnd);
-                }}
-                className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 rounded text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" /> Bật Phúc Khảo (+3 Ngày)
-              </button>
+              <span className="text-[10px] text-[var(--text-muted)] block truncate">
+                Hạn chót: {values.endDate ? new Date(values.endDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+              </span>
             </div>
+
+            {/* 2. Scoring Duration */}
+            <div className="p-3.5 bg-[var(--bg-base)] border border-cyan-500/30 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-1">
+                  <FileCheck className="w-3.5 h-3.5 text-cyan-400" />
+                  2. Chấm Điểm
+                </span>
+                <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                  {formatDetailedDuration(values.scoringStartDate, values.scoringEndDate) || "Chưa tính"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={scoreDuration.amount}
+                  onChange={(e) => {
+                    const newScore = { ...scoreDuration, amount: Math.max(1, Number(e.target.value)) };
+                    setScoreDuration(newScore);
+                    applyDurationCascade(values.startDate, subDuration, newScore);
+                  }}
+                  className="w-20 px-2.5 py-1.5 bg-black/60 border border-cyan-500/40 text-cyan-300 rounded font-bold text-xs text-center"
+                />
+                <select
+                  value={scoreDuration.unit}
+                  onChange={(e) => {
+                    const newScore = { ...scoreDuration, unit: e.target.value as TimeUnit };
+                    setScoreDuration(newScore);
+                    applyDurationCascade(values.startDate, subDuration, newScore);
+                  }}
+                  className="flex-1 px-2.5 py-1.5 bg-black/60 border border-cyan-500/40 text-cyan-300 rounded text-xs cursor-pointer"
+                >
+                  <option value="hours">Giờ</option>
+                  <option value="days">Ngày</option>
+                  <option value="weeks">Tuần</option>
+                  <option value="months">Tháng</option>
+                  <option value="years">Năm</option>
+                </select>
+              </div>
+              <span className="text-[10px] text-[var(--text-muted)] block truncate">
+                Khóa chấm: {values.scoringEndDate ? new Date(values.scoringEndDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+              </span>
+            </div>
+
+            {/* 3. Appeal Duration */}
+            <div className={`p-3.5 bg-[var(--bg-base)] border rounded-lg space-y-2 transition-all ${
+              hasAppeal ? "border-purple-500/30" : "border-slate-800 opacity-60"
+            }`}>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-purple-300 uppercase flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasAppeal}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      setHasAppeal(enabled);
+                      applyDurationCascade(values.startDate, subDuration, scoreDuration, appealDuration, enabled);
+                    }}
+                    className="accent-purple-400 w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span>3. Phúc Khảo</span>
+                </label>
+                {hasAppeal && (
+                  <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded">
+                    {formatDetailedDuration(values.appealStartDate, values.appealEndDate) || "Chưa tính"}
+                  </span>
+                )}
+              </div>
+
+              {hasAppeal ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={appealDuration.amount}
+                      onChange={(e) => {
+                        const newAppeal = { ...appealDuration, amount: Math.max(1, Number(e.target.value)) };
+                        setAppealDuration(newAppeal);
+                        applyDurationCascade(values.startDate, subDuration, scoreDuration, newAppeal, true);
+                      }}
+                      className="w-20 px-2.5 py-1.5 bg-black/60 border border-purple-500/40 text-purple-300 rounded font-bold text-xs text-center"
+                    />
+                    <select
+                      value={appealDuration.unit}
+                      onChange={(e) => {
+                        const newAppeal = { ...appealDuration, unit: e.target.value as TimeUnit };
+                        setAppealDuration(newAppeal);
+                        applyDurationCascade(values.startDate, subDuration, scoreDuration, newAppeal, true);
+                      }}
+                      className="flex-1 px-2.5 py-1.5 bg-black/60 border border-purple-500/40 text-purple-300 rounded text-xs cursor-pointer"
+                    >
+                      <option value="hours">Giờ</option>
+                      <option value="days">Ngày</option>
+                      <option value="weeks">Tuần</option>
+                      <option value="months">Tháng</option>
+                      <option value="years">Năm</option>
+                    </select>
+                  </div>
+                  <span className="text-[10px] text-[var(--text-muted)] block truncate">
+                    Hết phúc khảo: {values.appealEndDate ? new Date(values.appealEndDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+                  </span>
+                </>
+              ) : (
+                <p className="text-[10px] text-[var(--text-muted)] py-2 text-center">
+                  ☐ Đã bỏ qua giai đoạn phúc khảo
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODE 2: PRECISION MANUAL MODE (Chỉnh Từng Mốc DateTime Chi Tiết)
+      ───────────────────────────────────────────────────────────── */}
+      {activeMode === "precision" && (
+        <div className="space-y-4">
+          {/* Phase 1: Submission */}
+          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-3">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
+              <div className="flex items-center gap-2">
+                <UploadCloud className="w-4 h-4 text-amber-400" />
+                <span className="font-mono text-xs font-bold text-amber-300 uppercase">
+                  1. Giai Đoạn Nộp Bài (Submission Phase)
+                </span>
+              </div>
+              {values.startDate && values.endDate && (
+                <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[10px] rounded font-bold">
+                  ⏳ Thời lượng: {formatDetailedDuration(values.startDate, values.endDate)}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                  Mở Cổng Nộp Bài (Bắt Đầu Vòng) *
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={toDateTimeLocal(values.startDate)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange("startDate", val);
+                    if (!values.endDate && val) {
+                      onChange("endDate", addDaysPreserveTime(val, 14, "23:59"));
+                    }
+                  }}
+                  required
+                />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {TIME_CHIPS.map((t) => (
+                    <button
+                      key={t.label}
+                      type="button"
+                      onClick={() => onChange("startDate", setTimeToDateStr(values.startDate, t.label))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    Hạn Chót Nộp Bài *
+                  </label>
+                  <div className="flex items-center gap-1 text-[9px]">
+                    <button
+                      type="button"
+                      onClick={() => onChange("endDate", addDaysPreserveTime(values.endDate || values.startDate, 1))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                    >
+                      +1d
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChange("endDate", addDaysPreserveTime(values.endDate || values.startDate, 7))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                    >
+                      +7d
+                    </button>
+                  </div>
+                </div>
+                <Input
+                  type="datetime-local"
+                  value={toDateTimeLocal(values.endDate, "23:59")}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange("endDate", val);
+                    if (!values.scoringStartDate && val) {
+                      onChange("scoringStartDate", val);
+                    }
+                  }}
+                  required
+                />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {TIME_CHIPS.map((t) => (
+                    <button
+                      key={t.label}
+                      type="button"
+                      onClick={() => onChange("endDate", setTimeToDateStr(values.endDate, t.label))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Phase 2: Scoring */}
+          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-3">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-cyan-400" />
+                <span className="font-mono text-xs font-bold text-cyan-300 uppercase">
+                  2. Giai Đoạn Chấm Điểm (Scoring Phase)
+                </span>
+              </div>
+              {values.scoringStartDate && values.scoringEndDate && (
+                <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] rounded font-bold">
+                  ⏳ Thời lượng: {formatDetailedDuration(values.scoringStartDate, values.scoringEndDate)}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                  Bắt Đầu Mở Cổng Chấm
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={toDateTimeLocal(values.scoringStartDate, "08:00")}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange("scoringStartDate", val);
+                    if (!values.scoringEndDate && val) {
+                      onChange("scoringEndDate", addDaysPreserveTime(val, 7, "23:59"));
+                    }
+                  }}
+                />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {TIME_CHIPS.map((t) => (
+                    <button
+                      key={t.label}
+                      type="button"
+                      onClick={() => onChange("scoringStartDate", setTimeToDateStr(values.scoringStartDate, t.label))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                    <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                    Hạn Chót Khóa Chấm *
+                  </label>
+                  <div className="flex items-center gap-1 text-[9px]">
+                    <button
+                      type="button"
+                      onClick={() => onChange("scoringEndDate", addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 1))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                    >
+                      +1d
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChange("scoringEndDate", addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 7))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                    >
+                      +7d
+                    </button>
+                  </div>
+                </div>
+                <Input
+                  type="datetime-local"
+                  value={toDateTimeLocal(values.scoringEndDate, "23:59")}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange("scoringEndDate", val);
+                    if (hasAppeal && !values.appealStartDate && val) {
+                      onChange("appealStartDate", val);
+                    }
+                  }}
+                  required
+                />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {TIME_CHIPS.map((t) => (
+                    <button
+                      key={t.label}
+                      type="button"
+                      onClick={() => onChange("scoringEndDate", setTimeToDateStr(values.scoringEndDate, t.label))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Phase 3: Appeal (Optional) */}
+          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-3">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
+              <label className="flex items-center gap-2 cursor-pointer font-mono text-xs font-bold text-purple-300 uppercase">
+                <input
+                  type="checkbox"
+                  checked={hasAppeal}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setHasAppeal(enabled);
+                    if (!enabled) {
+                      onChange("appealStartDate", "");
+                      onChange("appealEndDate", "");
+                    } else if (values.scoringEndDate) {
+                      onChange("appealStartDate", values.scoringEndDate);
+                      onChange("appealEndDate", addDaysPreserveTime(values.scoringEndDate, 3, "23:59"));
+                    }
+                  }}
+                  className="accent-purple-400 w-3.5 h-3.5 cursor-pointer"
+                />
+                <Scale className="w-4 h-4 text-purple-400" />
+                <span>3. Giai Đoạn Phúc Khảo (Tùy Chọn)</span>
+              </label>
+              {hasAppeal && values.appealStartDate && values.appealEndDate && (
+                <span className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-[10px] rounded font-bold">
+                  ⏳ Thời lượng: {formatDetailedDuration(values.appealStartDate, values.appealEndDate)}
+                </span>
+              )}
+            </div>
+
+            {hasAppeal && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs pt-1 animate-fadeIn">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                    <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                    Bắt Đầu Mở Cổng Phúc Khảo
+                  </label>
+                  <Input
+                    type="datetime-local"
+                    value={toDateTimeLocal(values.appealStartDate, "08:00")}
+                    onChange={(e) => onChange("appealStartDate", e.target.value)}
+                  />
+                  <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                    <span className="text-[var(--text-muted)]">Giờ:</span>
+                    {TIME_CHIPS.map((t) => (
+                      <button
+                        key={t.label}
+                        type="button"
+                        onClick={() => onChange("appealStartDate", setTimeToDateStr(values.appealStartDate, t.label))}
+                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
+                      <Clock className="w-3.5 h-3.5 text-purple-400" />
+                      Hạn Chót Đóng Phúc Khảo
+                    </label>
+                    <div className="flex items-center gap-1 text-[9px]">
+                      <button
+                        type="button"
+                        onClick={() => onChange("appealEndDate", addDaysPreserveTime(values.appealEndDate || values.appealStartDate, 1))}
+                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
+                      >
+                        +1d
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onChange("appealEndDate", addDaysPreserveTime(values.appealEndDate || values.appealStartDate, 3))}
+                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
+                      >
+                        +3d
+                      </button>
+                    </div>
+                  </div>
+                  <Input
+                    type="datetime-local"
+                    value={toDateTimeLocal(values.appealEndDate, "23:59")}
+                    onChange={(e) => onChange("appealEndDate", e.target.value)}
+                  />
+                  <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                    <span className="text-[var(--text-muted)]">Giờ:</span>
+                    {TIME_CHIPS.map((t) => (
+                      <button
+                        key={t.label}
+                        type="button"
+                        onClick={() => onChange("appealEndDate", setTimeToDateStr(values.appealEndDate, t.label))}
+                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Visual Horizontal Timeline Bar (Gantt Overview) */}
+      <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded-lg space-y-2 font-mono text-[11px]">
+        <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)]">
+          <span className="flex items-center gap-1.5 text-slate-300">
+            <span>Sơ Đồ Tiến Trình Vòng Thi:</span>
+            <strong className="text-cyan-300">{totalDays} ngày tổng cộng</strong>
+          </span>
+          <span className="text-[10px] text-slate-400">
+            {values.startDate ? new Date(values.startDate).toLocaleDateString("vi-VN") : "---"} ──▶ {values.scoringEndDate ? new Date(values.scoringEndDate).toLocaleDateString("vi-VN") : "---"}
+          </span>
+        </div>
+
+        {/* Progress Gantt Track */}
+        <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden flex border border-slate-700/80">
+          <div
+            style={{ width: `${subPct}%` }}
+            className="h-full bg-amber-500 hover:brightness-110 transition-all cursor-help relative group"
+            title={`Nộp bài: ${subDays} ngày (${subPct}%)`}
+          />
+          <div
+            style={{ width: `${scorePct}%` }}
+            className="h-full bg-cyan-500 hover:brightness-110 transition-all cursor-help relative group"
+            title={`Chấm điểm: ${scoreDays} ngày (${scorePct}%)`}
+          />
+          {hasAppeal && appealPct > 0 && (
+            <div
+              style={{ width: `${appealPct}%` }}
+              className="h-full bg-purple-500 hover:brightness-110 transition-all cursor-help relative group"
+              title={`Phúc khảo: ${appealDays} ngày (${appealPct}%)`}
+            />
+          )}
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-3 text-[10px] pt-0.5">
+          <span className="flex items-center gap-1 text-amber-400">
+            <span className="w-2 h-2 rounded-full bg-amber-500" /> Nộp bài ({subDays}d)
+          </span>
+          <span className="flex items-center gap-1 text-cyan-400">
+            <span className="w-2 h-2 rounded-full bg-cyan-500" /> Chấm điểm ({scoreDays}d)
+          </span>
+          {hasAppeal && (
+            <span className="flex items-center gap-1 text-purple-400">
+              <span className="w-2 h-2 rounded-full bg-purple-500" /> Phúc khảo ({appealDays}d)
+            </span>
           )}
         </div>
       </div>
-
-      {/* Validation Status Footer */}
-      {warningMessage ? (
-        <div className="px-3 py-2 bg-[rgba(245,158,11,0.1)] border border-[var(--color-warning)] text-[var(--color-warning)] font-mono text-xs rounded flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{warningMessage}</span>
-        </div>
-      ) : (
-        values.startDate && values.endDate && values.scoringEndDate && (
-          <div className="px-3 py-1.5 bg-[rgba(16,185,129,0.08)] border border-[var(--color-success)]/40 text-[var(--color-success)] font-mono text-[11px] rounded flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[var(--color-success)]" />
-            <span>Mốc thời gian hợp lệ — Đã sẵn sàng cho giai đoạn chấm và thăng vòng!</span>
-          </div>
-        )
-      )}
     </div>
   );
 };
