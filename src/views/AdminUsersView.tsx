@@ -62,9 +62,7 @@ export const AdminUsersView: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { data: rawUsersData, isLoading, refetch } = useGetUsers();
-  const usersList: User[] = Array.isArray(rawUsersData)
-    ? rawUsersData
-    : (rawUsersData as any)?.data ?? [];
+  const usersList: User[] = rawUsersData?.data ?? [];
 
   const { mutateAsync: approveUser } = useApproveUser();
   const { mutateAsync: rejectUser } = useRejectUser();

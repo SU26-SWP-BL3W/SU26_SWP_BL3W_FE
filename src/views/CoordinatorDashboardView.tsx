@@ -51,9 +51,7 @@ export const CoordinatorDashboardView: React.FC = () => {
     }
   };
 
-  const pendingStudentsList = Array.isArray(pendingUsersData)
-    ? pendingUsersData
-    : (pendingUsersData as any)?.data ?? [];
+  const pendingStudentsList = pendingUsersData?.data ?? [];
 
   // Metrics
   const pendingTeamsCount = pendingTeams.length;

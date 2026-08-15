@@ -298,23 +298,13 @@ export function useGetUsers(params?: {
 }) {
   return useQuery({
     queryKey: ["users", params],
-    queryFn: async () => {
+    // LUÔN trả PagedResult<User> (một kiểu duy nhất) để mọi consumer đọc .data đồng nhất.
+    // Trước đây nhánh thành công trả thẳng mảng, các nhánh khác trả PagedResult -> lệch kiểu,
+    // màn nào đọc .data mà quên phòng thủ Array.isArray sẽ ra rỗng dù API có dữ liệu.
+    queryFn: async (): Promise<PagedResult<User>> => {
       const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users", { params });
-      if (res.data?.data) {
-        return res.data.data;
-      }
-      if (Array.isArray(res.data)) {
-        return {
-          data: res.data,
-          currentPage: 1,
-          pageSize: 50,
-          totalItems: res.data.length,
-          totalPages: 1,
-          hasPreviousPage: false,
-          hasNextPage: false,
-        };
-      }
-      return {
+      const payload = res.data as unknown; // sau interceptor bóc BaseResponse = PagedResult
+      const emptyPage: PagedResult<User> = {
         data: [],
         currentPage: 1,
         pageSize: 50,
@@ -323,6 +313,14 @@ export function useGetUsers(params?: {
         hasPreviousPage: false,
         hasNextPage: false,
       };
+      if (payload && typeof payload === "object" && Array.isArray((payload as PagedResult<User>).data)) {
+        return payload as PagedResult<User>;
+      }
+      if (Array.isArray(payload)) {
+        const arr = payload as User[];
+        return { ...emptyPage, data: arr, pageSize: arr.length, totalItems: arr.length };
+      }
+      return emptyPage;
     },
   });
 }

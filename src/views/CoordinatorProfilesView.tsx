@@ -113,7 +113,7 @@ export function CoordinatorProfilesView() {
 
   // Merge raw users with local optimistic overrides
   const allUsers = useMemo(() => {
-    const rawList = usersData?.data ?? [];
+    const rawList: User[] = usersData?.data ?? [];
     return rawList.map((u) => {
       const id = u.id || (u as any).UserID || "";
       if (localUsersOverride.has(id)) {
