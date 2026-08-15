@@ -13,7 +13,7 @@ interface Step1EventBasicInfoProps {
   isReadOnly?: boolean;
 }
 
-const toDateTimeLocal = (val?: string) => {
+const toDateTimeLocal = (val?: string, defaultTime = "08:00") => {
   if (!val) return "";
   if (val.length === 16 && val.includes("T")) return val;
   try {
@@ -277,7 +277,6 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   onChange={(e) => {
                     const val = e.target.value;
                     onUpdateField("registrationStartDate", val);
-                    // Smart Cascade: if registrationEndDate is empty, auto-fill +14 days
                     if (!eventData.registrationEndDate && val) {
                       const d = new Date(val);
                       d.setDate(d.getDate() + 14);
@@ -287,6 +286,22 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   }}
                   required
                 />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const base = eventData.registrationStartDate || toDateTimeLocal(new Date().toISOString(), "08:00");
+                        onUpdateField("registrationStartDate", `${base.split("T")[0]}T${t}`);
+                      }}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
                 <span className="text-[10px] text-[var(--text-muted)] block">
                   Thời điểm thí sinh bắt đầu được phép nộp hồ sơ đăng ký.
                 </span>
@@ -303,7 +318,6 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   onChange={(e) => {
                     const val = e.target.value;
                     onUpdateField("registrationEndDate", val);
-                    // Smart Cascade: if event startDate is empty, auto-fill registrationEndDate + 1 day
                     if (!eventData.startDate && val) {
                       const d = new Date(val);
                       d.setDate(d.getDate() + 1);
@@ -313,6 +327,22 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   }}
                   required
                 />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const base = eventData.registrationEndDate || toDateTimeLocal(new Date().toISOString(), "23:59");
+                        onUpdateField("registrationEndDate", `${base.split("T")[0]}T${t}`);
+                      }}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
                 <span className="text-[10px] text-[var(--text-muted)] block">
                   Hạn chót khóa form đăng ký của thí sinh.
                 </span>
@@ -329,7 +359,6 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   onChange={(e) => {
                     const val = e.target.value;
                     onUpdateField("startDate", val);
-                    // Smart Cascade: if event endDate is empty, auto-fill +30 days
                     if (!eventData.endDate && val) {
                       const d = new Date(val);
                       d.setDate(d.getDate() + 30);
@@ -339,6 +368,22 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   }}
                   required
                 />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const base = eventData.startDate || toDateTimeLocal(new Date().toISOString(), "08:00");
+                        onUpdateField("startDate", `${base.split("T")[0]}T${t}`);
+                      }}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5">
@@ -352,6 +397,22 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   onChange={(e) => onUpdateField("endDate", e.target.value)}
                   required
                 />
+                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                  <span className="text-[var(--text-muted)]">Giờ:</span>
+                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const base = eventData.endDate || toDateTimeLocal(new Date().toISOString(), "23:59");
+                        onUpdateField("endDate", `${base.split("T")[0]}T${t}`);
+                      }}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
