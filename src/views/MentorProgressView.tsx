@@ -1,22 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-import { useMyAssignedTracks, MENTOR_EVENT_ID } from "@/viewModels/useMyAssignedTracks";
+import { useMyAssignedTracks } from "@/viewModels/useMyAssignedTracks";
 import { useGetSubmitResultsByTrack } from "@/repositories/submitResultsRepository";
 import { useGetTeamsByEvent } from "@/repositories/teamsRepository";
 import { useGetTeamScoreBreakdown } from "@/repositories/scoresRepository";
-import { Button, Card } from "@/components/ui";
-import { Shield, RefreshCw, BarChart2 } from "lucide-react";
+import { Button, Card, Badge } from "@/components/ui";
+import { Shield, RefreshCw, BarChart2, CheckCircle2, Clock } from "lucide-react";
 
 export function MentorProgressView() {
   const { user } = useAuth();
   const { myTracks, isLoading: isLoadingTracks } = useMyAssignedTracks();
   const [explicitTrackId, setExplicitTrackId] = useState("");
   const selectedTrackId = explicitTrackId || myTracks[0]?.id || myTracks[0]?.Id || "";
+  const selectedTrack = myTracks.find((t) => (t.id || t.Id) === selectedTrackId);
+  const selectedEventId = selectedTrack?.eventId || selectedTrack?.EventId || "";
 
   const { data: submissions = [] } = useGetSubmitResultsByTrack(selectedTrackId);
-  const { data: teams = [] } = useGetTeamsByEvent(MENTOR_EVENT_ID);
+  const { data: teams = [] } = useGetTeamsByEvent(selectedEventId);
 
   const teamNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -33,17 +35,9 @@ export function MentorProgressView() {
     return Array.from(seen);
   }, [submissions]);
 
-  const [activeTeamId, setActiveTeamId] = useState("");
-
-  // Đội đang chọn phải nằm trong Track hiện tại — đổi Track thì tự chọn lại đội đầu tiên.
-  useEffect(() => {
-    if (teamIdsInTrack.length > 0 && !teamIdsInTrack.includes(activeTeamId)) {
-      setActiveTeamId(teamIdsInTrack[0]);
-    } else if (teamIdsInTrack.length === 0) {
-      setActiveTeamId("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamIdsInTrack]);
+  // Đội đang chọn phải nằm trong Track hiện tại — đổi Track thì tự về đội đầu tiên.
+  const [explicitTeamId, setExplicitTeamId] = useState("");
+  const activeTeamId = teamIdsInTrack.includes(explicitTeamId) ? explicitTeamId : teamIdsInTrack[0] || "";
 
   const { data: scoreBreakdown, isLoading, refetch } = useGetTeamScoreBreakdown(activeTeamId);
 
@@ -68,7 +62,7 @@ export function MentorProgressView() {
               THEO DÕI TIẾN ĐỘ ĐỘI THI (MENTOR PROGRESS)
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              // MENTOR MONITORING & SCORE BREAKDOWN
+              {"// MENTOR MONITORING & SCORE BREAKDOWN"}
             </p>
           </div>
         </div>
@@ -90,7 +84,7 @@ export function MentorProgressView() {
           <span className="text-[var(--text-muted)] uppercase ml-2">Đội thi:</span>
           <select
             value={activeTeamId}
-            onChange={(e) => setActiveTeamId(e.target.value)}
+            onChange={(e) => setExplicitTeamId(e.target.value)}
             disabled={teamIdsInTrack.length === 0}
             className="bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-mentor)] disabled:opacity-50"
           >
@@ -122,7 +116,7 @@ export function MentorProgressView() {
               : "Chọn một Đội thi để xem bảng phân rã điểm số theo từng tiêu chí."}
           </Card>
         ) : (
-          <Card className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-6">
+          <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
               <div>
                 <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
@@ -131,50 +125,92 @@ export function MentorProgressView() {
                 <h2 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase">
                   {scoreBreakdown.teamName || `Đội #${scoreBreakdown.teamId}`}
                 </h2>
-                <span className="text-xs font-mono text-[var(--text-muted)]">
-                  Hạng mục: {scoreBreakdown.trackName || "AI & Data Science"}
-                </span>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
-                  TỔNG ĐIỂM TRUNG BÌNH
-                </span>
-                <span className="font-mono text-3xl font-bold text-[var(--accent-mentor)]">
-                  {scoreBreakdown.totalScore} / 10
-                </span>
               </div>
             </div>
 
-            {/* Criteria Breakdown List */}
-            <div className="space-y-4">
-              <h3 className="font-mono text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
-                PHÂN RÃ ĐIỂM SỐ THEO TIÊU CHÍ (CRITERIA BREAKDOWN)
-              </h3>
-
-              {scoreBreakdown.details?.map((item: any) => (
-                <div
-                  key={item.criteriaId}
-                  className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2"
+            {scoreBreakdown.submissions.length === 0 ? (
+              <Card className="p-12 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
+                Đội thi này chưa có bài nộp nào được chấm điểm.
+              </Card>
+            ) : (
+              scoreBreakdown.submissions.map((submission) => (
+                <Card
+                  key={submission.submitResultId}
+                  className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-5"
                 >
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-bold text-[var(--text-primary)]">{item.criteriaName}</span>
-                    <span className="text-[var(--accent-mentor)] font-bold">
-                      {item.scoreValue} / {item.maxScore} (Trọng số: {item.weight}%)
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-muted)] pb-3">
+                    <div>
+                      <h3 className="font-display font-bold text-base text-[var(--text-primary)] uppercase">
+                        {submission.trackName} — {submission.roundName}
+                      </h3>
+                    </div>
+                    <Badge tone={submission.roundPublished ? "success" : "mentor"}>
+                      {submission.roundPublished ? "Kết quả đã công bố" : "Đang chấm điểm"}
+                    </Badge>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="w-full h-2 bg-[var(--bg-base)] border border-[var(--border-muted)] overflow-hidden">
-                    <div
-                      className="h-full bg-[var(--accent-mentor)] transition-all duration-300"
-                      style={{ width: `${(item.scoreValue / item.maxScore) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+                  {submission.judgeScores.length === 0 ? (
+                    <p className="font-mono text-xs text-[var(--text-muted)]">
+                      Chưa có giám khảo nào chấm bài nộp này.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {submission.judgeScores.map((judge, idx) => (
+                        <div
+                          key={`${submission.submitResultId}-${judge.judgeName}-${idx}`}
+                          className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-3"
+                        >
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <span className="flex items-center gap-2 font-bold text-[var(--text-primary)]">
+                              {judge.isSubmitted ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent-mentor)]" />
+                              ) : (
+                                <Clock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                              )}
+                              {judge.judgeName}
+                              {!judge.isSubmitted && (
+                                <span className="text-[10px] text-[var(--text-muted)] normal-case">
+                                  (chưa chốt điểm)
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-[var(--accent-mentor)] font-bold">
+                              {judge.totalScore} / 10
+                            </span>
+                          </div>
+
+                          {judge.comment && (
+                            <p className="font-mono text-[11px] text-[var(--text-muted)] italic">
+                              &ldquo;{judge.comment}&rdquo;
+                            </p>
+                          )}
+
+                          <div className="space-y-2">
+                            {judge.criteria.map((item) => (
+                              <div key={item.criteriaName} className="space-y-1">
+                                <div className="flex items-center justify-between text-[11px] font-mono">
+                                  <span className="text-[var(--text-primary)]">{item.criteriaName}</span>
+                                  <span className="text-[var(--text-muted)]">
+                                    {item.value} / {item.maxScore} (Trọng số: {item.weight}%)
+                                  </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-[var(--bg-base)] border border-[var(--border-muted)] overflow-hidden">
+                                  <div
+                                    className="h-full bg-[var(--accent-mentor)] transition-all duration-300"
+                                    style={{ width: `${(item.value / item.maxScore) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              ))
+            )}
+          </div>
         )}
       </div>
     </div>
