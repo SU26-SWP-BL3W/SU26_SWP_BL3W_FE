@@ -554,9 +554,12 @@ export const CoordinatorEventDetailView: React.FC = () => {
     }
   };
 
-  // Quick Toggle Status Banner
+  // Quick Toggle Status Banner (Tạm ẩn / Công bố)
   const handleQuickToggleStatus = async () => {
+    setErrorMessage(null);
+
     if (!status) {
+      // 1. Luồng CÔNG BỐ (Draft -> Public)
       if (!canPublishEvent) {
         setErrorMessage(`Chưa đủ điều kiện công bố. Vui lòng hoàn tất: ${validationMissingItems.join(", ")}`);
         setCurrentStep(6);
@@ -565,15 +568,41 @@ export const CoordinatorEventDetailView: React.FC = () => {
       if (!confirm(`Bạn có chắc chắn muốn CÔNG BỐ sự kiện "${eventData.eventName}" lên trang chủ công khai cho thí sinh đăng ký không?`)) {
         return;
       }
+      setIsTogglingPublish(true);
+      await handleSaveChanges(true);
+      setIsTogglingPublish(false);
     } else {
+      // 2. Luồng TẠM ẨN (Public -> Draft) để mở khóa form
       if (!confirm(`Bạn có chắc chắn muốn TẠM ẨN sự kiện "${eventData.eventName}" về Bản Nháp (Draft) để chỉnh sửa không?`)) {
         return;
       }
-    }
 
-    setIsTogglingPublish(true);
-    await handleSaveChanges(!status);
-    setIsTogglingPublish(false);
+      setIsTogglingPublish(true);
+      try {
+        const res = await eventsRepository.updateEvent(eventId, {
+          eventName: eventData.eventName,
+          season: eventData.season,
+          year: eventData.year,
+          maxTeams: eventData.maxTeams,
+          tagline: eventData.tagline,
+          description: eventData.description,
+          photoEventUrl,
+          status: false,
+        } as any);
+
+        if (res?.success === false) {
+          setErrorMessage(`Tạm ẩn sự kiện thất bại: ${res?.message}`);
+        } else {
+          setStatus(false);
+          await refetchEvent();
+          setSuccessMessage("🔓 ĐÃ MỞ KHÓA CHỈNH SỬA! Sự kiện đã được chuyển về Bản Nháp (Draft). Bạn có thể tự do chỉnh sửa lại thông tin và các mốc thời gian bên dưới.");
+        }
+      } catch (err: any) {
+        setErrorMessage(`Tạm ẩn sự kiện thất bại: ${err?.response?.data?.message || err?.message}`);
+      } finally {
+        setIsTogglingPublish(false);
+      }
+    }
   };
 
   const steps = [
@@ -801,6 +830,8 @@ export const CoordinatorEventDetailView: React.FC = () => {
               onNext={handleNextStep}
               onPrev={handlePrevStep}
               isReadOnly={status}
+              eventStartDate={eventData.startDate}
+              eventEndDate={eventData.endDate}
             />
           )}
 

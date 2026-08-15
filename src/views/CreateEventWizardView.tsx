@@ -189,6 +189,8 @@ export const CreateEventWizardView: React.FC = () => {
               onUpdateRound={wizard.handleUpdateRound}
               onNext={wizard.handleNextStep}
               onPrev={wizard.handlePrevStep}
+              eventStartDate={wizard.eventData.startDate}
+              eventEndDate={wizard.eventData.endDate}
             />
           )}
 

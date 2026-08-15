@@ -14,6 +14,8 @@ interface Step2RoundConfigProps {
   onNext: () => void;
   onPrev: () => void;
   isReadOnly?: boolean;
+  eventStartDate?: string;
+  eventEndDate?: string;
 }
 
 export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
@@ -24,6 +26,8 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
   onNext,
   onPrev,
   isReadOnly = false,
+  eventStartDate,
+  eventEndDate,
 }) => {
   return (
     <Card className="hud-glow-coordinator p-6 space-y-6">
@@ -44,6 +48,21 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
           </Button>
         )}
       </div>
+
+      {/* Boundary Guidance Banner */}
+      {(eventStartDate || eventEndDate) && (
+        <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs hud-clipped flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-cyan-400" />
+            <span>
+              <strong>Khung thời gian sự kiện:</strong> {eventStartDate ? new Date(eventStartDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }) : "---"} ──▶ {eventEndDate ? new Date(eventEndDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }) : "---"}
+            </span>
+          </span>
+          <span className="text-[10px] text-[var(--text-muted)] hidden sm:inline">
+            (Mọi vòng thi phải nằm trong khoảng này)
+          </span>
+        </div>
+      )}
 
       {isReadOnly && (
         <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs hud-clipped flex items-center gap-2">
