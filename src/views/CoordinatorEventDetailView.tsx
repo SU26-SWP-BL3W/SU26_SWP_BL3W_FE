@@ -579,7 +579,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
 
       setIsTogglingPublish(true);
       try {
-        const res = await eventsRepository.updateEvent(eventId, {
+        const payload: Record<string, any> = {
           eventName: eventData.eventName,
           season: eventData.season,
           year: eventData.year,
@@ -588,7 +588,18 @@ export const CoordinatorEventDetailView: React.FC = () => {
           description: eventData.description,
           photoEventUrl,
           status: false,
-        } as any);
+          startDate: eventData.startDate ? new Date(eventData.startDate).toISOString() : new Date().toISOString(),
+          endDate: eventData.endDate ? new Date(eventData.endDate).toISOString() : new Date(Date.now() + 30 * 86400000).toISOString(),
+        };
+
+        if (eventData.registrationStartDate) {
+          payload.registrationStartDate = new Date(eventData.registrationStartDate).toISOString();
+        }
+        if (eventData.registrationEndDate) {
+          payload.registrationEndDate = new Date(eventData.registrationEndDate).toISOString();
+        }
+
+        const res = await eventsRepository.updateEvent(eventId, payload as any);
 
         if (res?.success === false) {
           setErrorMessage(`Tạm ẩn sự kiện thất bại: ${res?.message}`);

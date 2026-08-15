@@ -293,6 +293,11 @@ export function useGetUserRejections(userId: string | undefined) {
 export function useGetUsers(params?: {
   isApproved?: boolean;
   isRejected?: boolean;
+  isStudent?: boolean;
+  isFpt?: boolean;
+  hasSubmittedProfile?: boolean;
+  search?: string;
+  eventId?: string;
   pageNumber?: number;
   pageSize?: number;
 }) {

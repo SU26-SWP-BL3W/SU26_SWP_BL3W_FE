@@ -21,7 +21,7 @@ function toEventDates(ev: MyEventModel): Pick<MockEvent, "startDate" | "endDate"
 export const CoordinatorDashboardView: React.FC = () => {
   const { data: eventsList = [], isLoading, refetch } = useMyEvents();
   const { data: pendingTeams = [] } = useGetPendingTeams();
-  const { data: pendingUsersData } = useGetUsers({ isApproved: false });
+  const { data: pendingUsersData } = useGetUsers({ pageNumber: 1, pageSize: 200, isApproved: false, isStudent: true, hasSubmittedProfile: true });
   const { data: appealsList = [] } = useAppeals();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,7 +51,12 @@ export const CoordinatorDashboardView: React.FC = () => {
     }
   };
 
-  const pendingStudentsList = pendingUsersData?.data ?? [];
+  const pendingStudentsList = (pendingUsersData?.data ?? []).filter((u: any) => {
+    const isStudent = u.isStudent ?? true;
+    const isTemp = u.isTemporary ?? false;
+    const hasCard = Boolean(u.studentCode || u.photoStudentCardUrl || u.schoolId);
+    return isStudent && !isTemp && hasCard && !u.isApproved;
+  });
 
   // Metrics
   const pendingTeamsCount = pendingTeams.length;

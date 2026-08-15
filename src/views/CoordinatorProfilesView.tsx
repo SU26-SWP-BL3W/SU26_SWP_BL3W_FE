@@ -130,12 +130,22 @@ export function CoordinatorProfilesView() {
     });
   }, [usersData, localUsersOverride]);
 
+  // Helper: Xác định thí sinh thực sự ĐÃ nộp hồ sơ thẻ SV và đang chờ duyệt
+  const isPendingStudentCard = (u: User) => {
+    if (u.isApproved) return false;
+    if (!u.isStudent) return false;
+    if (u.isTemporary) return false;
+    if (u.rejectionCount && u.rejectionCount >= 2) return false;
+    // Bắt buộc đã nộp hồ sơ (có MSSV hoặc ảnh thẻ hoặc trường đại học)
+    return Boolean(u.studentCode || u.photoStudentCardUrl || u.schoolId);
+  };
+
   // Apply Multi-dimensional Filtering
   const filteredUsers = useMemo(() => {
     return allUsers.filter((u) => {
       // 1. Tab Status Filter
       if (activeTab === "pending") {
-        if (u.isApproved || (u.rejectionCount && u.rejectionCount >= 2)) return false;
+        if (!isPendingStudentCard(u)) return false;
       } else if (activeTab === "approved") {
         if (!u.isApproved) return false;
       } else if (activeTab === "rejected") {
@@ -213,9 +223,9 @@ export function CoordinatorProfilesView() {
 
   // Counts for Badges
   const counts = useMemo(() => {
-    const pending = allUsers.filter((u) => !u.isApproved && (!u.rejectionCount || u.rejectionCount < 2)).length;
+    const pending = allUsers.filter(isPendingStudentCard).length;
     const approved = allUsers.filter((u) => u.isApproved).length;
-    const rejected = allUsers.filter((u) => !u.isApproved && (u.rejectionCount && u.rejectionCount > 0)).length;
+    const rejected = allUsers.filter((u) => !u.isApproved && ((u.rejectionCount && u.rejectionCount > 0) || u.isRejected)).length;
     return { all: allUsers.length, pending, approved, rejected };
   }, [allUsers]);
 
@@ -708,19 +718,38 @@ export function CoordinatorProfilesView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-muted)]/60">
-                  {pagedUsers.map((user) => {
-                    const userId = user.id || (user as any).UserID || "";
-                    const isSelected = selectedUserIds.has(userId);
-                    const is2StrikesLocked = (user.rejectionCount || 0) >= 2;
-                    const is1Strike = user.rejectionCount === 1;
+                  {pagedUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center text-[var(--text-muted)]">
+                        <div className="flex flex-col items-center justify-center space-y-3">
+                          <CheckCircle2 className="w-10 h-10 text-emerald-400 opacity-60" />
+                          <p className="font-bold text-sm text-[var(--text-primary)]">
+                            {activeTab === "pending"
+                              ? "Không có hồ sơ thẻ sinh viên nào đang chờ duyệt!"
+                              : "Không tìm thấy hồ sơ nào phù hợp với bộ lọc."}
+                          </p>
+                          <p className="text-xs max-w-md text-[var(--text-muted)] font-mono">
+                            {activeTab === "pending"
+                              ? "Tất cả thí sinh đã nộp thẻ sinh viên đều đã được xử lý xong. Các tài khoản chưa nộp thẻ sẽ xuất hiện tại đây sau khi họ cập nhật hồ sơ."
+                              : "Vui lòng thử điều chỉnh lại từ khóa tìm kiếm hoặc các tiêu chí lọc phía trên."}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    pagedUsers.map((user) => {
+                      const userId = user.id || (user as any).UserID || "";
+                      const isSelected = selectedUserIds.has(userId);
+                      const is2StrikesLocked = (user.rejectionCount || 0) >= 2;
+                      const is1Strike = user.rejectionCount === 1;
 
-                    return (
-                      <tr
-                        key={userId}
-                        className={`hover:bg-[var(--bg-input)]/70 transition-colors ${
-                          isSelected ? "bg-cyan-500/10" : ""
-                        }`}
-                      >
+                      return (
+                        <tr
+                          key={userId}
+                          className={`hover:bg-[var(--bg-input)]/70 transition-colors ${
+                            isSelected ? "bg-cyan-500/10" : ""
+                          }`}
+                        >
                         {/* Checkbox */}
                         <td className="p-3 text-center">
                           <input
@@ -915,7 +944,7 @@ export function CoordinatorProfilesView() {
                         </td>
                       </tr>
                     );
-                  })}
+                  }))}
                 </tbody>
               </table>
             </div>
