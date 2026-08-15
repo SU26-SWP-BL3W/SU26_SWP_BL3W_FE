@@ -2,13 +2,15 @@
 
 import React, { useState } from "react";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
-import { MOCK_EVENTS, MockEvent } from "@/viewModels/mockEventsData";
+import type { EventItem } from "@/viewModels/eventsMetadata";
 import { staffRepository } from "@/repositories/staffRepository";
 import { ShieldAlert, Plus, Users, School, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 import { useEvents } from "@/repositories/eventsRepository";
 import { usersRepository } from "@/repositories/usersRepository";
+
+import { ApiMissingDataBadge } from "@/components/ui";
 
 function HudLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -33,14 +35,14 @@ export const AdminDashboardView: React.FC = () => {
   const { data: rawEvents = [] } = useEvents();
   const realEvents = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data ?? [];
 
-  const displayEvents = realEvents.length > 0 ? realEvents : MOCK_EVENTS;
+  const displayEvents = realEvents;
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [ecEmail, setEcEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignSuccessMessage, setAssignSuccessMessage] = useState<string | null>(null);
 
-  const handleOpenAssignModal = (ev: MockEvent) => {
+  const handleOpenAssignModal = (ev: EventItem) => {
     setSelectedEvent(ev);
     setEcEmail("");
     setAssignSuccessMessage(null);
@@ -174,66 +176,74 @@ export const AdminDashboardView: React.FC = () => {
         <Card className="p-6 space-y-4 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)]">
           <SectionTitle>DANH SÁCH TẤT CẢ SỰ KIỆN TRONG HỆ THỐNG ({displayEvents.length})</SectionTitle>
 
-          <div className="overflow-x-auto">
-            <Table>
-              <thead>
-                <tr>
-                  <th>MÃ EVENT / TÊN SỰ KIỆN</th>
-                  <th>MÙA GIẢI</th>
-                  <th>SỐ VÒNG THI</th>
-                  <th>EVENT COORDINATOR PHỤ TRÁCH</th>
-                  <th>TRẠNG THÁI</th>
-                  <th className="text-center">THAO TÁC ADMIN</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayEvents.map((ev: any, index: number) => {
-                  const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-admin-${index}`;
-                  const name = ev.eventName || ev.EventName || "Sự kiện Hackathon";
-                  const season = ev.season || ev.Season || "Mùa Hè";
-                  const year = ev.year || ev.Year || 2026;
-                  const roundsCount = ev.rounds?.length ?? ev.Rounds?.length ?? 1;
-                  const ecInfo = ev.coordinatorEmail || ev.CoordinatorEmail || (index % 2 === 0 ? "ec.coordinator@seal.edu.vn" : "ec.tuan@seal.edu.vn");
+          {displayEvents.length === 0 ? (
+            <ApiMissingDataBadge
+              endpoint="GET /api/Events"
+              title="CHƯA CÓ SỰ KIỆN TỪ BACKEND DATABASE"
+              message="Chưa có bản ghi sự kiện nào được trả về từ Backend API. Vui lòng bấm 'Khởi Tạo Sự Kiện Mới' để tạo sự kiện."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <thead>
+                  <tr>
+                    <th>MÃ EVENT / TÊN SỰ KIỆN</th>
+                    <th>MÙA GIẢI</th>
+                    <th>SỐ VÒNG THI</th>
+                    <th>EVENT COORDINATOR PHỤ TRÁCH</th>
+                    <th>TRẠNG THÁI</th>
+                    <th className="text-center">THAO TÁC ADMIN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayEvents.map((ev: any, index: number) => {
+                    const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-admin-${index}`;
+                    const name = ev.eventName || ev.EventName || "Sự kiện Hackathon";
+                    const season = ev.season || ev.Season || "Mùa Hè";
+                    const year = ev.year || ev.Year || 2026;
+                    const roundsCount = ev.rounds?.length ?? ev.Rounds?.length ?? 1;
+                    const ecInfo = ev.coordinatorEmail || ev.CoordinatorEmail || "Chưa gán EC";
 
-                  return (
-                    <tr key={id}>
-                      <td>
-                        <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{name}</div>
-                        <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{id}</div>
-                      </td>
-                      <td>
-                        <Badge tone="team">{season} {year}</Badge>
-                      </td>
-                      <td>
-                        <span className="font-mono text-xs text-[var(--text-primary)]">
-                          {roundsCount} Vòng Thi
-                        </span>
-                      </td>
-                      <td>
-                        <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold">
-                          EC. {ecInfo}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
-                          ACTIVE
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleOpenAssignModal(ev)}
-                          className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
-                        >
-                          <UserCheck className="w-3.5 h-3.5" /> Gán EC
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </div>
+                    return (
+                      <tr key={id}>
+                        <td>
+                          <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{name}</div>
+                          <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{id}</div>
+                        </td>
+                        <td>
+                          <Badge tone="team">{season} {year}</Badge>
+                        </td>
+                        <td>
+                          <span className="font-mono text-xs text-[var(--text-primary)]">
+                            {roundsCount} Vòng Thi
+                          </span>
+                        </td>
+                        <td>
+                          <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold">
+                            EC. {ecInfo}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
+                            ACTIVE
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleOpenAssignModal(ev)}
+                            className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
+                          >
+                            <UserCheck className="w-3.5 h-3.5" /> Gán EC
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </Card>
 
         {/* Modal Gán Event Coordinator Dành Cho Admin */}

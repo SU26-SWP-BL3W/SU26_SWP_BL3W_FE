@@ -3,14 +3,8 @@
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useAuth } from "@/providers/AuthProvider";
-import {
-  getMockTeam,
-  getMockMembers,
-  getMockInvitations,
-  MOCK_CURRENT_USER,
-  type MockMember,
-  type TeamStatus,
-} from "@/viewModels/mockTeamData";
+export type TeamStatus = "Forming" | "PendingApproval" | "Approved" | "Registered" | "Rejected" | "Disqualified";
+import type { MemberItem } from "@/viewModels/teamTypes";
 import { Shield, Search, Crown, Users, LogOut, Trophy } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -38,6 +32,20 @@ const STATUS_CONFIG: Record<
     bg: "bg-[var(--color-success)]/10",
     border: "border-[var(--color-success)]/40",
     dot: "bg-[var(--color-success)]",
+  },
+  Approved: {
+    label: "ĐÃ ĐƯỢC BTC DUYỆT ĐĂNG KÝ",
+    color: "text-[var(--color-success)]",
+    bg: "bg-[var(--color-success)]/10",
+    border: "border-[var(--color-success)]/40",
+    dot: "bg-[var(--color-success)]",
+  },
+  Rejected: {
+    label: "TỪ CHỐI / BỊ LOẠI",
+    color: "text-[var(--color-danger)]",
+    bg: "bg-[var(--color-danger)]/10",
+    border: "border-[var(--color-danger)]/40",
+    dot: "bg-[var(--color-danger)]",
   },
   Disqualified: {
     label: "TỪ CHỐI / BỊ LOẠI",
@@ -75,14 +83,14 @@ function MemberRow({
   isLeader,
   onTransfer,
 }: {
-  member: MockMember;
+  member: MemberItem;
   isCurrentUser: boolean;
   isLeader: boolean;
   onTransfer: (userId: string, name: string) => void;
 }) {
   const initials = member.fullName
     .split(" ")
-    .map((w) => w[0])
+    .map((w: string) => w[0])
     .slice(-2)
     .join("")
     .toUpperCase();
@@ -161,9 +169,7 @@ function NoTeamState() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(
-      `[MOCK] Tạo đội: "${teamName}"\nDescription: "${description}"\n\n→ Sẽ gọi POST /api/Teams khi có API`
-    );
+    alert(`Khởi tạo đội: "${teamName}"\nDescription: "${description}"`);
   };
 
   return (
@@ -259,18 +265,34 @@ function NoTeamState() {
   );
 }
 
+import { useMyTeam } from "@/repositories/teamsRepository";
+import { ApiMissingDataBadge } from "@/components/ui";
+
 // ─── Main View ────────────────────────────────────────────────────────────────
 export function MyTeamView() {
   const { user, activeRole } = useAuth();
   const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
   const isLeader = roleName === "TeamLeader";
 
-  const team = getMockTeam();
-  const members = getMockMembers();
-  const invitations = getMockInvitations();
+  const { data: teamResponse, isLoading } = useMyTeam();
+  const realTeam = teamResponse?.team;
+
+  const team = realTeam ? {
+    id: realTeam.TeamId || (realTeam as any).id || "tm-real",
+    teamCode: (realTeam as any).teamCode || "#TM-REAL",
+    teamName: realTeam.TeamName || (realTeam as any).teamName || "Đội Thi Chưa Đặt Tên",
+    description: realTeam.Description || (realTeam as any).description || "",
+    eventId: realTeam.EventId || (realTeam as any).eventId || "event-seal-2026",
+    status: realTeam.Status || (realTeam as any).status || "Forming",
+    eventName: "SEAL Hackathon 2026",
+    createdTime: "2026-08-01",
+  } : null;
+
+  const members: any[] = teamResponse?.members || [];
+  const invitations: any[] = teamResponse?.invitations || [];
 
   const [inviteEmail, setInviteEmail] = useState("");
-  const [pendingInvites, setPendingInvites] = useState(() => invitations);
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferTarget, setTransferTarget] = useState<{ id: string; name: string } | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -278,7 +300,18 @@ export function MyTeamView() {
   const [isSubmittingRegistration, setIsSubmittingRegistration] = useState(false);
 
   // State 1: Chưa có đội
-  if (!team) return <NoTeamState />;
+  if (!team && !isLoading) {
+    return (
+      <main className="hud-lattice flex flex-1 flex-col p-8 space-y-6 max-w-[var(--container-max)] mx-auto w-full">
+        <ApiMissingDataBadge
+          endpoint="GET /api/Teams/me"
+          title="BẠN CHƯA THAM GIA ĐỘI THI NÀO TRÊN BACKEND DATABASE"
+          message="Bạn chưa có bản ghi đội thi nào trên Backend API. Vui lòng bấm 'Tạo Đội Thi Mới' bên dưới để bắt đầu."
+        />
+        <NoTeamState />
+      </main>
+    );
+  }
 
   const unapprovedMembers = members.filter((m) => !m.isApproved);
   const memberCount = members.length;
@@ -293,7 +326,7 @@ export function MyTeamView() {
     if (!inviteEmail.trim()) return;
     const newInv = {
       id: `inv-${Date.now()}`,
-      teamId: team.id,
+      teamId: team?.id || "",
       email: inviteEmail.trim(),
       status: "Pending" as const,
       sentAt: new Date().toISOString(),
@@ -340,7 +373,7 @@ export function MyTeamView() {
             Ghi Danh Với BTC
           </h2>
           <p className="font-mono text-xs text-[var(--text-muted)] mt-1">
-            Đội <span className="text-[var(--accent-team)] font-bold">{team.name}</span> — {team.eventName}
+            Đội <span className="text-[var(--accent-team)] font-bold">{team?.teamName || "Đội Thi"}</span> — {team?.eventName || "SEAL Hackathon 2026"}
           </p>
         </div>
 
@@ -477,7 +510,7 @@ export function MyTeamView() {
           <div>
             <HudLabel>TEAM OPERATIONS HUB</HudLabel>
             <h1 className="font-display text-4xl font-bold uppercase tracking-wide text-[var(--accent-team)] mt-1">
-              {team.name}
+              {team.teamName}
             </h1>
             <div className="flex flex-wrap items-center gap-3 mt-3">
               <span className={`font-mono text-[10px] font-bold px-2.5 py-1 border tracking-widest uppercase flex items-center gap-1.5 ${

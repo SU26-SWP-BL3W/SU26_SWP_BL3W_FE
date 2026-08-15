@@ -3,18 +3,10 @@
 import { useState, useMemo } from "react";
 import { useCreateSubmission } from "@/repositories/submitResultsRepository";
 import { Link } from "@/i18n/routing";
-import {
-  getMockTeam,
-  getMockRounds,
-  getMockTracksByRound,
-  getMockDeliverables,
-  getMockSubmissions,
-  type MockRound,
-  type MockTrack,
-  type MockDeliverable,
-  type MockSubmission,
-  type DeliverableType,
-} from "@/viewModels/mockTeamData";
+import { useMyTeam } from "@/repositories/teamsRepository";
+import { ApiMissingDataBadge } from "@/components/ui";
+
+import type { RoundItem, TrackItem, DeliverableItem, SubmissionItem, DeliverableType } from "@/viewModels/teamTypes";
 
 // ─── Deliverable Icon Metadata ────────────────────────────────────────────────
 const DELIVERABLE_ICONS: Record<DeliverableType, { label: string; icon: string; badgeColor: string }> = {
@@ -33,11 +25,11 @@ function TrackSubmissionCard({
   existingSubmission,
   onSubmitSuccess,
 }: {
-  track: MockTrack;
-  existingSubmission?: MockSubmission;
-  onSubmitSuccess: (trackId: string, updatedSub: MockSubmission) => void;
+  track: TrackItem;
+  existingSubmission?: SubmissionItem;
+  onSubmitSuccess: (trackId: string, updatedSub: SubmissionItem) => void;
 }) {
-  const deliverables = getMockDeliverables(track.id);
+  const deliverables: DeliverableItem[] = [];
   const createSubmission = useCreateSubmission();
 
   // Parse existing submission links if available
@@ -111,7 +103,7 @@ function TrackSubmissionCard({
 
     try {
       await createSubmission.mutateAsync(payload as any);
-      const updatedMock: MockSubmission = {
+      const updatedItem: SubmissionItem = {
         id: existingSubmission?.id || `sub-${Date.now()}`,
         teamId: "team-001",
         roundId: track.roundId,
@@ -126,7 +118,7 @@ function TrackSubmissionCard({
         isEliminated: false,
       };
       setIsSaved(true);
-      onSubmitSuccess(track.id, updatedMock);
+      onSubmitSuccess(track.id, updatedItem);
     } catch (err) {
       console.error(err);
       alert("Có lỗi xảy ra khi lưu bài nộp.");
@@ -193,8 +185,8 @@ function TrackSubmissionCard({
           </div>
 
           <div className="flex flex-col gap-3">
-            {deliverables.map((dlv) => {
-              const meta = DELIVERABLE_ICONS[dlv.type] || DELIVERABLE_ICONS.other;
+            {deliverables.map((dlv: any) => {
+              const meta = (DELIVERABLE_ICONS as any)[dlv.type] || DELIVERABLE_ICONS.other;
               const val = linkValues[dlv.type] || linkValues[dlv.id] || "";
               const isFilled = val.trim().length > 0;
               const isValidUrl = isFilled && (val.startsWith("http://") || val.startsWith("https://"));
@@ -324,25 +316,14 @@ function TrackSubmissionCard({
 
 // ─── Main NewSubmissionView Component ──────────────────────────────────────────
 export function NewSubmissionView() {
-  const team = getMockTeam();
-  const rounds = getMockRounds(team?.eventId);
-  const activeRound = rounds[0] || null;
+  const { data: realTeam, isLoading } = useMyTeam();
+  const team = realTeam;
 
-  const [submissions, setSubmissions] = useState<Record<string, MockSubmission>>(() => {
-    const existingList = getMockSubmissions(team?.id);
-    const map: Record<string, MockSubmission> = {};
-    existingList.forEach((s) => {
-      map[s.trackId] = s;
-    });
-    return map;
-  });
+  const [submissions, setSubmissions] = useState<Record<string, SubmissionItem>>({});
 
-  const availableTracks = useMemo(() => {
-    if (!activeRound) return [];
-    return getMockTracksByRound(activeRound.id);
-  }, [activeRound]);
+  const availableTracks: TrackItem[] = [];
 
-  const handleTrackSubmitSuccess = (trackId: string, updatedSub: MockSubmission) => {
+  const handleTrackSubmitSuccess = (trackId: string, updatedSub: SubmissionItem) => {
     setSubmissions((prev) => ({
       ...prev,
       [trackId]: updatedSub,
@@ -350,16 +331,21 @@ export function NewSubmissionView() {
   };
 
   // Guard for Non-registered teams
-  if (!team || team.status !== "Registered") {
+  if (!team && !isLoading) {
     return (
-      <div className="hud-lattice min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
+      <div className="hud-lattice min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 space-y-4">
+        <ApiMissingDataBadge
+          endpoint="GET /api/SubmitResults"
+          title="BẠN CHƯA CÓ ĐỘI THI ĐỂ NỘP BÀI TRÊN BACKEND DATABASE"
+          message="Vui lòng tạo hoặc tham gia một Đội thi chính thức trước khi thực hiện nộp bài."
+        />
         <div className="max-w-md w-full bg-[var(--bg-panel)] border border-[var(--color-warning)]/40 hud-clipped p-8 text-center">
           <div className="font-mono text-[10px] text-[var(--color-warning)] tracking-widest uppercase mb-3">
             CHƯA ĐỦ ĐIỀU KIỆN NỘP BÀI
           </div>
           <p className="font-mono text-sm text-[var(--text-primary)] mb-4 leading-relaxed">
             {!team ? "Bạn chưa có đội thi." : `Trạng thái đội thi hiện tại: `}
-            {team && <span className="font-bold text-[var(--color-warning)]">{team.status}</span>}
+            {team && <span className="font-bold text-[var(--color-warning)]">{(team as any)?.status || (team as any)?.Status}</span>}
             <br />
             <span className="text-xs text-[var(--text-muted)] mt-1 block">
               Đội cần được BTC phê duyệt ghi danh trước khi thực hiện nộp bài.
@@ -402,14 +388,14 @@ export function NewSubmissionView() {
               Nộp Bài Thi Hackathon
             </h1>
             <div className="flex flex-wrap items-center gap-3 mt-2 font-mono text-xs text-[var(--text-muted)]">
-              <span>Đội: <strong className="text-[var(--accent-team)]">{team.name}</strong></span>
+              <span>Đội: <strong className="text-[var(--accent-team)]">{(team as any)?.teamName || (team as any)?.TeamName || "Đội Thi"}</strong></span>
               <span>·</span>
               <span>Sự kiện:</span>
               <Link
-                href={`/events/${team.eventId}`}
+                href={`/events/${(team as any)?.eventId || "event-seal-2026"}`}
                 className="text-[var(--accent-primary)] hover:underline flex items-center gap-1 border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded-none font-bold"
               >
-                <span>{team.eventName}</span>
+                <span>{(team as any)?.eventName || "SEAL Hackathon 2026"}</span>
                 <span className="text-[10px]">↗ XEM CHI TIẾT SỰ KIỆN</span>
               </Link>
             </div>
@@ -424,37 +410,6 @@ export function NewSubmissionView() {
           </div>
         </div>
 
-        {/* ── Current Round Banner ── */}
-        {activeRound && (
-          <div className="mb-8 p-5 bg-[var(--bg-panel)]/70 border border-[var(--accent-primary)]/30 hud-clipped flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 border border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/10 flex items-center justify-center font-mono font-bold text-sm text-[var(--accent-primary)]">
-                R{activeRound.roundNumber}
-              </div>
-              <div>
-                <div className="font-mono text-[10px] text-[var(--accent-primary)] uppercase font-bold tracking-widest">
-                  VÒNG THI ĐANG DIỄN RA
-                </div>
-                <div className="font-display text-lg font-bold text-[var(--text-primary)]">
-                  {activeRound.roundName}
-                </div>
-              </div>
-            </div>
-
-            <div className="font-mono text-xs text-[var(--text-muted)] flex flex-wrap items-center gap-3">
-              <div className="border border-[var(--accent-team)]/40 bg-[var(--accent-team)]/10 px-3 py-1 text-[var(--accent-team)] font-bold text-xs">
-                LẦN NỘP BÀI: <span className="text-[var(--text-primary)]">1 / 3</span> <span className="text-[9px] text-[var(--text-muted)] font-normal">(BR-11 Max 3)</span>
-              </div>
-              <div>
-                Hạn nộp: <strong className="text-[var(--text-primary)]">{new Date(activeRound.endDate).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</strong>
-              </div>
-              <span className="px-2.5 py-1 border border-[var(--color-success)]/40 bg-[var(--color-success)]/10 text-[var(--color-success)] font-bold text-[10px] uppercase">
-                ĐANG MỞ CỔNG NỘP
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* ── Scrollable Track Submissions Section List ── */}
         <div className="flex flex-col gap-8">
           <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
@@ -468,9 +423,11 @@ export function NewSubmissionView() {
           </div>
 
           {availableTracks.length === 0 ? (
-            <div className="p-12 text-center bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs text-[var(--text-muted)]">
-              Chưa có hạng mục nào cho vòng thi hiện tại.
-            </div>
+            <ApiMissingDataBadge
+              endpoint="GET /api/SubmitResults"
+              title="CHƯA CÓ HẠNG MỤC NỘP BÀI TRÊN BACKEND DATABASE"
+              message="Chưa có Hạng mục thi đấu nào được khởi tạo hoặc gán mở cổng nộp bài trên Backend API."
+            />
           ) : (
             availableTracks.map((track) => (
               <TrackSubmissionCard

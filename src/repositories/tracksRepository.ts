@@ -41,7 +41,8 @@ export function useGetTracksByEvent(eventId?: string) {
           { params: { EventId: eventId, PageSize: 100 } }
         );
         return res.data.data?.data ?? [];
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Tracks/event error:", err?.message);
         return [];
       }
     },

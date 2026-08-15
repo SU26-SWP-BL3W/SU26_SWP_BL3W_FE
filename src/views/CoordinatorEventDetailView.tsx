@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button, Card, Badge } from "@/components/ui";
 import { useEventDetail, useEventRounds, eventsRepository } from "@/repositories/eventsRepository";
 import { useGetTracksByEvent, tracksRepository } from "@/repositories/tracksRepository";
-import { useGetTemplates, templatesRepository, MOCK_DEFAULT_CRITERIAS } from "@/repositories/templatesRepository";
+import { useGetTemplates, templatesRepository } from "@/repositories/templatesRepository";
 import { roundsRepository } from "@/repositories/roundsRepository";
 import { staffRepository, useGetEventRoles } from "@/repositories/staffRepository";
 import { Step1EventBasicInfo } from "@/components/domain/event-wizard/Step1EventBasicInfo";
@@ -73,13 +73,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
   const [status, setStatus] = useState<boolean>(true);
   const [photoEventUrl, setPhotoEventUrl] = useState<string>("");
 
-  const INITIAL_CRITERIAS: TemplateCriteriaFormState[] = (MOCK_DEFAULT_CRITERIAS as any[]).map((c, i) => ({
-    criteriaId: c.criteriaId || c.CriteriaId || `crit-${i + 1}`,
-    criterionName: c.criterionName || c.CriterionName || `Tiêu chí ${i + 1}`,
-    description: c.description || c.Description || "",
-    weight: c.weight || c.Weight || 25,
-    maxScore: c.maxScore || c.MaxScore || 10,
-  }));
+  const INITIAL_CRITERIAS: TemplateCriteriaFormState[] = [];
 
   const [rounds, setRounds] = useState<RoundFormState[]>([]);
   const [tracks, setTracks] = useState<TrackFormState[]>([]);

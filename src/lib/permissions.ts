@@ -18,10 +18,8 @@ function getAssignedEventIds(role: EventRole | null): string[] {
  * - Nếu không được phân công ➔ Trả về false (Chỉ cho phép XEM - Read-Only).
  *
  * KHÔNG có fallback "coi như được phân công event-seal-2026" — trước đây có,
- * khiến hàm này LUÔN trả true cho mọi role (vì mock login chưa từng set
- * assignedEventIds), tức là không thật sự chặn gì cả. Nếu cần demo nhanh 1
- * event cụ thể, set thẳng assignedEventIds trên role mock đó (AuthProvider),
- * không giấu giả định vào trong hàm kiểm tra quyền.
+ * khiến hàm này LUÔN trả true cho mọi role, tức là không thật sự chặn gì cả.
+ * Nếu cần phân công event cụ thể, set thẳng assignedEventIds trên AuthProvider.
  */
 export function hasEventPermission(
   user: User | null,

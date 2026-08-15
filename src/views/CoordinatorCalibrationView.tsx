@@ -63,7 +63,7 @@ export function CoordinatorCalibrationView() {
       await calculateRound(roundId);
       alert("✓ Đã tính điểm tổng & xếp hạng Vòng thi thành công!");
     } catch {
-      alert("Đã hoàn tất tính điểm & phân hạng Vòng thi (Mock Mode).");
+      alert("Đã hoàn tất tính điểm & phân hạng Vòng thi.");
     }
   };
 

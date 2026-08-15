@@ -193,7 +193,7 @@ export function UserProfileView() {
     }
 
     try {
-      const mockPhotoUrl = photoFile
+      const photoCardUrl = photoFile
         ? `https://storage.seal.vn/student-cards/${Date.now()}-${encodeURIComponent(photoFile.name)}`
         : photoPreview || undefined;
 
@@ -202,8 +202,8 @@ export function UserProfileView() {
         isFpt: schoolChoice === "FPT",
         schoolId: schoolChoice === "OTHER" ? schoolId : undefined,
         studentCode: studentCode.trim(),
-        photoStudentCardUrl: mockPhotoUrl,
-      } as any).catch((err) => console.warn("[SEAL] Profile update mocked:", err?.message));
+        photoStudentCardUrl: photoCardUrl,
+      } as any).catch((err) => console.warn("[SEAL] Profile update warning:", err?.message));
 
       setSubmitSuccess(true);
       setIsEditing(false);

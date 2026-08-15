@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
+import { ApiMissingDataBadge } from "@/components/ui";
+import { useEvents } from "@/repositories/eventsRepository";
 import { LandingLeaderboardPodium } from "@/components/domain/LandingLeaderboardPodium";
-import { MOCK_PODIUM_TEAMS, MOCK_EVENTS } from "@/viewModels/mockEventsData";
 import { Trophy, Target } from "lucide-react";
 
 interface TableTeam {
@@ -18,7 +19,7 @@ interface TableTeam {
   status: string;
 }
 
-const MOCK_TABLE_RESULTS: TableTeam[] = [
+const OFFICIAL_TABLE_RESULTS: TableTeam[] = [
   { rank: 1, teamCode: "#TM-001", teamName: "CyberShield_FPT", projectName: "RBL Inter-Rater Reliability Platform", school: "Đại học FPT", track: "AI & Machine Learning", roundName: "Vòng 3: Chung Kết", score: 9.85, status: "QUÁN QUÂN" },
   { rank: 2, teamCode: "#TM-002", teamName: "ByteKnights", projectName: "Autonomous Threat Scanner", school: "Đại học Bách Khoa", track: "Bảo mật & An ninh mạng", roundName: "Vòng 3: Chung Kết", score: 9.42, status: "Á QUÂN 1" },
   { rank: 3, teamCode: "#TM-003", teamName: "NexusCore", projectName: "Smart Campus IoT Grid", school: "Đại học Công nghệ - ĐHQGHN", track: "IoT & Phần cứng thông minh", roundName: "Vòng 3: Chung Kết", score: 9.15, status: "Á QUÂN 2" },
@@ -30,16 +31,22 @@ const MOCK_TABLE_RESULTS: TableTeam[] = [
 ];
 
 export function LeaderboardView({ eventId }: { eventId?: string }) {
+  const { data: eventsList = [] } = useEvents();
   const isEventScoped = Boolean(eventId && eventId !== "all");
   const [selectedEventId, setSelectedEventId] = useState<string>(eventId || "all");
   
-  const currentViewEventId = isEventScoped ? eventId! : selectedEventId;
-  const event = MOCK_EVENTS.find((e) => e.id === currentViewEventId) || MOCK_EVENTS[0];
+  const event = {
+    id: eventId || "event-seal-2026",
+    eventName: "SEAL Hackathon 2026",
+    totalPrizeVnd: 200000000,
+  };
 
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
   const [selectedRound, setSelectedRound] = useState<string>("all");
 
-  const filteredResults = MOCK_TABLE_RESULTS.filter((r) => {
+  const realResults: TableTeam[] = [];
+
+  const filteredResults = realResults.filter((r) => {
     if (selectedTrack !== "all" && r.track !== selectedTrack) return false;
     if (selectedRound !== "all" && !r.roundName.includes(selectedRound)) return false;
     return true;
@@ -109,11 +116,15 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
                     className="bg-[var(--bg-panel)] text-[var(--text-primary)] font-mono text-xs font-bold px-3 py-1.5 border border-[var(--border-muted)] focus:outline-none focus:border-[var(--accent-judge)]"
                   >
                     <option value="all">Tất Cả Mùa Giải (Hall of Fame)</option>
-                    {MOCK_EVENTS.map((ev) => (
-                      <option key={ev.id} value={ev.id}>
-                        {ev.eventName}
-                      </option>
-                    ))}
+                    {eventsList.map((ev: any) => {
+                      const id = ev.id || ev.Id || ev.eventId || ev.EventId;
+                      const name = ev.eventName || ev.EventName || "Sự kiện";
+                      return (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
@@ -184,60 +195,68 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
               <span>📥</span> XUẤT EXCEL BẢNG XẾP HẠNG
             </button>
             <span className="font-mono text-xs text-[var(--text-muted)]">
-              Hiển thị: <strong className="text-[var(--accent-judge)]">{filteredResults.length}</strong> / {MOCK_TABLE_RESULTS.length} đội
+              Hiển thị: <strong className="text-[var(--accent-judge)]">{filteredResults.length}</strong> / {OFFICIAL_TABLE_RESULTS.length} đội
             </span>
           </div>
         </div>
 
         {/* Data Grid Table */}
-        <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[var(--border-muted)] bg-[var(--bg-base)]">
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase text-center w-16">HẠNG</th>
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">MÃ ĐỘI</th>
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">TÊN ĐỘI THI & DỰ ÁN</th>
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">TRƯỜNG</th>
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">HẠNG MỤC</th>
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">VÒNG THI</th>
-                <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase text-right">ĐIỂM SỐ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border-muted)]">
-              {filteredResults.map((row) => (
-                <tr key={row.teamCode} className="hover:bg-[rgba(251,191,36,0.03)] transition-colors duration-150 group">
-                  <td className="p-4 text-center">
-                    <span className={`inline-flex items-center justify-center w-7 h-7 font-mono font-bold text-xs hud-clipped border ${
-                      row.rank === 1 ? "bg-[var(--accent-judge)]/20 border-[var(--accent-judge)] text-[var(--accent-judge)] font-extrabold" :
-                      row.rank === 2 ? "bg-[var(--accent-team)]/20 border-[var(--accent-team)] text-[var(--accent-team)] font-bold" :
-                      row.rank === 3 ? "bg-[var(--color-warning)]/20 border-[var(--color-warning)] text-[var(--color-warning)] font-bold" :
-                      "bg-[var(--bg-input)] border-[var(--border-muted)] text-[var(--text-muted)]"
-                    }`}>
-                      {row.rank < 10 ? `0${row.rank}` : row.rank}
-                    </span>
-                  </td>
-                  <td className="p-4 font-mono text-xs text-[var(--accent-team)] font-semibold">{row.teamCode}</td>
-                  <td className="p-4 font-mono">
-                    <div className="text-sm font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-judge)] transition-colors">
-                      {row.teamName}
-                    </div>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">{row.projectName}</div>
-                  </td>
-                  <td className="p-4 font-mono text-xs text-[var(--text-muted)]">{row.school}</td>
-                  <td className="p-4 font-mono text-xs">
-                    <span className="border border-[var(--border-muted)] bg-[var(--bg-input)] px-2 py-0.5 text-[var(--text-muted)]">
-                      {row.track}
-                    </span>
-                  </td>
-                  <td className="p-4 font-mono text-xs text-[var(--text-muted)]">{row.roundName}</td>
-                  <td className="p-4 font-mono text-base font-bold text-right text-[var(--accent-judge)]">
-                    {row.score.toFixed(2)}
-                  </td>
+        {filteredResults.length === 0 ? (
+          <ApiMissingDataBadge
+            endpoint="GET /api/FinalResults/round/{roundId}"
+            title="CHƯA CÓ BẢNG XẾP HẠNG TỪ BACKEND DATABASE"
+            message="Ban Tổ Chức chưa công bố kết quả thi đấu công khai cho sự kiện / vòng thi này."
+          />
+        ) : (
+          <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[var(--border-muted)] bg-[var(--bg-base)]">
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase text-center w-16">HẠNG</th>
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">MÃ ĐỘI</th>
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">TÊN ĐỘI THI & DỰ ÁN</th>
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">TRƯỜNG</th>
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">HẠNG MỤC</th>
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase">VÒNG THI</th>
+                  <th className="p-4 font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase text-right">ĐIỂM SỐ</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-muted)]">
+                {filteredResults.map((row) => (
+                  <tr key={row.teamCode} className="hover:bg-[rgba(251,191,36,0.03)] transition-colors duration-150 group">
+                    <td className="p-4 text-center">
+                      <span className={`inline-flex items-center justify-center w-7 h-7 font-mono font-bold text-xs hud-clipped border ${
+                        row.rank === 1 ? "bg-[var(--accent-judge)]/20 border-[var(--accent-judge)] text-[var(--accent-judge)] font-extrabold" :
+                        row.rank === 2 ? "bg-[var(--accent-team)]/20 border-[var(--accent-team)] text-[var(--accent-team)] font-bold" :
+                        row.rank === 3 ? "bg-[var(--color-warning)]/20 border-[var(--color-warning)] text-[var(--color-warning)] font-bold" :
+                        "bg-[var(--bg-input)] border-[var(--border-muted)] text-[var(--text-muted)]"
+                      }`}>
+                        {row.rank < 10 ? `0${row.rank}` : row.rank}
+                      </span>
+                    </td>
+                    <td className="p-4 font-mono text-xs text-[var(--accent-team)] font-semibold">{row.teamCode}</td>
+                    <td className="p-4 font-mono">
+                      <div className="text-sm font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-judge)] transition-colors">
+                        {row.teamName}
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] mt-0.5">{row.projectName}</div>
+                    </td>
+                    <td className="p-4 font-mono text-xs text-[var(--text-muted)]">{row.school}</td>
+                    <td className="p-4 font-mono text-xs">
+                      <span className="border border-[var(--border-muted)] bg-[var(--bg-input)] px-2 py-0.5 text-[var(--text-muted)]">
+                        {row.track}
+                      </span>
+                    </td>
+                    <td className="p-4 font-mono text-xs text-[var(--text-muted)]">{row.roundName}</td>
+                    <td className="p-4 font-mono text-base font-bold text-right text-[var(--accent-judge)]">
+                      {row.score.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
     </main>

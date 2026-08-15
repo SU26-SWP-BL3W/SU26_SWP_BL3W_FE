@@ -137,13 +137,13 @@ export function useUpdateStudentProfile() {
   });
 }
 
-// ─── FPT Mock Verification ────────────────────────────────────
+// ─── FPT Student Verification ──────────────────────────────────
 
 export function useFptStudentVerification() {
   return useMutation({
     mutationFn: async (studentCode: string) => {
       const res = await apiClient.get<BaseResponse<FptStudentResponse>>(
-        `/fpt-mock/students/${studentCode}`
+        `/FptStudents/${studentCode}`
       );
       return res.data.data;
     },

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { User, UserRejection, BaseResponse, PagedResult } from "@/models/entities";
 
-export const MOCK_USERS_LIST: User[] = [
+export const DEFAULT_USERS_LIST: User[] = [
   {
     id: "usr-admin-01",
     email: "admin.system@seal.edu.vn",
@@ -279,7 +279,7 @@ export function useGetUserRejections(userId: string | undefined) {
         );
         if (res.data?.data) return res.data.data;
       } catch {
-        // Mock fallback
+        // Fallback
       }
       return [];
     },
@@ -355,22 +355,17 @@ export function useRejectUser() {
   });
 }
 
-/** GET /api/fpt-mock/students/{studentCode} — Xác minh SV FPT */
+/** GET /api/FptStudents/{studentCode} — Xác minh SV FPT */
 export function useFptStudentLookup(studentCode: string | null) {
   return useQuery({
     queryKey: ["fptStudent", studentCode],
     queryFn: async () => {
       try {
-        const res = await apiClient.get(`/fpt-mock/students/${studentCode}`);
+        const res = await apiClient.get(`/FptStudents/${studentCode}`);
         return res.data?.data ?? res.data;
-      } catch {
-        return {
-          studentCode: studentCode || "SE170123",
-          fullName: "Nguyễn Văn A (FPT Student Verified)",
-          email: `${studentCode?.toLowerCase() || "se170123"}@fpt.edu.vn`,
-          isFpt: true,
-          isVerified: true,
-        };
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/FptStudents/" + studentCode + " error:", err?.message);
+        return null;
       }
     },
     enabled: !!studentCode && studentCode.length >= 5,
@@ -388,10 +383,9 @@ export const usersRepository = {
         (u) => u.email?.toLowerCase() === email.toLowerCase() || (u as any).Email?.toLowerCase() === email.toLowerCase()
       );
       if (found) return found;
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      console.warn("[SEAL BE-DATA MISSING] GET /api/Users error:", err?.message);
     }
-    const mockFound = MOCK_USERS_LIST.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-    return mockFound ?? null;
+    return null;
   },
 };

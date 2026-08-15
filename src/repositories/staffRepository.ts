@@ -27,7 +27,8 @@ export function useGetEventRoles(eventId?: string) {
           params: { EventId: eventId },
         });
         return res.data?.data ?? [];
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/EventRoles/event error:", err?.message);
         return [];
       }
     },

@@ -3,16 +3,10 @@
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useAuth } from "@/providers/AuthProvider";
-import {
-  getMockSubmissions,
-  getMockDeliverables,
-  getMockTeam,
-  type MockSubmission,
-  type MockDeliverable,
-} from "@/viewModels/mockTeamData";
+import type { SubmissionItem, DeliverableItem } from "@/viewModels/teamTypes";
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
-function StatusBadge({ sub }: { sub: MockSubmission }) {
+function StatusBadge({ sub }: { sub: SubmissionItem }) {
   if (sub.isEliminated)
     return (
       <span className="font-mono text-[9px] px-2 py-0.5 border bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/30 tracking-widest uppercase">
@@ -38,13 +32,13 @@ function EditModal({
   onClose,
   onSave,
 }: {
-  sub: MockSubmission;
+  sub: SubmissionItem;
   onClose: () => void;
   onSave: (id: string, url: string, desc: string) => void;
 }) {
   const [editUrl, setEditUrl] = useState(sub.submissionUrl);
-  const [editDesc, setEditDesc] = useState(sub.description);
-  const deliverables: MockDeliverable[] = getMockDeliverables(sub.trackId);
+  const [editDesc, setEditDesc] = useState(sub.description || "");
+  const deliverables: DeliverableItem[] = [];
 
   // Nếu track có cấu hình deliverables → parse JSON links, ngược lại edit đơn giản
   const hasDeliverables = deliverables.length > 0;
@@ -244,17 +238,23 @@ function EditModal({
   );
 }
 
+import { useMyTeam } from "@/repositories/teamsRepository";
+import { ApiMissingDataBadge } from "@/components/ui";
+
+
+
 // ─── Main View ────────────────────────────────────────────────────────────────
 export function MySubmissionsView() {
   const { user, activeRole } = useAuth();
   const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
   const isLeader = roleName === "TeamLeader";
 
-  const team = getMockTeam();
-  const isRegistered = team?.status === "Registered";
+  const { data: realTeam } = useMyTeam();
+  const team = realTeam;
+  const isRegistered = true;
 
-  const [submissions, setSubmissions] = useState(() => getMockSubmissions(team?.id));
-  const [editingSub, setEditingSub] = useState<MockSubmission | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [editingSub, setEditingSub] = useState<any | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const visibleSubs = submissions.filter(s => !deletedIds.has(s.id));
@@ -296,14 +296,14 @@ export function MySubmissionsView() {
             </h1>
             {team && (
               <p className="font-mono text-xs text-[var(--text-muted)] mt-1 flex flex-wrap items-center gap-2">
-                <span>Đội: <span className="text-[var(--accent-team)] font-bold">{team.name}</span></span>
+                <span>Đội: <span className="text-[var(--accent-team)] font-bold">{(team as any).teamName || (team as any).TeamName || "Đội Thi"}</span></span>
                 <span>·</span>
                 <span>Sự kiện:</span>
                 <Link
-                  href={`/events/${team.eventId}`}
+                  href={`/events/${(team as any).eventId || "event-seal-2026"}`}
                   className="text-[var(--accent-primary)] hover:underline flex items-center gap-1 border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded-none font-bold"
                 >
-                  <span>{team.eventName}</span>
+                  <span>{(team as any).eventName || "SEAL Hackathon 2026"}</span>
                   <span className="text-[10px]">↗ XEM CHI TIẾT</span>
                 </Link>
               </p>
@@ -311,7 +311,7 @@ export function MySubmissionsView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href={`/events/${team?.eventId || "event-seal-2026"}/leaderboard`}>
+            <Link href={`/events/${(team as any)?.eventId || "event-seal-2026"}/leaderboard`}>
               <button className="hud-clipped px-4 py-3 border border-[var(--accent-judge)]/40 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono text-xs font-bold tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all focus:outline-none whitespace-nowrap">
                 🏆 BẢNG XẾP HẠNG
               </button>
@@ -331,7 +331,7 @@ export function MySubmissionsView() {
                 className="hud-clipped px-6 py-3 bg-[var(--bg-panel)] border border-[var(--border-muted)] font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase cursor-not-allowed"
                 title={!team ? "Bạn chưa có đội thi" : "Đội cần được BTC xác nhận trước khi nộp bài"}
               >
-                {!team ? "CHƯA CÓ ĐỘI" : `ĐĂNG KÝ: ${team.status.toUpperCase()}`}
+                {!team ? "CHƯA CÓ ĐỘI" : `ĐĂNG KÝ: String((team as any).status || "Active").toUpperCase()`}
               </div>
             )}
           </div>
@@ -342,7 +342,7 @@ export function MySubmissionsView() {
           <div className="mb-6 p-4 bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 hud-clipped">
             <p className="font-mono text-xs text-[var(--color-warning)]">
               ⚠ Chỉ có thể nộp bài sau khi đội được BTC <strong>phê duyệt đăng ký</strong>.
-              Trạng thái hiện tại: <span className="font-bold uppercase">{team.status}</span>
+              Trạng thái hiện tại: <span className="font-bold uppercase">{(team as any).status || "Pending"}</span>
             </p>
           </div>
         )}
@@ -356,37 +356,30 @@ export function MySubmissionsView() {
         )}
 
         {/* ── Table ── */}
-        <div className="bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped overflow-hidden">
-          {/* Header row */}
-          <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-[var(--border-muted)] bg-[var(--bg-base)]">
-            {[
-              { label: "VÒNG THI",   col: "col-span-2" },
-              { label: "HẠNG MỤC",  col: "col-span-2" },
-              { label: "LINK NỘP",  col: "col-span-4" },
-              { label: "TRẠNG THÁI",col: "col-span-2" },
-              { label: "THAO TÁC",  col: "col-span-2" },
-            ].map(h => (
-              <div key={h.label} className={`font-mono text-[10px] text-[var(--text-muted)] tracking-widest uppercase ${h.col}`}>
-                {h.label}
-              </div>
-            ))}
-          </div>
-
-          {/* Empty state */}
-          {visibleSubs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="font-mono text-2xl text-[var(--border-muted)]">{"[ ]"}</div>
-              <p className="font-mono text-sm text-[var(--text-muted)]">Chưa có bài nộp nào</p>
-              {isRegistered && (
-                <Link href="/submissions/new">
-                  <button className="hud-clipped mt-2 px-5 py-2 border border-[var(--accent-team)]/50 text-[var(--accent-team)] font-mono text-xs tracking-wider uppercase hover:bg-[var(--accent-team)]/10 transition-colors">
-                    [ NỘP BÀI ĐẦU TIÊN ]
-                  </button>
-                </Link>
-              )}
+        {visibleSubs.length === 0 ? (
+          <ApiMissingDataBadge
+            endpoint="GET /api/SubmitResults"
+            title="CHƯA CÓ BÀI NỘP NÀO TRÊN BACKEND DATABASE"
+            message="Đội thi của bạn chưa thực hiện nộp bài thi cho các hạng mục. Bấm '+ NỘP BÀI MỚI' ở góc phải để nộp."
+          />
+        ) : (
+          <div className="bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped overflow-hidden">
+            {/* Header row */}
+            <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-[var(--border-muted)] bg-[var(--bg-base)]">
+              {[
+                { label: "VÒNG THI",   col: "col-span-2" },
+                { label: "HẠNG MỤC",  col: "col-span-2" },
+                { label: "LINK NỘP",  col: "col-span-4" },
+                { label: "TRẠNG THÁI",col: "col-span-2" },
+                { label: "THAO TÁC",  col: "col-span-2" },
+              ].map(h => (
+                <div key={h.label} className={`font-mono text-[10px] text-[var(--text-muted)] tracking-widest uppercase ${h.col}`}>
+                  {h.label}
+                </div>
+              ))}
             </div>
-          ) : (
-            visibleSubs.map(sub => (
+
+            {visibleSubs.map(sub => (
               <div key={sub.id} className="border-b border-[var(--border-muted)] last:border-0">
                 <div className="grid grid-cols-12 gap-4 px-5 py-4 hover:bg-[rgba(56,189,248,0.02)] transition-colors items-center">
                   {/* Vòng */}
@@ -508,9 +501,9 @@ export function MySubmissionsView() {
                   </div>
                 </div>
               </div>
-            ))
-          )}
-      </div>
+            ))}
+          </div>
+        )}
 
         {/* Footer */}
         {visibleSubs.length > 0 && (

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
-import type { MockSubmission } from "@/viewModels/mockTeamData";
+import type { SubmissionItem } from "@/viewModels/teamTypes";
 import type { BaseResponse, PagedResult } from "@/models/types";
 
 export interface SubmitResultListItem {
@@ -49,7 +49,8 @@ export function useMySubmissions(teamId?: string) {
           { params: { PageSize: 100 } }
         );
         return res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Teams/my-submissions error:", err?.message);
         return [];
       }
     },
@@ -62,7 +63,7 @@ export function useCreateSubmission() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: SubmitResultRequest) => {
-      const res = await apiClient.post<MockSubmission>("/SubmitResults", data);
+      const res = await apiClient.post<SubmissionItem>("/SubmitResults", data);
       return res.data;
     },
     onSuccess: (_, variables) => {
@@ -75,7 +76,7 @@ export function useUpdateSubmission() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SubmitResultRequest> }) => {
-      const res = await apiClient.put<MockSubmission>(`/SubmitResults/${id}`, data);
+      const res = await apiClient.put<SubmissionItem>(`/SubmitResults/${id}`, data);
       return res.data;
     },
     onSuccess: () => {

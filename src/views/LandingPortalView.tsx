@@ -12,7 +12,7 @@ import {
   TRACK_META,
   DEFAULT_TRACK_META,
   type EventCardData,
-} from "@/viewModels/mockEventsData";
+} from "@/viewModels/eventsMetadata";
 import { useLandingPreviewViewModel } from "@/viewModels/useLandingPreviewViewModel";
 import { LandingMetricsStrip } from "@/components/domain/LandingMetricsStrip";
 import { LandingWorkflowSteps } from "@/components/domain/LandingWorkflowSteps";

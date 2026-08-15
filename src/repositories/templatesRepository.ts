@@ -9,10 +9,12 @@ export function useGetCriterias() {
     queryFn: async () => {
       try {
         const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
-        return res.data?.data ?? MOCK_DEFAULT_CRITERIAS;
-      } catch {
-        return MOCK_DEFAULT_CRITERIAS;
+        const list = res.data?.data;
+        if (Array.isArray(list) && list.length > 0) return list;
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Criterias error:", err?.message);
       }
+      return [];
     },
   });
 }
@@ -23,10 +25,12 @@ export function useGetTemplates() {
     queryFn: async () => {
       try {
         const res = await apiClient.get<BaseResponse<TemplateEntity[]>>("/Templates");
-        return res.data?.data ?? MOCK_DEFAULT_TEMPLATES;
-      } catch {
-        return MOCK_DEFAULT_TEMPLATES;
+        const list = res.data?.data;
+        if (Array.isArray(list) && list.length > 0) return list;
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Templates error:", err?.message);
       }
+      return [];
     },
   });
 }
@@ -43,7 +47,7 @@ export interface AddCriteriaToTemplatePayload {
   maxScore: number; // e.g. 10
 }
 
-export const MOCK_DEFAULT_CRITERIAS: CriteriaEntity[] = [
+export const DEFAULT_CRITERIAS_LIST: CriteriaEntity[] = [
   {
     CriteriaId: "crit-1",
     CriterionName: "Tính đổi mới & sáng tạo (Innovation)",
@@ -78,20 +82,20 @@ export const MOCK_DEFAULT_CRITERIAS: CriteriaEntity[] = [
   },
 ];
 
-export const MOCK_DEFAULT_TEMPLATES: TemplateEntity[] = [
+export const DEFAULT_TEMPLATES_LIST: TemplateEntity[] = [
   {
     id: "tpl-default-ai",
     templateId: "tpl-default-ai",
     TemplateId: "tpl-default-ai",
     templateName: "Mẫu Tiêu Chí Chuẩn SEAL AI & Tech (100%)",
-    criterias: MOCK_DEFAULT_CRITERIAS,
+    criterias: DEFAULT_CRITERIAS_LIST,
   },
   {
     id: "tpl-default-web",
     templateId: "tpl-default-web",
     TemplateId: "tpl-default-web",
     templateName: "Mẫu Khảo Sát Web & Product (100%)",
-    criterias: MOCK_DEFAULT_CRITERIAS,
+    criterias: DEFAULT_CRITERIAS_LIST,
   },
 ];
 
@@ -100,12 +104,13 @@ export const templatesRepository = {
     try {
       const res = await apiClient.get<BaseResponse<TemplateEntity[]>>("/Templates");
       return res.data;
-    } catch {
+    } catch (err: any) {
+      console.warn("[SEAL BE-DATA MISSING] GET /api/Templates error:", err?.message);
       return {
-        data: MOCK_DEFAULT_TEMPLATES,
-        message: "Lấy danh sách mẫu tiêu chí",
-        statusCode: 200,
-        success: true,
+        data: [],
+        message: "Chưa có dữ liệu Templates từ Backend",
+        statusCode: 404,
+        success: false,
       };
     }
   },
@@ -114,12 +119,13 @@ export const templatesRepository = {
     try {
       const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
       return res.data;
-    } catch {
+    } catch (err: any) {
+      console.warn("[SEAL BE-DATA MISSING] GET /api/Criterias error:", err?.message);
       return {
-        data: MOCK_DEFAULT_CRITERIAS,
-        message: "Lấy danh sách tiêu chí mẫu",
-        statusCode: 200,
-        success: true,
+        data: [],
+        message: "Chưa có dữ liệu Criterias từ Backend",
+        statusCode: 404,
+        success: false,
       };
     }
   },

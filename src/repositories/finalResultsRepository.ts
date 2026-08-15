@@ -91,7 +91,8 @@ export function useGetPrizes(params?: { eventId?: string; trackId?: string }) {
           return list.filter((p: any) => p.trackId === params.trackId || p.TrackId === params.trackId);
         }
         return list;
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Events/" + params.eventId + "/Prizes error:", err?.message);
         return [];
       }
     },

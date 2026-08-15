@@ -6,3 +6,4 @@ export * from "./Table";
 export * from "./DropzoneUpload";
 export * from "./NumericScoreEvaluator";
 export * from "./HexagonLoader";
+export * from "./ApiMissingDataBadge";

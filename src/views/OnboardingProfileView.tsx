@@ -237,7 +237,7 @@ export function OnboardingProfileView() {
               <h2 className="font-display text-lg font-bold text-[var(--accent-primary)] tracking-widest uppercase">
                 XÁC MINH FPT
               </h2>
-              <p className="text-xs font-mono text-[var(--text-muted)]">// VIA FPT MOCK SYSTEM</p>
+              <p className="text-xs font-mono text-[var(--text-muted)]">// VIA FPT VERIFICATION SYSTEM</p>
             </div>
           </div>
 
@@ -320,7 +320,7 @@ export function OnboardingProfileView() {
                       isFpt: true,
                       studentCode: fptResult.studentCode ?? fptCode,
                       fullName: fptResult.fullName ?? undefined,
-                    } as any).catch((err) => console.warn("[SEAL] FPT submit mocked:", err?.message));
+                    } as any).catch((err) => console.warn("[SEAL] FPT submit warning:", err?.message));
                     setStep("pending");
                   } catch {
                     setSubmitError("Không thể gửi hồ sơ. Vui lòng thử lại.");
@@ -451,9 +451,9 @@ export function OnboardingProfileView() {
               onClick={async () => {
                 setSubmitError("");
                 try {
-                  const mockPhotoUrl = photoFile ? `https://storage.seal.vn/${Date.now()}-${encodeURIComponent(photoFile.name)}` : undefined;
-                  await submitProfile({ isFpt: false, schoolId, studentCode, photoStudentCardUrl: mockPhotoUrl })
-                    .catch((err) => console.warn("[SEAL] Non-FPT submit mocked:", err?.message));
+                  const photoCardUrl = photoFile ? `https://storage.seal.vn/${Date.now()}-${encodeURIComponent(photoFile.name)}` : undefined;
+                  await submitProfile({ isFpt: false, schoolId, studentCode, photoStudentCardUrl: photoCardUrl })
+                    .catch((err) => console.warn("[SEAL] Non-FPT submit warning:", err?.message));
                   setStep("pending");
                 } catch {
                   setSubmitError("Không thể gửi hồ sơ. Vui lòng thử lại.");

@@ -170,19 +170,10 @@ apiClient.interceptors.response.use(
       typeof window !== "undefined" &&
       !isPublicAuthRoute(error.config?.url)
     ) {
-      const currentAccessToken = localStorage.getItem("accessToken");
-      const isMockToken = currentAccessToken?.startsWith("mock-jwt-token-");
-
       console.warn("[auth] 401 tại", error.config?.url, {
         hasRefreshToken: !!localStorage.getItem("refreshToken"),
         alreadyRetried: !!original?._retry,
-        isMockToken,
       });
-
-      // Nếu đang dùng mock token cho dev/testing UI → không force logout làm nhảy trang
-      if (isMockToken) {
-        return Promise.reject(error);
-      }
 
       // Còn refresh token và chưa thử retry → làm mới access token rồi gọi lại.
       if (original && !original._retry && localStorage.getItem("refreshToken")) {

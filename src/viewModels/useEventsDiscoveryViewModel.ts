@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  MOCK_EVENTS,
   computeEventStatus,
   STATUS_PRIORITY,
   type EventDisplayStatus,
   type EventCardData,
-} from "./mockEventsData";
+} from "./eventsMetadata";
 
 import { usePublicEvents } from "@/repositories/eventsRepository";
 
@@ -76,7 +75,7 @@ export function useEventsDiscoveryViewModel() {
       };
     });
 
-    const combined = [...mappedReal, ...MOCK_EVENTS];
+    const combined = mappedReal;
     // Deduplicate by ID
     const seen = new Set<string>();
     const unique = combined.filter((ev) => {

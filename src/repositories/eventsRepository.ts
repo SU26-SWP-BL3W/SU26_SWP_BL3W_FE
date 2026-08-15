@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { Event, Round } from "@/models/entities";
-import type { MockRound } from "@/viewModels/mockEventsData";
+import type { EventRoundItem } from "@/viewModels/eventsMetadata";
 
 export interface MyEventModel {
   id?: string;
@@ -83,8 +83,6 @@ export interface EventDTO {
   name?: string;
 }
 
-import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
-
 const STORAGE_KEY = "seal_created_events";
 
 function getStoredEvents(): any[] {
@@ -109,9 +107,7 @@ function saveStoredEvents(list: any[]) {
 function mergeCreatedWithDb(dbList: any[]) {
   const localList = getStoredEvents();
   if (!Array.isArray(dbList) || dbList.length === 0) {
-    const dbIds = new Set(localList.map((e) => e.id || e.Id || e.eventId || e.EventId).filter(Boolean));
-    const fallbackMocks = MOCK_EVENTS.filter((m) => !dbIds.has(m.id));
-    return [...localList, ...fallbackMocks];
+    return localList;
   }
 
   const dbIds = new Set(
@@ -134,10 +130,14 @@ export function useEvents() {
         if (Array.isArray(data) && data.length > 0) {
           return mergeCreatedWithDb(data) as Event[];
         }
-      } catch {
-        // Fallback to cache store
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Events error:", err?.message);
       }
-      return mergeCreatedWithDb([]) as Event[];
+      const localEvents = mergeCreatedWithDb([]);
+      if (localEvents.length === 0) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Events returned 0 items from Backend DB.");
+      }
+      return localEvents as Event[];
     },
   });
 }
@@ -152,19 +152,18 @@ export function useMyEvents() {
         if (Array.isArray(data) && data.length > 0) {
           return mergeCreatedWithDb(data) as MyEventModel[];
         }
-      } catch {
-        // Fallback to fallback
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Events/my-events error:", err?.message);
       }
 
-      // Fallback: If my-events is empty or errors, fetch all events from GET /api/Events
       try {
         const allRes = await apiClient.get<any>("/Events");
         const allData = allRes.data?.data ?? allRes.data;
         if (Array.isArray(allData) && allData.length > 0) {
           return mergeCreatedWithDb(allData) as MyEventModel[];
         }
-      } catch {
-        // ignore
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Events error:", err?.message);
       }
       return mergeCreatedWithDb([]) as MyEventModel[];
     },
@@ -177,14 +176,18 @@ export function useEventDetail(eventId: string) {
     queryFn: async () => {
       try {
         const res = await apiClient.get<Event>(`/Events/${eventId}`);
-        return res.data;
-      } catch {
-        const allLocal = mergeCreatedWithDb([]);
-        const cached = allLocal.find(
-          (e) => (e.id || e.Id || e.eventId || e.EventId) === eventId
-        );
-        return cached || null;
+        if (res.data) return res.data;
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Events/" + eventId + " error:", err?.message);
       }
+      const allLocal = mergeCreatedWithDb([]);
+      const cached = allLocal.find(
+        (e) => (e.id || e.Id || e.eventId || e.EventId) === eventId
+      );
+      if (!cached) {
+        console.warn("[SEAL BE-DATA MISSING] Event detail not found in Real API for ID:", eventId);
+      }
+      return cached || null;
     },
     enabled: !!eventId,
   });
@@ -225,7 +228,7 @@ export async function deleteEvent(id: string): Promise<any> {
   try {
     await apiClient.delete(`/Events/${id}`);
   } catch {
-    // Ignore network error in mock mode
+    // Ignore network error in local mode
   }
   const currentStored = getStoredEvents();
   const updated = currentStored.filter(

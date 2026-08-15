@@ -17,39 +17,12 @@ export const notificationsRepository = {
     try {
       const res = await apiClient.get<BaseResponse<SystemNotification[]>>("/Notifications/my-notifications");
       return res.data;
-    } catch (error) {
+    } catch (error: any) {
+      console.warn("[SEAL BE-DATA MISSING] GET /api/Notifications/my-notifications error:", error?.message);
       return {
-        success: true,
-        data: [
-          {
-            id: "notif-01",
-            title: "Duyệt Hồ Sơ Thẻ Sinh Viên",
-            message: "Hồ sơ Thẻ Sinh Viên của bạn đã được Ban Tổ Chức xác minh thành công.",
-            type: "success",
-            createdAt: "10 phút trước",
-            isRead: false,
-            linkUrl: "/onboarding/profile",
-          },
-          {
-            id: "notif-02",
-            title: "Bảng Điểm Mới Từ Giám Khảo",
-            message: "Giám khảo TS. Nguyễn Văn A đã hoàn tất chấm điểm cho bài thi của Đội bạn.",
-            type: "info",
-            createdAt: "1 giờ trước",
-            isRead: false,
-            linkUrl: "/my-submissions",
-          },
-          {
-            id: "notif-03",
-            title: "Nhắc Nhở Hạn Nộp Bài Thi",
-            message: "Vòng Sơ Loại sẽ đóng cổng nộp bài thi trong 24h tới.",
-            type: "warning",
-            createdAt: "3 giờ trước",
-            isRead: true,
-            linkUrl: "/submissions/new",
-          },
-        ],
-        message: "Mock notifications",
+        success: false,
+        data: [],
+        message: "Chưa có thông báo từ Backend API",
       };
     }
   },
@@ -59,8 +32,9 @@ export const notificationsRepository = {
     try {
       const res = await apiClient.put<BaseResponse<boolean>>(`/Notifications/${notificationId}/read`);
       return res.data;
-    } catch (error) {
-      return { success: true, data: true, message: "Marked as read" };
+    } catch (error: any) {
+      console.warn("[SEAL BE-DATA MISSING] PUT /api/Notifications/" + notificationId + "/read error:", error?.message);
+      return { success: false, data: false, message: "Lỗi cập nhật trạng thái thông báo" };
     }
   },
 };

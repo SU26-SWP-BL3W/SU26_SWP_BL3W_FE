@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { Link } from "@/i18n/routing";
-import { getMockTeam } from "@/viewModels/mockTeamData";
 import { SealShield } from "./SealShield";
 import { NotificationBell } from "./NotificationBell";
 import { hasEventPermission } from "@/lib/permissions";
@@ -31,7 +30,7 @@ import {
 
 export function NavigationBar() {
   const pathname = usePathname() || "";
-  const { user, activeRole, login, logout } = useAuth();
+  const { user, activeRole, logout } = useAuth();
   const rawRole = activeRole?.roleName || activeRole?.RoleName;
   const userEmail = (user?.email || user?.Email || "").toLowerCase();
   
@@ -51,8 +50,7 @@ export function NavigationBar() {
     }
   }
 
-  const team = getMockTeam();
-  const currentEventId = team?.eventId || "event-seal-2026";
+  const currentEventId = "event-seal-2026";
 
   // XÁC ĐỊNH NGHIỆP VỤ RENDER THANH NAVBAR DỌC HOẶC NGANG
   const isCoordinatorRoute = pathname.includes("/coordinator");
@@ -174,18 +172,6 @@ export function NavigationBar() {
             <span className="text-[var(--color-danger)] font-bold">System Admin</span>
           </div>
 
-          {/* Role Switcher Bar */}
-          <div className="flex items-center justify-between gap-1 p-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-[10px]">
-            <button onClick={() => login("Admin")} className="text-[var(--color-danger)] font-bold hover:underline" title="Admin">Admin</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("TeamLeader")} className="text-[var(--accent-team)] hover:underline" title="Đội Trưởng">Leader</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("TeamMember")} className="text-[var(--accent-team)] hover:underline" title="Thành Viên">Member</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Judge")} className="text-[var(--accent-judge)] hover:underline" title="Giám Khảo">Judge</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Coordinator")} className="text-[var(--accent-coordinator)] hover:underline" title="Ban Tổ Chức">Coord</button>
-          </div>
 
           <button
             type="button"
@@ -317,18 +303,6 @@ export function NavigationBar() {
             <span className="text-[#a855f7] font-bold">Coordinator</span>
           </div>
 
-          {/* Role Switcher Bar */}
-          <div className="flex items-center justify-between gap-1 p-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-[10px]">
-            <button onClick={() => login("TeamLeader")} className="text-[var(--accent-team)] font-bold hover:underline" title="Đội Trưởng">Leader</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("TeamMember")} className="text-[var(--accent-team)] hover:underline" title="Thành Viên">Member</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Mentor")} className="text-[#2dd4bf] font-bold hover:underline" title="Cố Vấn">Mentor</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Judge")} className="text-[var(--accent-judge)] hover:underline" title="Giám Khảo">Judge</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Coordinator")} className="text-[#a855f7] font-bold hover:underline" title="Ban Tổ Chức">Coord</button>
-          </div>
 
           <button
             type="button"
@@ -456,18 +430,6 @@ export function NavigationBar() {
             </span>
           </div>
 
-          {/* Role Switcher Bar */}
-          <div className="flex items-center justify-between gap-1 p-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-[10px]">
-            <button onClick={() => login("TeamLeader")} className="text-[var(--accent-team)] font-bold hover:underline" title="Đội Trưởng">Leader</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("TeamMember")} className="text-[var(--accent-team)] hover:underline" title="Thành Viên">Member</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Mentor")} className="text-[#2dd4bf] font-bold hover:underline" title="Cố Vấn">Mentor</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Judge")} className="text-[var(--accent-judge)] hover:underline" title="Giám Khảo">Judge</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Coordinator")} className="text-[var(--accent-coordinator)] hover:underline" title="Ban Tổ Chức">Coord</button>
-          </div>
 
           <button
             type="button"
@@ -595,18 +557,6 @@ export function NavigationBar() {
             </span>
           </div>
 
-          {/* Role Switcher Bar */}
-          <div className="flex items-center justify-between gap-1 p-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] font-mono text-[10px]">
-            <button onClick={() => login("TeamLeader")} className="text-[var(--accent-team)] font-bold hover:underline" title="Đội Trưởng">Leader</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("TeamMember")} className="text-[var(--accent-team)] hover:underline" title="Thành Viên">Member</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Mentor")} className="text-[#2dd4bf] font-bold hover:underline" title="Cố Vấn">Mentor</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Judge")} className="text-[var(--accent-judge)] hover:underline" title="Giám Khảo">Judge</button>
-            <span className="text-[var(--border-muted)]">|</span>
-            <button onClick={() => login("Coordinator")} className="text-[var(--accent-coordinator)] hover:underline" title="Ban Tổ Chức">Coord</button>
-          </div>
 
           <button
             type="button"
@@ -630,7 +580,7 @@ export function NavigationBar() {
       : null;
 
     const activeViewEventId = urlEventId || currentEventId;
-    const isJoinedThisEvent = team && team.eventId === activeViewEventId;
+    const isJoinedThisEvent = false;
 
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[var(--border-muted)] flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
@@ -662,10 +612,10 @@ export function NavigationBar() {
               {isJoinedThisEvent ? "ĐANG THI ĐẤU" : "SỰ KIỆN CHƯA THAM GIA"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
-              {isJoinedThisEvent ? (team?.eventName || "SEAL Hackathon 2026") : (activeViewEventId === "event-seal-mini" ? "SEAL Mini Hack 2026" : "SEAL AI Sprint 2026")}
+              {isJoinedThisEvent ? "SEAL Hackathon 2026" : (activeViewEventId === "event-seal-mini" ? "SEAL Mini Hack 2026" : "SEAL AI Sprint 2026")}
             </span>
             <span className="font-mono text-[10px] font-bold text-[var(--accent-team)]">
-              {isJoinedThisEvent ? `Đội: ${team?.name}` : "Trạng thái: Thí sinh tự do"}
+              {isJoinedThisEvent ? "Đội thi" : "Trạng thái: Thí sinh tự do"}
             </span>
           </div>
 
@@ -872,21 +822,6 @@ export function NavigationBar() {
       <div className="flex items-center gap-4">
         <NotificationBell align="right" />
 
-        {/* Role Switcher Demo Control Bar */}
-        <div className="hidden lg:flex items-center gap-1.5 border border-[var(--border-muted)] px-2 py-1 bg-[var(--bg-input)] font-mono text-[10px] hud-clipped">
-          <span className="text-[var(--text-muted)] font-bold">Role:</span>
-          <button onClick={() => login("Admin")} className={`hover:underline ${roleName === "Admin" ? "text-[var(--color-danger)] font-bold" : "text-[var(--text-muted)]"}`}>Admin</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("TeamLeader")} className={`hover:underline ${roleName === "TeamLeader" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Leader</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("TeamMember")} className={`hover:underline ${roleName === "TeamMember" ? "text-[var(--accent-team)] font-bold" : "text-[var(--text-muted)]"}`}>Member</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Mentor")} className={`hover:underline ${roleName === "Mentor" ? "text-[#2dd4bf] font-bold" : "text-[var(--text-muted)]"}`}>Mentor</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Judge")} className={`hover:underline ${roleName === "Judge" ? "text-[var(--accent-judge)] font-bold" : "text-[var(--text-muted)]"}`}>Judge</button>
-          <span className="text-[var(--border-muted)]">|</span>
-          <button onClick={() => login("Coordinator")} className={`hover:underline ${roleName === "Coordinator" ? "text-[#a855f7] font-bold" : "text-[var(--text-muted)]"}`}>Coord</button>
-        </div>
 
         {user ? (
           <div className="flex items-center gap-3 font-mono text-xs">
