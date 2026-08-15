@@ -35,9 +35,9 @@
   --border-muted: #24344d;    /* Viền sắc nét phân khối */
 
   /* ---------- Typography ---------- */
-  --font-display-face: var(--font-chakra-petch), sans-serif;
-  --font-body-face:    var(--font-ibm-plex-sans), sans-serif;
-  --font-mono-face:    var(--font-jetbrains-mono), monospace;
+  --font-display-face: "Chakra Petch", var(--font-chakra-petch), sans-serif;
+  --font-body-face:    "IBM Plex Sans", var(--font-ibm-plex-sans), sans-serif;
+  --font-mono-face:    "JetBrains Mono", var(--font-jetbrains-mono), monospace;
   --fs-heading-lg: 26px;
   --fs-heading-md: 20px;
   --fs-body-md:    16px;

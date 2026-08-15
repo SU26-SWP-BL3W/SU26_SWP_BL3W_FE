@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -10,24 +9,6 @@ import { AppLayoutWrapper } from "@/components/domain/AppLayoutWrapper";
 import "@/styles/tokens.css";
 import "../globals.css";
 
-const chakraPetch = Chakra_Petch({
-  variable: "--font-chakra-petch",
-  subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700"],
-});
-
-const ibmPlexSans = IBM_Plex_Sans({
-  variable: "--font-ibm-plex-sans",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "700"],
-});
-
 export const metadata: Metadata = {
   title: "SEAL",
   description: "SEAL — SU26 SWP391 BL3W",
@@ -35,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
@@ -48,11 +29,15 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html
-      lang={locale}
-      className={`${chakraPetch.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
-      suppressHydrationWarning
-    >
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
