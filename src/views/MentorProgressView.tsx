@@ -1,45 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-import { useMyAssignedTracks } from "@/viewModels/useMyAssignedTracks";
-import { useGetSubmitResultsByTrack } from "@/repositories/submitResultsRepository";
-import { useGetTeamsByEvent } from "@/repositories/teamsRepository";
 import { useGetTeamScoreBreakdown } from "@/repositories/scoresRepository";
-import { Button, Card, Badge } from "@/components/ui";
-import { Shield, RefreshCw, BarChart2, CheckCircle2, Clock } from "lucide-react";
+import { Button, Card, Badge, Input } from "@/components/ui";
+import { Search, Shield, RefreshCw, BarChart2, CheckCircle2 } from "lucide-react";
 
 export function MentorProgressView() {
   const { user } = useAuth();
-  const { myTracks, isLoading: isLoadingTracks } = useMyAssignedTracks();
-  const [explicitTrackId, setExplicitTrackId] = useState("");
-  const selectedTrackId = explicitTrackId || myTracks[0]?.id || myTracks[0]?.Id || "";
-  const selectedTrack = myTracks.find((t) => (t.id || t.Id) === selectedTrackId);
-  const selectedEventId = selectedTrack?.eventId || selectedTrack?.EventId || "";
-
-  const { data: submissions = [] } = useGetSubmitResultsByTrack(selectedTrackId);
-  const { data: teams = [] } = useGetTeamsByEvent(selectedEventId);
-
-  const teamNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    teams.forEach((t) => map.set((t.id || t.Id) as string, t.name || t.Name || "Đội thi"));
-    return map;
-  }, [teams]);
-
-  const teamIdsInTrack = useMemo(() => {
-    const seen = new Set<string>();
-    submissions.forEach((s) => {
-      const teamId = (s.teamId || s.TeamId || "") as string;
-      if (teamId) seen.add(teamId);
-    });
-    return Array.from(seen);
-  }, [submissions]);
-
-  // Đội đang chọn phải nằm trong Track hiện tại — đổi Track thì tự về đội đầu tiên.
-  const [explicitTeamId, setExplicitTeamId] = useState("");
-  const activeTeamId = teamIdsInTrack.includes(explicitTeamId) ? explicitTeamId : teamIdsInTrack[0] || "";
+  const [inputTeamId, setInputTeamId] = useState("team-1");
+  const [activeTeamId, setActiveTeamId] = useState("team-1");
 
   const { data: scoreBreakdown, isLoading, refetch } = useGetTeamScoreBreakdown(activeTeamId);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputTeamId.trim()) {
+      setActiveTeamId(inputTeamId.trim());
+    }
+  };
 
   if (!user) {
     return (
@@ -62,61 +41,38 @@ export function MentorProgressView() {
               THEO DÕI TIẾN ĐỘ ĐỘI THI (MENTOR PROGRESS)
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              {"// MENTOR MONITORING & SCORE BREAKDOWN"}
+              // MENTOR MONITORING & SCORE BREAKDOWN
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-          <span className="text-[var(--text-muted)] uppercase">Hạng mục:</span>
-          <select
-            value={selectedTrackId}
-            onChange={(e) => setExplicitTrackId(e.target.value)}
-            className="bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-mentor)]"
-          >
-            {myTracks.map((t) => (
-              <option key={t.id || t.Id} value={t.id || t.Id}>
-                {t.trackName || t.TrackName}
-              </option>
-            ))}
-          </select>
-
-          <span className="text-[var(--text-muted)] uppercase ml-2">Đội thi:</span>
-          <select
-            value={activeTeamId}
-            onChange={(e) => setExplicitTeamId(e.target.value)}
-            disabled={teamIdsInTrack.length === 0}
-            className="bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-mentor)] disabled:opacity-50"
-          >
-            {teamIdsInTrack.length === 0 && <option value="">Chưa có đội nộp bài</option>}
-            {teamIdsInTrack.map((teamId) => (
-              <option key={teamId} value={teamId}>
-                {teamNameById.get(teamId) || `Đội #${teamId}`}
-              </option>
-            ))}
-          </select>
-
-          <Button variant="ghost" onClick={() => refetch()} className="text-xs flex items-center gap-1">
-            <RefreshCw className="w-3.5 h-3.5" /> Làm mới
+        <form onSubmit={handleSearch} className="flex items-center gap-2">
+          <Input
+            type="text"
+            placeholder="Mã đội thi (VD: team-1)"
+            value={inputTeamId}
+            onChange={(e) => setInputTeamId(e.target.value)}
+            className="w-48 text-xs font-mono"
+          />
+          <Button type="submit" variant="ghost" className="text-xs flex items-center gap-1">
+            <Search className="w-3.5 h-3.5" /> Tra cứu
           </Button>
-        </div>
+        </form>
       </div>
 
       {/* Content */}
       <div className="max-w-4xl mx-auto">
-        {isLoadingTracks || isLoading ? (
+        {isLoading ? (
           <div className="flex justify-center py-20">
             <RefreshCw className="w-8 h-8 animate-spin text-[var(--accent-mentor)]" />
           </div>
-        ) : !activeTeamId || !scoreBreakdown ? (
+        ) : !scoreBreakdown ? (
           <Card className="p-12 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
             <Shield className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
-            {myTracks.length === 0
-              ? "Bạn chưa được phân công Cố vấn cho Hạng mục nào."
-              : "Chọn một Đội thi để xem bảng phân rã điểm số theo từng tiêu chí."}
+            Nhập mã Đội thi để tra cứu bảng phân rã điểm số theo từng tiêu chí.
           </Card>
         ) : (
-          <div className="space-y-6">
+          <Card className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-6">
             <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
               <div>
                 <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
@@ -125,92 +81,50 @@ export function MentorProgressView() {
                 <h2 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase">
                   {scoreBreakdown.teamName || `Đội #${scoreBreakdown.teamId}`}
                 </h2>
+                <span className="text-xs font-mono text-[var(--text-muted)]">
+                  Hạng mục: {scoreBreakdown.trackName || "AI & Data Science"}
+                </span>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
+                  TỔNG ĐIỂM TRUNG BÌNH
+                </span>
+                <span className="font-mono text-3xl font-bold text-[var(--accent-mentor)]">
+                  {scoreBreakdown.totalScore} / 10
+                </span>
               </div>
             </div>
 
-            {scoreBreakdown.submissions.length === 0 ? (
-              <Card className="p-12 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
-                Đội thi này chưa có bài nộp nào được chấm điểm.
-              </Card>
-            ) : (
-              scoreBreakdown.submissions.map((submission) => (
-                <Card
-                  key={submission.submitResultId}
-                  className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-5"
+            {/* Criteria Breakdown List */}
+            <div className="space-y-4">
+              <h3 className="font-mono text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
+                PHÂN RÃ ĐIỂM SỐ THEO TIÊU CHÍ (CRITERIA BREAKDOWN)
+              </h3>
+
+              {scoreBreakdown.details?.map((item: any) => (
+                <div
+                  key={item.criteriaId}
+                  className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-muted)] pb-3">
-                    <div>
-                      <h3 className="font-display font-bold text-base text-[var(--text-primary)] uppercase">
-                        {submission.trackName} — {submission.roundName}
-                      </h3>
-                    </div>
-                    <Badge tone={submission.roundPublished ? "success" : "mentor"}>
-                      {submission.roundPublished ? "Kết quả đã công bố" : "Đang chấm điểm"}
-                    </Badge>
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-[var(--text-primary)]">{item.criteriaName}</span>
+                    <span className="text-[var(--accent-mentor)] font-bold">
+                      {item.scoreValue} / {item.maxScore} (Trọng số: {item.weight}%)
+                    </span>
                   </div>
 
-                  {submission.judgeScores.length === 0 ? (
-                    <p className="font-mono text-xs text-[var(--text-muted)]">
-                      Chưa có giám khảo nào chấm bài nộp này.
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {submission.judgeScores.map((judge, idx) => (
-                        <div
-                          key={`${submission.submitResultId}-${judge.judgeName}-${idx}`}
-                          className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-3"
-                        >
-                          <div className="flex items-center justify-between text-xs font-mono">
-                            <span className="flex items-center gap-2 font-bold text-[var(--text-primary)]">
-                              {judge.isSubmitted ? (
-                                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent-mentor)]" />
-                              ) : (
-                                <Clock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                              )}
-                              {judge.judgeName}
-                              {!judge.isSubmitted && (
-                                <span className="text-[10px] text-[var(--text-muted)] normal-case">
-                                  (chưa chốt điểm)
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-[var(--accent-mentor)] font-bold">
-                              {judge.totalScore} / 10
-                            </span>
-                          </div>
-
-                          {judge.comment && (
-                            <p className="font-mono text-[11px] text-[var(--text-muted)] italic">
-                              &ldquo;{judge.comment}&rdquo;
-                            </p>
-                          )}
-
-                          <div className="space-y-2">
-                            {judge.criteria.map((item) => (
-                              <div key={item.criteriaName} className="space-y-1">
-                                <div className="flex items-center justify-between text-[11px] font-mono">
-                                  <span className="text-[var(--text-primary)]">{item.criteriaName}</span>
-                                  <span className="text-[var(--text-muted)]">
-                                    {item.value} / {item.maxScore} (Trọng số: {item.weight}%)
-                                  </span>
-                                </div>
-                                <div className="w-full h-1.5 bg-[var(--bg-base)] border border-[var(--border-muted)] overflow-hidden">
-                                  <div
-                                    className="h-full bg-[var(--accent-mentor)] transition-all duration-300"
-                                    style={{ width: `${(item.value / item.maxScore) * 100}%` }}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              ))
-            )}
-          </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-2 bg-[var(--bg-base)] border border-[var(--border-muted)] overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--accent-mentor)] transition-all duration-300"
+                      style={{ width: `${(item.scoreValue / item.maxScore) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
       </div>
     </div>
