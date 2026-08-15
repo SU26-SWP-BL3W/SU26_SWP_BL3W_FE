@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth, PRESET_ACCOUNTS } from "@/providers/AuthProvider";
 import { Link, useRouter } from "@/i18n/routing";
 import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight, UserCheck } from "lucide-react";
@@ -13,7 +14,7 @@ export function LoginView() {
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { loginWithRole, loginWithEmail, loginWithCredentials } = useAuth();
+  const { loginWithRole, loginWithEmail, loginWithCredentials, loginWithGoogleCredential } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,9 +43,25 @@ export function LoginView() {
     router.push(targetPath);
   };
 
-  const handleGoogleLogin = () => {
-    const targetPath = loginWithRole("Student");
-    router.push(targetPath);
+  const handleGoogleSuccess = async (response: CredentialResponse) => {
+    if (!response.credential) {
+      setErrorMessage("Không nhận được token xác thực từ Google.");
+      return;
+    }
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const targetPath = await loginWithGoogleCredential(response.credential);
+      router.push(targetPath);
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || err?.message || "Đăng nhập Google thất bại.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrorMessage("Đăng nhập với Google bị hủy hoặc gặp sự cố.");
   };
 
   const handleFptEduLogin = () => {
@@ -166,15 +183,18 @@ export function LoginView() {
 
           {/* Social / OAuth Login Options */}
           <div className="space-y-2.5 font-mono">
-            {/* Google Login */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full py-2.5 bg-[#152238] hover:bg-[#1e2e4a] border border-[#1e2e4a] hover:border-slate-500 text-slate-200 font-bold text-xs hud-clipped transition-all flex items-center justify-center gap-2.5"
-            >
-              <GoogleIcon className="w-4 h-4" />
-              <span>Đăng nhập với Google</span>
-            </button>
+            {/* Google Login (Real Google Identity Services) */}
+            <div className="flex justify-center w-full py-0.5 overflow-hidden">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_black"
+                shape="rectangular"
+                text="signin_with"
+                size="large"
+                width="100%"
+              />
+            </div>
 
             {/* FPT Edu Login */}
             <button

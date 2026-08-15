@@ -15,6 +15,8 @@ export interface EventFormState {
   registrationStartDate: string;
   registrationEndDate: string;
   maxTeams: number;
+  minTeamSize?: number;
+  maxTeamSize?: number;
   tagline?: string;
   description: string;
 }
@@ -76,6 +78,8 @@ export function useCreateEventWizardViewModel() {
     registrationStartDate: "2026-06-01T08:00",
     registrationEndDate: "2026-07-10T17:00",
     maxTeams: 50,
+    minTeamSize: 3,
+    maxTeamSize: 5,
     tagline: "Đấu trường công nghệ RBL quy mô sinh viên toàn quốc",
     description: "Đấu trường công nghệ dành cho sinh viên toàn quốc quy mô lớn nhất trong năm của SEAL.",
   });
@@ -435,6 +439,24 @@ export function useCreateEventWizardViewModel() {
         setErrorMessage("Sự kiện cần ít nhất 1 Vòng thi (Round)!");
         return;
       }
+      for (const rnd of rounds) {
+        if (!rnd.roundName?.trim()) {
+          setErrorMessage(`Vui lòng nhập tên cho Vòng thi số ${rnd.roundNumber}!`);
+          return;
+        }
+        if (!rnd.startDate || !rnd.endDate) {
+          setErrorMessage(`Vòng "${rnd.roundName}" chưa thiết lập đầy đủ Thời gian Bắt đầu và Kết thúc!`);
+          return;
+        }
+        if (new Date(rnd.startDate) > new Date(rnd.endDate)) {
+          setErrorMessage(`Thời gian bắt đầu Vòng "${rnd.roundName}" phải trước thời gian kết thúc!`);
+          return;
+        }
+        if (!rnd.scoringEndDate) {
+          setErrorMessage(`Vui lòng thiết lập Hạn chót chấm điểm (Scoring End Date) cho Vòng "${rnd.roundName}"!`);
+          return;
+        }
+      }
       const rawObj = createdEvent as any;
       const realEventId = rawObj?.id || rawObj?.Id || rawObj?.eventId || rawObj?.EventId || rawObj?.data?.id || rawObj?.data?.Id || rawObj?.data?.eventId || rawObj?.data?.EventId;
       if (!realEventId) {
@@ -487,6 +509,12 @@ export function useCreateEventWizardViewModel() {
       if (tracks.length === 0) {
         setErrorMessage("Vui lòng cấu hình ít nhất 1 Hạng mục thi (Track)!");
         return;
+      }
+      for (const trk of tracks) {
+        if (!trk.trackName?.trim()) {
+          setErrorMessage("Tên Hạng mục thi không được để trống!");
+          return;
+        }
       }
       const realEventId = (createdEvent as any)?.id || (createdEvent as any)?.Id || createdEvent?.EventId || (createdEvent as any)?.data?.id;
       if (!realEventId) {

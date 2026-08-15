@@ -15,7 +15,23 @@ import { getMockTeam } from "@/viewModels/mockTeamData";
 
 export function EventDetailView({ eventId }: { eventId: string }) {
   const { user, activeRole } = useAuth();
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const rawRole = activeRole?.roleName || activeRole?.RoleName;
+  const userEmail = (user?.email || user?.Email || "").toLowerCase();
+  let roleName = rawRole || "";
+  if (roleName === "EventCoordinator") roleName = "Coordinator";
+  if (!roleName) {
+    if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
+      roleName = "Coordinator";
+    } else if (userEmail.includes("judge")) {
+      roleName = "Judge";
+    } else if (userEmail.includes("mentor")) {
+      roleName = "Mentor";
+    } else if (user?.isAdmin || user?.IsAdmin) {
+      roleName = "Admin";
+    } else {
+      roleName = "Guest";
+    }
+  }
   const team = getMockTeam();
 
   // Kiểm tra user/đội thi có thuộc sự kiện này không
@@ -149,16 +165,21 @@ export function EventDetailView({ eventId }: { eventId: string }) {
                   </>
                 )}
 
-                {roleName === "Coordinator" && (
+                {(roleName === "Coordinator" || roleName === "Admin") && (
                   <>
+                    <Link href={`/coordinator/events/${eventId}`}>
+                      <button className="px-4 py-2 bg-[#a855f7] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
+                        <span>✏️</span> 2. QUẢN LÝ / CHỈNH SỬA SỰ KIỆN (BTC)
+                      </button>
+                    </Link>
                     <Link href="/coordinator/dashboard">
-                      <button className="px-4 py-2 bg-[#a855f7] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🎯</span> 2. BÀN ĐIỀU HÀNH BTC
+                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[#a855f7]/50 text-[#a855f7] font-bold hover:bg-[#a855f7] hover:text-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
+                        <span>🎯</span> 3. CONTROL CENTER BTC
                       </button>
                     </Link>
                     <Link href={`/events/${eventId}/leaderboard`}>
                       <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 3. XEM BẢNG XẾP HẠNG
+                        <span>🏆</span> 4. XEM BẢNG XẾP HẠNG
                       </button>
                     </Link>
                   </>

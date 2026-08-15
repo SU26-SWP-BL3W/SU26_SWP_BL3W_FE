@@ -32,7 +32,25 @@ import {
 export function NavigationBar() {
   const pathname = usePathname() || "";
   const { user, activeRole, login, logout } = useAuth();
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const rawRole = activeRole?.roleName || activeRole?.RoleName;
+  const userEmail = (user?.email || user?.Email || "").toLowerCase();
+  
+  let roleName = rawRole || "";
+  if (roleName === "EventCoordinator") roleName = "Coordinator";
+  if (!roleName) {
+    if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
+      roleName = "Coordinator";
+    } else if (userEmail.includes("judge")) {
+      roleName = "Judge";
+    } else if (userEmail.includes("mentor")) {
+      roleName = "Mentor";
+    } else if (user?.isAdmin || user?.IsAdmin) {
+      roleName = "Admin";
+    } else {
+      roleName = "Guest";
+    }
+  }
+
   const team = getMockTeam();
   const currentEventId = team?.eventId || "event-seal-2026";
 
@@ -872,7 +890,7 @@ export function NavigationBar() {
 
         {user ? (
           <div className="flex items-center gap-3 font-mono text-xs">
-            {!user.isApproved && (
+            {user.isStudent && !user.isApproved && roleName !== "Coordinator" && roleName !== "Admin" && roleName !== "Judge" && roleName !== "Mentor" && (
               <Link
                 href="/profile"
                 className="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/40 font-bold hover:bg-[var(--color-warning)] hover:text-black transition-all hud-clipped"

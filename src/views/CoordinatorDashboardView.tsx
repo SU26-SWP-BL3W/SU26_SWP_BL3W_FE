@@ -7,7 +7,7 @@ import { useGetPendingTeams } from "@/repositories/teamsRepository";
 import { useAppeals } from "@/repositories/appealsRepository";
 import { useGetUsers } from "@/repositories/usersRepository";
 import { computeEventStatus, STATUS_LABEL, STATUS_TONE, STATUS_DOT_VAR, type MockEvent } from "@/viewModels/mockEventsData";
-import { Shield, Settings, Activity, Users, CalendarPlus, Trash2, Edit3, Award, FileText, CheckCircle2, Sliders, ExternalLink } from "lucide-react";
+import { Shield, Settings, Activity, Users, CalendarPlus, Trash2, Edit3, Award, FileText, CheckCircle2, Sliders, ExternalLink, Eye, EyeOff, Rocket } from "lucide-react";
 import Link from "next/link";
 
 function toEventDates(ev: MyEventModel): Pick<MockEvent, "startDate" | "endDate" | "registrationEndDate"> {
@@ -29,7 +29,27 @@ export const CoordinatorDashboardView: React.FC = () => {
   const [deleteTargetName, setDeleteTargetName] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [togglingEventId, setTogglingEventId] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
+
+  const handleTogglePublish = async (eventId: string, currentStatus: boolean, eventName: string) => {
+    const nextStatus = !currentStatus;
+    const confirmMsg = nextStatus
+      ? `Bạn có chắc chắn muốn CÔNG BỐ sự kiện "${eventName}" lên trang chủ công khai không?`
+      : `Bạn có chắc chắn muốn TẠM ẨN sự kiện "${eventName}" về trạng thái Bản Nháp (Draft) để chỉnh sửa không? Trong thời gian ẩn, thí sinh sẽ không thể thấy hay đăng ký mới.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    setTogglingEventId(eventId);
+    try {
+      await eventsRepository.updateEvent(eventId, { status: nextStatus });
+      await refetch();
+    } catch (err: any) {
+      alert(`Thao tác thất bại: ${err?.response?.data?.message || err?.message}`);
+    } finally {
+      setTogglingEventId(null);
+    }
+  };
 
   const pendingStudentsList = Array.isArray(pendingUsersData)
     ? pendingUsersData
@@ -229,6 +249,7 @@ export const CoordinatorDashboardView: React.FC = () => {
                 const season = ev.season || ev.Season || "Mùa giải";
                 const year = ev.year || ev.Year || 2026;
                 const maxTeams = ev.maxTeams || ev.MaxTeams || 50;
+                const isPublished = (ev as any).status === true || (ev as any).Status === true;
 
                 return (
                   <div
@@ -237,11 +258,22 @@ export const CoordinatorDashboardView: React.FC = () => {
                     style={{ borderTop: `3px solid ${STATUS_DOT_VAR[status]}` }}
                   >
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-[10px] text-[var(--accent-coordinator)] font-bold uppercase">
                           {season} {year}
                         </span>
-                        <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
+                        <div className="flex items-center gap-1.5">
+                          {isPublished ? (
+                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold hud-clipped">
+                              🟢 PUBLIC
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono font-bold hud-clipped">
+                              🟡 BẢN NHÁP
+                            </span>
+                          )}
+                          <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
+                        </div>
                       </div>
 
                       <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">
@@ -261,18 +293,55 @@ export const CoordinatorDashboardView: React.FC = () => {
                           <span>Mùa giải:</span>
                           <span className="text-[var(--text-primary)] font-bold">{ev.season || ev.Season || "Mùa Hè"} {ev.year || ev.Year || 2026}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span>Trạng thái hiển thị:</span>
+                          <span className={isPublished ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
+                            {isPublished ? "Công khai (Thí sinh có thể thấy)" : "Đang ẩn (Chỉ BTC/Admin thấy)"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Action Bar */}
-                    <div className="border-t border-[var(--border-muted)] pt-4 space-y-2">
+                    <div className="border-t border-[var(--border-muted)] pt-4 space-y-2.5">
+                      
+                      {/* PROMINENT EDIT EVENT BUTTON */}
+                      <Link href={`/coordinator/events/${id}`} className="block">
+                        <Button
+                          variant="primary"
+                          accent="coordinator"
+                          className="w-full text-xs font-mono py-2 flex items-center justify-center gap-1.5 shadow-sm font-bold bg-[#a855f7] hover:bg-[#9333ea] text-white"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                          <span>✏️ CHỈNH SỬA SỰ KIỆN &amp; VÒNG THI</span>
+                        </Button>
+                      </Link>
+
+                      {/* SECONDARY CONTROLS GRID */}
                       <div className="grid grid-cols-2 gap-2">
-                        <Link href={`/coordinator/events/${id}`}>
-                          <Button variant="secondary" className="w-full text-[11px] font-mono py-1.5 flex items-center justify-center gap-1">
-                            <Edit3 className="w-3.5 h-3.5 text-[var(--accent-coordinator)]" />
-                            <span>Sửa Events</span>
-                          </Button>
-                        </Link>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={togglingEventId === id}
+                          onClick={() => handleTogglePublish(id, isPublished, name)}
+                          className={`w-full text-[11px] font-mono py-1.5 flex items-center justify-center gap-1 border ${
+                            isPublished
+                              ? "border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                              : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                          }`}
+                        >
+                          {isPublished ? (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{togglingEventId === id ? "Đang ẩn..." : "Tạm Ẩn"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Rocket className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>{togglingEventId === id ? "Đang mở..." : "Công Bố"}</span>
+                            </>
+                          )}
+                        </Button>
 
                         <Link href="/coordinator/teams">
                           <Button variant="secondary" className="w-full text-[11px] font-mono py-1.5 flex items-center justify-center gap-1">

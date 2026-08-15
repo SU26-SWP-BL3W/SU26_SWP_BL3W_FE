@@ -13,6 +13,7 @@ interface Step2RoundConfigProps {
   onUpdateRound: (id: string, field: keyof RoundFormState, value: any) => void;
   onNext: () => void;
   onPrev: () => void;
+  isReadOnly?: boolean;
 }
 
 export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
@@ -22,6 +23,7 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
   onUpdateRound,
   onNext,
   onPrev,
+  isReadOnly = false,
 }) => {
   return (
     <Card className="hud-glow-coordinator p-6 space-y-6">
@@ -35,11 +37,19 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
             Thiết lập danh sách các vòng thi, mốc nộp bài, thời gian chấm điểm, phúc khảo và quy tắc chuyển vòng.
           </p>
         </div>
-        <Button variant="ghost" onClick={onAddRound} className="flex items-center gap-1 text-xs">
-          <Plus className="w-4 h-4 text-[var(--accent-coordinator)]" />
-          + Thêm Vòng Thi
-        </Button>
+        {!isReadOnly && (
+          <Button variant="ghost" onClick={onAddRound} className="flex items-center gap-1 text-xs">
+            <Plus className="w-4 h-4 text-[var(--accent-coordinator)]" />
+            + Thêm Vòng Thi
+          </Button>
+        )}
       </div>
+
+      {isReadOnly && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs hud-clipped flex items-center gap-2">
+          <span>⚠️ Sự kiện đang ở trạng thái <strong>Công Khai (Public)</strong>. Để thêm hoặc sửa vòng thi, vui lòng bấm <strong>[ 🔒 TẠM ẨN ĐỂ SỬA ]</strong> ở trên cùng.</span>
+        </div>
+      )}
 
       <div className="space-y-6">
         {rounds.map((round, index) => {

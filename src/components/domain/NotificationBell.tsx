@@ -1,18 +1,9 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import { Link } from "@/i18n/routing";
-
-export interface NotificationItem {
-  id: string;
-  type: "invitation" | "system" | "appeal" | "submission";
-  title: string;
-  message: string;
-  time: string;
-  isRead: boolean;
-  actionUrl?: string;
-  actionType?: "accept_team_invite";
-}
+import { useMyInvitations, type MyInvitationItem } from "@/repositories/usersRepository";
+import { useAcceptOrDeclineInvitation } from "@/repositories/teamsRepository";
+import { useRespondEventRoleInvitation } from "@/repositories/eventRolesRepository";
+import { Mail, Check, X, Bell, ExternalLink, RefreshCw } from "lucide-react";
 
 interface NotificationBellProps {
   align?: "left" | "right";
@@ -22,38 +13,14 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "notif-01",
-      type: "invitation",
-      title: "Lời Mời Gia Nhập Đội Thi",
-      message: "Trưởng đội Nguyễn Văn Leader đã mời bạn gia nhập đội Cyber_Knights.",
-      time: "10 phút trước",
-      isRead: false,
-      actionUrl: "/my-team",
-      actionType: "accept_team_invite",
-    },
-    {
-      id: "notif-02",
-      type: "appeal",
-      title: "Phản Hồi Đơn Phúc Khảo",
-      message: "Ban Tổ Chức đã chấp thuận đơn phúc khảo cho bài nộp Vòng Sơ Loại.",
-      time: "2 giờ trước",
-      isRead: false,
-      actionUrl: "/appeals",
-    },
-    {
-      id: "notif-03",
-      type: "system",
-      title: "Công Bố Kết Quả Vòng 1",
-      message: "Bảng xếp hạng chính thức Vòng Sơ Loại SEAL Hackathon 2026 đã công bố.",
-      time: "1 ngày trước",
-      isRead: true,
-      actionUrl: "/events/event-seal-2026/leaderboard",
-    },
-  ]);
+  const { data: invData, isLoading, refetch } = useMyInvitations();
+  const invitations = invData?.invitations ?? [];
+  const pendingInvitations = invitations.filter((i) => i.status === "PendingAccept");
+  const unreadCount = invData?.totalPending ?? pendingInvitations.length;
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const { mutateAsync: respondTeam, isPending: isRespondingTeam } = useAcceptOrDeclineInvitation();
+  const { mutateAsync: respondEventRole, isPending: isRespondingEventRole } = useRespondEventRoleInvitation();
+  const isResponding = isRespondingTeam || isRespondingEventRole;
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -66,16 +33,18 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  };
-
-  const handleAction = (id: string, actionName: string) => {
-    alert(`[NOTIFICATION ACTION] ${actionName} cho thông báo: #${id}`);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-    setIsOpen(false);
+  const handleRespond = async (inv: MyInvitationItem, isAccepted: boolean) => {
+    try {
+      if (inv.type === "TEAM") {
+        await respondTeam({ invitationId: inv.invitationId, isAccepted });
+      } else {
+        await respondEventRole({ invitationId: inv.invitationId, isAccepted });
+      }
+    } catch {
+      alert("Không thể xử lý lời mời — vui lòng thử lại.");
+    } finally {
+      refetch();
+    }
   };
 
   return (
@@ -127,85 +96,82 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
               <span className="font-bold text-[var(--accent-primary)] tracking-wider uppercase text-[11px]">
-                THÔNG BÁO IN-APP ({unreadCount})
+                LỜI MỜI & THÔNG BÁO ({unreadCount})
               </span>
             </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="text-[10px] text-[var(--text-muted)] hover:text-white underline transition-colors"
-              >
-                Đánh dấu tất cả đã đọc
-              </button>
-            )}
+            <button
+              onClick={() => refetch()}
+              className="text-[10px] text-[var(--text-muted)] hover:text-white flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" /> Làm mới
+            </button>
           </div>
 
-          {/* List of Notifications */}
+          {/* List of Pending Invitations */}
           <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border-muted)]/60">
-            {notifications.length === 0 ? (
+            {isLoading ? (
+              <div className="p-6 text-center text-[var(--text-muted)] flex justify-center items-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-[var(--accent-primary)]" />
+                Đang tải thông báo...
+              </div>
+            ) : pendingInvitations.length === 0 ? (
               <div className="p-6 text-center text-[var(--text-muted)] italic">
-                Không có thông báo mới nào
+                Không có lời mời đang chờ phản hồi
               </div>
             ) : (
-              notifications.map((item) => (
+              pendingInvitations.map((item) => (
                 <div
-                  key={item.id}
-                  className={`p-3 flex flex-col gap-1.5 transition-colors ${
-                    !item.isRead ? "bg-[var(--accent-primary)]/5" : "hover:bg-[var(--bg-input)]/40"
-                  }`}
+                  key={item.invitationId}
+                  className="p-3 flex flex-col gap-1.5 bg-[var(--accent-primary)]/5 hover:bg-[var(--bg-input)]/40 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      {!item.isRead && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-danger)]" />
-                      )}
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
                       <span className="font-bold text-[var(--text-primary)] text-xs">
-                        {item.title}
+                        {item.type === "TEAM" ? "Lời Mời Vào Đội Thi" : `Lời Mời Vai Trò: ${item.role || "Staff"}`}
                       </span>
                     </div>
-                    <span className="text-[10px] text-[var(--text-muted)]">{item.time}</span>
+                    <span className="text-[10px] text-[var(--accent-team)] font-bold">
+                      {item.targetName}
+                    </span>
                   </div>
 
                   <p className="font-sans text-xs text-[var(--text-muted)] leading-relaxed">
-                    {item.message}
+                    {item.inviterName ? `${item.inviterName} đã gửi lời mời bạn tham gia.` : "Bạn nhận được lời mời mới."}
                   </p>
 
-                  {/* Actions for invitations */}
-                  {item.actionType === "accept_team_invite" && (
-                    <div className="flex items-center gap-2 pt-1 font-mono text-[10px]">
-                      <button
-                        onClick={() => handleAction(item.id, "Chấp nhận lời mời Đội thi")}
-                        className="px-2.5 py-1 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/40 font-bold uppercase hover:bg-[var(--color-success)] hover:text-black transition-all"
-                      >
-                        ✓ CHẤP NHẬN
-                      </button>
-                      <button
-                        onClick={() => handleAction(item.id, "Từ chối lời mời")}
-                        className="px-2.5 py-1 bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/30 font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all"
-                      >
-                        ✕ TỪ CHỐI
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Link action if present */}
-                  {item.actionUrl && item.actionType !== "accept_team_invite" && (
-                    <Link
-                      href={item.actionUrl}
-                      onClick={() => setIsOpen(false)}
-                      className="text-[10px] text-[var(--accent-primary)] font-bold hover:underline self-start pt-0.5"
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-1 font-mono text-[10px]">
+                    <button
+                      disabled={isResponding}
+                      onClick={() => handleRespond(item, true)}
+                      className="px-2.5 py-1 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/40 font-bold uppercase hover:bg-[var(--color-success)] hover:text-black transition-all flex items-center gap-1 disabled:opacity-50"
                     >
-                      Xem chi tiết ➔
-                    </Link>
-                  )}
+                      <Check className="w-3 h-3" /> ĐỒNG Ý
+                    </button>
+                    <button
+                      disabled={isResponding}
+                      onClick={() => handleRespond(item, false)}
+                      className="px-2.5 py-1 bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/30 font-bold uppercase hover:bg-[var(--color-danger)] hover:text-white transition-all flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <X className="w-3 h-3" /> TỪ CHỐI
+                    </button>
+                  </div>
                 </div>
               ))
             )}
           </div>
 
           {/* Footer */}
-          <div className="p-2 text-center bg-[var(--bg-base)] border-t border-[var(--border-muted)] text-[10px] text-[var(--text-muted)]">
-            Tự động cập nhật mỗi 30 giây (Polling Sync)
+          <div className="p-2.5 text-center bg-[var(--bg-base)] border-t border-[var(--border-muted)] flex items-center justify-between">
+            <span className="text-[10px] text-[var(--text-muted)] font-mono">Tự động đồng bộ</span>
+            <Link
+              href="/my-invitations"
+              onClick={() => setIsOpen(false)}
+              className="text-[10px] text-[var(--accent-primary)] font-bold hover:underline flex items-center gap-1"
+            >
+              Mở trung tâm lời mời <ExternalLink className="w-3 h-3" />
+            </Link>
           </div>
         </div>
       )}

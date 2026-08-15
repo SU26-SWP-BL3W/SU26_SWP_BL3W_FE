@@ -10,6 +10,7 @@ interface Step1EventBasicInfoProps {
   onUpdateField: (field: keyof EventFormState, value: any) => void;
   onNext: () => void;
   isSubmitting: boolean;
+  isReadOnly?: boolean;
 }
 
 const toDateTimeLocal = (val?: string) => {
@@ -42,6 +43,7 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
   onUpdateField,
   onNext,
   isSubmitting,
+  isReadOnly = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -58,17 +60,29 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsEditing(!isEditing)}
-          className="px-3 py-1.5 font-mono text-xs border border-[var(--accent-primary)]/40 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 hud-clipped font-bold flex items-center gap-1.5 cursor-pointer"
-        >
-          <Edit3 className="w-3.5 h-3.5" />
-          {isEditing ? "✕ Hủy Chỉnh Sửa" : "✎ Chỉnh Sửa Thông Tin"}
-        </button>
+        {isReadOnly ? (
+          <div className="px-3 py-1.5 font-mono text-xs border border-amber-500/40 text-amber-300 bg-amber-500/10 hud-clipped font-bold flex items-center gap-1.5">
+            <span>🔒 Chỉ Đọc (Đang Public)</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsEditing(!isEditing)}
+            className="px-3 py-1.5 font-mono text-xs border border-[var(--accent-primary)]/40 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 hud-clipped font-bold flex items-center gap-1.5 cursor-pointer"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            {isEditing ? "✕ Hủy Chỉnh Sửa" : "✎ Chỉnh Sửa Thông Tin"}
+          </button>
+        )}
       </div>
 
-      {isEditing ? (
+      {isReadOnly && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs hud-clipped flex items-center gap-2">
+          <span>⚠️ Sự kiện đang ở trạng thái <strong>Công Khai (Public)</strong>. Để bảo vệ dữ liệu thí sinh, vui lòng bấm <strong>[ 🔒 TẠM ẨN ĐỂ SỬA ]</strong> ở trên cùng trước khi chỉnh sửa thông tin.</span>
+        </div>
+      )}
+
+      {isEditing && !isReadOnly ? (
         /* EDITABLE FORM FOR COORDINATOR */
         <div className="p-6 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/30 hud-clipped space-y-6 animate-fadeIn font-mono text-xs">
           {/* Nhóm 1: Thông Tin Chung */}
@@ -126,6 +140,39 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                   onChange={(e) => onUpdateField("tagline", e.target.value)}
                   placeholder="Khẩu hiệu hoặc tóm tắt sự kiện"
                 />
+              </div>
+
+              {/* Linh hoạt quy mô thành viên mỗi đội */}
+              <div className="p-3 bg-[var(--bg-base)] border border-cyan-500/30 rounded space-y-1">
+                <label className="text-[10px] text-cyan-300 uppercase flex items-center gap-1 font-bold">
+                  <Users className="w-3 h-3 text-cyan-400" />
+                  Số TV Tối Thiểu Mỗi Đội (Min Members) *
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={eventData.minTeamSize ?? 3}
+                  onChange={(e) => onUpdateField("minTeamSize", Number(e.target.value))}
+                  required
+                />
+                <span className="text-[9px] text-[var(--text-muted)] block">Ví dụ: 3 người</span>
+              </div>
+
+              <div className="p-3 bg-[var(--bg-base)] border border-cyan-500/30 rounded space-y-1">
+                <label className="text-[10px] text-cyan-300 uppercase flex items-center gap-1 font-bold">
+                  <Users className="w-3 h-3 text-cyan-400" />
+                  Số TV Tối Đa Mỗi Đội (Max Members) *
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={eventData.maxTeamSize ?? 5}
+                  onChange={(e) => onUpdateField("maxTeamSize", Number(e.target.value))}
+                  required
+                />
+                <span className="text-[9px] text-[var(--text-muted)] block">Ví dụ: 5 người</span>
               </div>
             </div>
           </div>
@@ -269,10 +316,13 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
             <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1.5">
               <span className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
                 <Users className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                Quy Mô Đội Thi Tối Đa
+                Quy Mô Đội &amp; Số Lượng Thành Viên
               </span>
-              <p className="font-bold text-[var(--accent-primary)] text-sm pt-1">
-                Giới hạn: {eventData.maxTeams || 50} Đội thi
+              <p className="font-bold text-[var(--accent-primary)] text-sm pt-0.5">
+                {eventData.maxTeams || 50} Đội thi
+              </p>
+              <p className="text-[11px] font-bold text-cyan-300">
+                Mỗi đội: {eventData.minTeamSize ?? 3} - {eventData.maxTeamSize ?? 5} thành viên
               </p>
             </div>
 

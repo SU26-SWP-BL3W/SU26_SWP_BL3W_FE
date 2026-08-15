@@ -44,13 +44,15 @@ export function useMySubmissions(teamId?: string) {
     queryKey: ["my-submissions", teamId],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<MockSubmission[]>(`/SubmitResults/team/${teamId}`);
-        return res.data;
+        const res = await apiClient.get<BaseResponse<PagedResult<SubmitResultListItem>> | any>(
+          "/Teams/my-submissions",
+          { params: { PageSize: 100 } }
+        );
+        return res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
       } catch {
         return [];
       }
     },
-    enabled: !!teamId,
   });
 }
 

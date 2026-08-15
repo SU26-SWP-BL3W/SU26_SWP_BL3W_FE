@@ -14,6 +14,7 @@ interface Step5StaffAssignmentProps {
   onPrev: () => void;
   isSubmitting: boolean;
   successMessage: string | null;
+  isReadOnly?: boolean;
 }
 
 export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
@@ -25,6 +26,7 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
   onPrev,
   isSubmitting,
   successMessage,
+  isReadOnly = false,
 }) => {
   const [emailInput, setEmailInput] = useState<string>("");
   const [roleInput, setRoleInput] = useState<"Judge" | "Mentor">("Judge");
@@ -32,6 +34,7 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isReadOnly) return;
     if (!emailInput.trim()) return;
     onAddStaffInvite(emailInput.trim(), roleInput, trackInput || undefined);
     setEmailInput("");
@@ -53,6 +56,12 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
           Giao diện phân công Hạng mục
         </span>
       </div>
+
+      {isReadOnly && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs hud-clipped flex items-center gap-2">
+          <span>⚠️ Sự kiện đang ở trạng thái <strong>Công Khai (Public)</strong>. Để phân công thêm hoặc gỡ nhân sự, vui lòng bấm <strong>[ 🔒 TẠM ẨN ĐỂ SỬA ]</strong> ở trên cùng.</span>
+        </div>
+      )}
 
       {/* Form Mời Nhân Sự */}
       <form onSubmit={handleAdd} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">

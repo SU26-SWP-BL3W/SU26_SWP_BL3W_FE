@@ -172,8 +172,13 @@ export function useResetPassword() {
 
 export function useChangePassword() {
   return useMutation({
-    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      const res = await apiClient.put("/Auth/change-password", data);
+    mutationFn: async (data: { currentPassword?: string; oldPassword?: string; newPassword: string; confirmNewPassword?: string }) => {
+      const payload = {
+        OldPassword: data.oldPassword || data.currentPassword || "",
+        NewPassword: data.newPassword,
+        ConfirmNewPassword: data.confirmNewPassword || data.newPassword,
+      };
+      const res = await apiClient.put("/Auth/change-password", payload);
       return res.data;
     },
   });

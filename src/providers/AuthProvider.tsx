@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { User, EventRole } from "@/models/entities";
 import apiClient from "@/models/apiClient";
 
@@ -58,15 +59,10 @@ interface AuthContextType {
   activeRole: EventRole | null;
   isInitialized: boolean;
   login: (roleName?: string) => string;
-  // Kiểu string (khớp đúng phần thân hàm bên dưới) — trước đây khai literal
-  // union rồi cast "as any" ở chỗ Provider value để né lỗi kiểu, tức là
-  // TypeScript coi như không check gì cả. Giờ khai đúng kiểu thật, bỏ "as any".
   loginWithRole: (roleName: string) => string;
   loginWithEmail: (email: string) => string;
-  // Đăng nhập THẬT bằng email + mật khẩu người dùng nhập: gọi /Auth/login lấy
-  // token thật, lấy vai trò thật từ /EventRoles/user. Ném lỗi nếu sai để form
-  // hiện thông báo, KHÔNG gán token giả rồi để bị đá ra sau vài giây.
   loginWithCredentials: (email: string, password: string) => Promise<string>;
+  loginWithGoogleCredential: (idToken: string) => Promise<string>;
   logout: () => void;
 }
 
@@ -111,12 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const realToken = data?.token || data?.accessToken;
           if (realToken) {
             localStorage.setItem("accessToken", realToken);
-          } else {
-            localStorage.setItem("accessToken", `mock-jwt-token-${newUser.id || newUser.userId}`);
           }
         })
-        .catch(() => {
-          localStorage.setItem("accessToken", `mock-jwt-token-${newUser.id || newUser.userId}`);
+        .catch((err) => {
+          console.warn("[Auth] Failed to authenticate seeded user for JWT:", err?.message);
         });
     }
   };
@@ -130,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       newUser = {
         id: "usr-admin-01",
         userId: "usr-admin-01",
-        email: "admin.system@seal.edu.vn",
+        email: "admin@seal.com",
         fullName: "Quản Trị Viên Hệ Thống",
         isAdmin: true,
         isApproved: true,
@@ -146,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       newUser = {
         id: "usr-ec-01",
         userId: "usr-ec-01",
-        email: "ec.coordinator@seal.edu.vn",
+        email: "ec1@example.com",
         fullName: "Điều Phối Viên Sự Kiện",
         isAdmin: false,
         isApproved: true,
@@ -163,24 +157,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         EventRoleId: "er-ec-100",
         UserId: "usr-ec-01",
         RoleName: "Coordinator",
-        // hasEventPermission() không còn fallback ngầm — role mock phải tự
-        // khai rõ mình được gán event nào, không để hàm check quyền tự đoán.
         assignedEventIds: ["event-seal-2026"],
         AssignedEventIds: ["event-seal-2026"],
       };
       targetPath = "/coordinator/dashboard";
     } else if (roleName === "Mentor") {
       newUser = {
-        id: "usr-[#2dd4bf]",
+        id: "usr-mentor-01",
         userId: "usr-mentor-01",
-        email: "mentor.ai@seal.edu.vn",
-        fullName: "Cố Vấn Chuyên Môn AI",
+        email: "mentor1@example.com",
+        fullName: "Cố Vấn Chuyên Môn",
         isAdmin: false,
         isApproved: true,
         isFpt: true,
         isStudent: false,
         UserID: "usr-mentor-01",
-        FullName: "Cố Vấn Chuyên Môn AI",
+        FullName: "Cố Vấn Chuyên Môn",
         IsAdmin: false,
       };
       newRole = {
@@ -198,14 +190,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       newUser = {
         id: "usr-judge-01",
         userId: "usr-judge-01",
-        email: "judge.ai@seal.edu.vn",
-        fullName: "Giám Khảo Trí Tuệ Nhân Tạo",
+        email: "judge1@example.com",
+        fullName: "Giám Khảo Chấm Thi",
         isAdmin: false,
         isApproved: true,
         isFpt: true,
         isStudent: false,
         UserID: "usr-judge-01",
-        FullName: "Giám Khảo Trí Tuệ Nhân Tạo",
+        FullName: "Giám Khảo Chấm Thi",
         IsAdmin: false,
       };
       newRole = {
@@ -221,24 +213,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       targetPath = "/events";
     } else {
       newUser = {
-        id: "usr-leader-01",
-        userId: "usr-leader-01",
-        email: "leader.cybershield@fpt.edu.vn",
-        fullName: "Trưởng Nhóm CyberShield",
+        id: "usr-student-01",
+        userId: "usr-student-01",
+        email: "student1@example.com",
+        fullName: "Sinh Viên Thí Sinh",
         isAdmin: false,
         isApproved: true,
         isFpt: true,
         isStudent: true,
-        UserID: "usr-leader-01",
-        FullName: "Trưởng Nhóm CyberShield",
+        UserID: "usr-student-01",
+        FullName: "Sinh Viên Thí Sinh",
         IsAdmin: false,
       };
       newRole = {
-        eventRoleId: "er-leader-300",
-        userId: "usr-leader-01",
+        eventRoleId: "er-student-300",
+        userId: "usr-student-01",
         roleName: roleName === "TeamMember" ? "TeamMember" : "TeamLeader",
-        EventRoleId: "er-leader-300",
-        UserId: "usr-leader-01",
+        EventRoleId: "er-student-300",
+        UserId: "usr-student-01",
         RoleName: roleName === "TeamMember" ? "TeamMember" : "TeamLeader",
       };
       targetPath = "/my-team";
@@ -356,6 +348,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return targetPath;
   };
 
+  const loginWithGoogleCredential = async (idToken: string): Promise<string> => {
+    const res = await apiClient.post<any>("/Auth/google-login", { idToken: idToken.trim() });
+    const d = res.data?.data ?? res.data ?? {};
+    const accessToken = d.accessToken ?? d.AccessToken ?? d.token ?? d.Token;
+    const refreshToken = d.refreshToken ?? d.RefreshToken;
+    if (!accessToken) throw new Error("Phản hồi Google Login thiếu token xác thực.");
+
+    const userId = d.userId ?? d.UserId ?? d.user?.id ?? d.user?.userId;
+    const isAdmin = Boolean(d.isAdmin ?? d.IsAdmin ?? d.user?.isAdmin);
+    const isStudent = Boolean(d.isStudent ?? d.IsStudent ?? d.user?.isStudent);
+    const fullName = d.fullName ?? d.FullName ?? d.user?.fullName ?? "";
+    const email = d.email ?? d.Email ?? d.user?.email ?? "";
+    const isApproved = d.isApproved ?? d.IsApproved ?? d.user?.isApproved ?? false;
+
+    const authUser: User = {
+      id: userId,
+      userId,
+      email,
+      fullName,
+      isAdmin,
+      isStudent,
+      isApproved,
+      isFpt: email.toLowerCase().endsWith("@fpt.edu.vn"),
+      UserID: userId,
+      FullName: fullName,
+      IsAdmin: isAdmin,
+    };
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", accessToken);
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    }
+
+    let primaryRole: EventRole | null = null;
+    let targetPath = isAdmin ? "/admin/dashboard" : isStudent ? (isApproved ? "/events" : "/onboarding/profile") : "/events";
+
+    try {
+      const rolesRes = await apiClient.get<any>("/EventRoles/user", {
+        params: { UserId: userId, PageSize: 200 },
+      });
+      const rows: any[] = rolesRes.data?.data ?? rolesRes.data ?? [];
+      const norm = rows.map((r) => ({
+        eventId: r.eventId ?? r.EventId,
+        roleName: r.roleName ?? r.RoleName,
+      }));
+      const rank = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
+      const chosen = rank.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
+      if (chosen) {
+        const assigned = norm
+          .filter((r) => r.roleName === chosen.roleName)
+          .map((r) => r.eventId)
+          .filter(Boolean);
+        primaryRole = {
+          eventRoleId: `real-${chosen.roleName}-${userId}`,
+          userId,
+          roleName: chosen.roleName,
+          EventRoleId: `real-${chosen.roleName}-${userId}`,
+          UserId: userId,
+          RoleName: chosen.roleName,
+          assignedEventIds: assigned,
+          AssignedEventIds: assigned,
+        } as EventRole;
+        targetPath = REDIRECT_BY_ROLE[chosen.roleName] ?? "/events";
+      }
+    } catch {
+      // fallback targetPath
+    }
+
+    setUser(authUser);
+    setActiveRole(primaryRole);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("currentUser", JSON.stringify(authUser));
+      if (primaryRole) localStorage.setItem("activeRole", JSON.stringify(primaryRole));
+      else localStorage.removeItem("activeRole");
+    }
+    return targetPath;
+  };
+
   const logout = () => {
     setUser(null);
     setActiveRole(null);
@@ -367,10 +437,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "805216331270-kmjdrat53j8oa0c7sg6cqbag12a8q9iv.apps.googleusercontent.com";
+
   return (
-    <AuthContext.Provider value={{ user, activeRole, isInitialized, login, loginWithRole, loginWithEmail, loginWithCredentials, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AuthContext.Provider
+        value={{
+          user,
+          activeRole,
+          isInitialized,
+          login,
+          loginWithRole,
+          loginWithEmail,
+          loginWithCredentials,
+          loginWithGoogleCredential,
+          logout,
+        }}
+      >
+        {children}
+      </AuthContext.Provider>
+    </GoogleOAuthProvider>
   );
 }
 

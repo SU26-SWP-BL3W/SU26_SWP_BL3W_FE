@@ -22,6 +22,7 @@ interface Step4TemplateCriteriaEditorProps {
   onUpdateCriteria: (index: number, field: keyof TemplateCriteriaFormState, value: any) => void;
   onNext: () => void;
   onPrev: () => void;
+  isReadOnly?: boolean;
 }
 
 export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorProps> = ({
@@ -40,6 +41,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
   onUpdateCriteria,
   onNext,
   onPrev,
+  isReadOnly = false,
 }) => {
   const { data: realCriteriaBank = [] } = useGetCriterias();
   const criteriaPresetList = realCriteriaBank.length > 0 ? realCriteriaBank : MOCK_DEFAULT_CRITERIAS;

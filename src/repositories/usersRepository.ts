@@ -34,17 +34,23 @@ export const MOCK_USERS_LIST: User[] = [
     isFpt: false,
     isStudent: false,
     schoolName: "Đại học Bách Khoa HCM (HCMUT)",
+    trackId: "trk-ai",
+    trackName: "AI & Machine Learning",
+    trackRole: "Judge",
     createdTime: "2026-02-10T00:00:00Z",
   },
   {
     id: "usr-mentor-01",
     email: "mentor.cybershield@seal.edu.vn",
-    fullName: "ThS. Cố Vấn Chuyên Môn",
+    fullName: "ThS. Cố Vấn Chuyên Môn AI",
     isAdmin: false,
     isApproved: true,
     isFpt: true,
     isStudent: false,
     schoolName: "Đại học FPT Hà Nội",
+    trackId: "trk-ai",
+    trackName: "AI & Machine Learning",
+    trackRole: "Mentor",
     createdTime: "2026-02-12T00:00:00Z",
   },
   {
@@ -57,6 +63,11 @@ export const MOCK_USERS_LIST: User[] = [
     isFpt: true,
     isStudent: true,
     schoolName: "Đại học FPT HCM",
+    trackId: "trk-ai",
+    trackName: "AI & Machine Learning",
+    trackRole: "Leader",
+    teamName: "CyberShield AI",
+    teamId: "team-01",
     createdTime: "2026-03-01T00:00:00Z",
   },
   {
@@ -69,6 +80,11 @@ export const MOCK_USERS_LIST: User[] = [
     isFpt: true,
     isStudent: true,
     schoolName: "Đại học FPT HCM",
+    trackId: "trk-ai",
+    trackName: "AI & Machine Learning",
+    trackRole: "Member",
+    teamName: "CyberShield AI",
+    teamId: "team-01",
     createdTime: "2026-03-02T00:00:00Z",
   },
   {
@@ -81,6 +97,11 @@ export const MOCK_USERS_LIST: User[] = [
     isFpt: true,
     isStudent: true,
     schoolName: "Đại học FPT HCM",
+    trackId: "trk-web",
+    trackName: "Web & Mobile Product",
+    trackRole: "Member",
+    teamName: "Web Masters",
+    teamId: "team-02",
     createdTime: "2026-03-05T00:00:00Z",
   },
   {
@@ -92,10 +113,51 @@ export const MOCK_USERS_LIST: User[] = [
     isApproved: false,
     isFpt: false,
     isStudent: true,
-    photoStudentCardUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80",
+    photoStudentCardUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80",
     schoolName: "Đại học Khoa học Tự nhiên (HCMUS)",
+    trackId: "trk-web",
+    trackName: "Web & Mobile Product",
+    trackRole: "Leader",
+    teamName: "HCMUS CodeBreakers",
     rejectionCount: 0,
     createdTime: "2026-04-10T00:00:00Z",
+  },
+  {
+    id: "usr-fpt-02",
+    email: "hoa.dang@fpt.edu.vn",
+    fullName: "Đặng Thị Hoa (FPT HCM - Lỗi MSSV)",
+    studentCode: "SE180999",
+    isAdmin: false,
+    isApproved: false,
+    isFpt: true,
+    isStudent: true,
+    photoStudentCardUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+    schoolName: "Đại học FPT TP.HCM",
+    trackId: "trk-game",
+    trackName: "Game Development",
+    trackRole: "Member",
+    teamName: "FPT GameCrafters",
+    rejectionCount: 0,
+    createdTime: "2026-04-11T00:00:00Z",
+  },
+  {
+    id: "usr-resubmit-03",
+    email: "long.le@hcmut.edu.vn",
+    fullName: "Lê Hoàng Long (SV Bách Khoa HCMUT - Nộp lại)",
+    studentCode: "2210888",
+    isAdmin: false,
+    isApproved: false,
+    isFpt: false,
+    isStudent: true,
+    photoStudentCardUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+    schoolName: "Đại học Bách Khoa (HCMUT)",
+    trackId: "trk-web",
+    trackName: "Web & Mobile Product",
+    trackRole: "Member",
+    teamName: "BK Titans",
+    rejectionCount: 1,
+    rejectionReason: "Ảnh chụp thẻ SV lần 1 bị lóa đèn, không nhìn rõ mã số sinh viên.",
+    createdTime: "2026-04-12T00:00:00Z",
   },
   {
     id: "usr-locked-99",
@@ -106,11 +168,33 @@ export const MOCK_USERS_LIST: User[] = [
     isApproved: false,
     isFpt: false,
     isStudent: true,
-    photoStudentCardUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80",
+    photoStudentCardUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
     schoolName: "Đại học Văn Lang (VLU)",
+    trackId: "trk-sec",
+    trackName: "Cybersecurity & Cloud",
+    trackRole: "Member",
+    teamName: "VLU CyberDef",
     rejectionCount: 2,
     rejectionReason: "Ảnh chụp thẻ SV bị mờ nét và sai mã sinh viên 2 lần.",
     createdTime: "2026-04-12T00:00:00Z",
+  },
+  {
+    id: "usr-approved-04",
+    email: "linh.pham@uel.edu.vn",
+    fullName: "Phạm Thùy Linh (SV ĐH Kinh Tế - Luật)",
+    studentCode: "K214050123",
+    isAdmin: false,
+    isApproved: true,
+    isFpt: false,
+    isStudent: true,
+    photoStudentCardUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
+    schoolName: "Đại học Kinh Tế - Luật (UEL)",
+    trackId: "trk-sec",
+    trackName: "Cybersecurity & Cloud",
+    trackRole: "Leader",
+    teamName: "UEL Securitas",
+    rejectionCount: 0,
+    createdTime: "2026-03-20T00:00:00Z",
   },
 ];
 
@@ -215,30 +299,26 @@ export function useGetUsers(params?: {
   return useQuery({
     queryKey: ["users", params],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users", { params });
-        if (res.data?.data?.data && res.data.data.data.length > 0) {
-          return res.data.data;
-        }
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          return {
-            data: res.data,
-            currentPage: 1,
-            pageSize: 50,
-            totalItems: res.data.length,
-            totalPages: 1,
-            hasPreviousPage: false,
-            hasNextPage: false,
-          };
-        }
-      } catch {
-        console.warn("[SEAL] Returning mock users list for Admin view");
+      const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users", { params });
+      if (res.data?.data) {
+        return res.data.data;
+      }
+      if (Array.isArray(res.data)) {
+        return {
+          data: res.data,
+          currentPage: 1,
+          pageSize: 50,
+          totalItems: res.data.length,
+          totalPages: 1,
+          hasPreviousPage: false,
+          hasNextPage: false,
+        };
       }
       return {
-        data: MOCK_USERS_LIST,
+        data: [],
         currentPage: 1,
         pageSize: 50,
-        totalItems: MOCK_USERS_LIST.length,
+        totalItems: 0,
         totalPages: 1,
         hasPreviousPage: false,
         hasNextPage: false,

@@ -56,18 +56,24 @@ export const CreateEventWizardView: React.FC = () => {
           {steps.map((step) => {
             const isActive = wizard.currentStep === step.number;
             const isCompleted = step.number === 6 ? wizard.canPublishEvent : Boolean(wizard.stepDoneMap[step.number]);
+            const isClickable = step.number <= wizard.currentStep || Boolean(wizard.stepDoneMap[step.number - 1]);
 
             return (
               <button
                 key={step.number}
                 type="button"
-                onClick={() => wizard.setCurrentStep(step.number)}
-                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-2.5 relative group cursor-pointer ${
-                  isActive
-                    ? "bg-[rgba(6,182,212,0.15)] border-2 border-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.35)] text-cyan-300 scale-[1.02] z-10"
+                disabled={!isClickable}
+                onClick={() => {
+                  if (isClickable) wizard.setCurrentStep(step.number);
+                }}
+                className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-2.5 relative group ${
+                  !isClickable
+                    ? "opacity-40 cursor-not-allowed bg-[var(--bg-panel)]/20 border-[var(--border-muted)]/50 text-[var(--text-muted)]"
+                    : isActive
+                    ? "bg-[rgba(6,182,212,0.15)] border-2 border-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.35)] text-cyan-300 scale-[1.02] z-10 cursor-pointer"
                     : isCompleted
-                    ? "bg-[rgba(16,185,129,0.1)] border-[var(--color-success)] text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)]"
-                    : "bg-[var(--bg-panel)]/40 border-[var(--border-muted)] text-[var(--text-muted)] hover:border-slate-500 hover:text-[var(--text-primary)]"
+                    ? "bg-[rgba(16,185,129,0.1)] border-[var(--color-success)] text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)] cursor-pointer"
+                    : "bg-[var(--bg-panel)]/40 border-[var(--border-muted)] text-[var(--text-muted)] hover:border-slate-500 hover:text-[var(--text-primary)] cursor-pointer"
                 }`}
               >
                 {/* Status Icon / Number Badge */}

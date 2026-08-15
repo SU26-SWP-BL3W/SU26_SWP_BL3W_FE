@@ -139,6 +139,13 @@ export interface User {
   rejectedCount?: number;
   createdTime?: string;
   lastUpdatedTime?: string;
+  // Track & Event contextual fields
+  eventId?: string;
+  trackId?: string;
+  trackName?: string;
+  trackRole?: "Leader" | "Member" | "Judge" | "Mentor" | string;
+  teamId?: string;
+  teamName?: string;
   // Aliases for compatibility
   UserID?: string;
   FullName?: string;
