@@ -37,10 +37,11 @@ export function CoordinatorTeamsView() {
   const handleApprove = async (teamId: string) => {
     try {
       await approveTeam(teamId);
+      alert("✓ Đã duyệt đội thi thành công! Đội thi đã ở trạng thái REGISTERED.");
       setDetailModal(null);
       refetch();
-    } catch {
-      alert("Đã duyệt đội thi thành công! Đội thi đã ở trạng thái REGISTERED.");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Duyệt đội thi thất bại.");
     }
   };
 
@@ -50,13 +51,13 @@ export function CoordinatorTeamsView() {
 
     try {
       await rejectTeam({ teamId: rejectModal.teamId, reason: rejectReason.trim() });
+      alert("✓ Đã từ chối đăng ký đội thi thành công.");
       refetch();
-    } catch {
-      alert("Đã từ chối đăng ký đội thi.");
-    } finally {
       setRejectModal(null);
       setDetailModal(null);
       setRejectReason("");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Từ chối đăng ký đội thi thất bại.");
     }
   };
 

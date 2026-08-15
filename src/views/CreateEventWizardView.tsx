@@ -55,12 +55,13 @@ export const CreateEventWizardView: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {steps.map((step) => {
             const isActive = wizard.currentStep === step.number;
-            // Badge luỹ tiến: bước n chỉ "Xong" khi nó và mọi bước trước đều xong (tránh "Bước 5 Xong / Bước 2 Chờ").
+            // Bước đã xong: chỉ khi step.number < currentStep VÀ bước đó đã hoàn thành thật trong DB
             const isCompleted =
-              step.number === 6
+              step.number < wizard.currentStep &&
+              (step.number === 6
                 ? wizard.canPublishEvent
-                : [1, 2, 3, 4, 5].slice(0, step.number).every((n) => Boolean(wizard.stepDoneMap[n]));
-            const isClickable = step.number <= wizard.currentStep || Boolean(wizard.stepDoneMap[step.number - 1]);
+                : [1, 2, 3, 4, 5].slice(0, step.number).every((n) => Boolean(wizard.stepDoneMap[n])));
+            const isClickable = step.number === 1 || Boolean(wizard.stepDoneMap[step.number - 1]) || step.number <= wizard.currentStep;
 
             return (
               <button
@@ -90,7 +91,9 @@ export const CreateEventWizardView: React.FC = () => {
                       : "bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-muted)]"
                   }`}
                 >
-                  {isCompleted ? (
+                  {isActive ? (
+                    <span>{step.number}</span>
+                  ) : isCompleted ? (
                     <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
                   ) : (
                     <span>{step.number}</span>

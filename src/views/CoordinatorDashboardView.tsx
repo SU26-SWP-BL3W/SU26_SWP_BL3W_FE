@@ -60,20 +60,19 @@ export const CoordinatorDashboardView: React.FC = () => {
     ? appealsList.filter((a: any) => a.status === 0 || a.status === "Pending" || a.Status === "Filed").length
     : 0;
 
-  // Filtered Events with Deduplication
-  const seenEventKeys = new Set<string>();
+  // Filtered Events with Deduplication by unique ID
+  const seenEventIds = new Set<string>();
   const filteredEvents = eventsList
     .filter((ev, idx) => {
       const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-id-${idx}`;
-      return !deletedIds.includes(id);
+      if (deletedIds.includes(id)) return false;
+      if (seenEventIds.has(id)) return false;
+      seenEventIds.add(id);
+      return true;
     })
     .filter((ev) => {
       const name = (ev.eventName || ev.EventName || "").trim();
-      if (!name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-      const key = `${name.toLowerCase()}-${ev.year || ev.Year || 2026}`;
-      if (seenEventKeys.has(key)) return false;
-      seenEventKeys.add(key);
-      return true;
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
   const handleDeleteEvent = async () => {

@@ -673,7 +673,9 @@ export const CoordinatorEventDetailView: React.FC = () => {
                       : "bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-muted)]"
                   }`}
                 >
-                  {isCompleted ? (
+                  {isActive ? (
+                    <span>{step.number}</span>
+                  ) : isCompleted ? (
                     <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
                   ) : (
                     <span>{step.number}</span>

@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   useGetTrackCalibration,
   useCalculateRoundResults,
   useExportCsvAnonymized,
 } from "@/repositories/scoresRepository";
+import { useMyEvents } from "@/repositories/eventsRepository";
+import { useGetRoundsByEvent } from "@/repositories/roundsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
+import { useGetCriterias, templatesRepository } from "@/repositories/templatesRepository";
 import { Button, Card, Badge, Table, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui";
 import {
   Shield,
@@ -15,59 +19,96 @@ import {
   Download,
   Calculator,
   Award,
+  Filter,
+  Layers,
+  Target,
 } from "lucide-react";
 
 export function CoordinatorCalibrationView() {
   const [activeTab, setActiveTab] = useState<"calibration" | "criteria">("criteria");
-  const [trackId, setTrackId] = useState("track-1");
-  const [roundId, setRoundId] = useState("round-1");
-  const [eventId, setEventId] = useState("seal-2026-mua-he");
 
-  const { data: calibration, isLoading, refetch } = useGetTrackCalibration(trackId);
+  const { data: myEvents = [] } = useMyEvents();
+  const [eventId, setEventId] = useState<string>("");
+
+  useEffect(() => {
+    if (myEvents.length > 0 && !eventId) {
+      const firstId = myEvents[0].id || myEvents[0].Id || myEvents[0].eventId || myEvents[0].EventId || "";
+      setEventId(firstId);
+    }
+  }, [myEvents, eventId]);
+
+  const { data: rounds = [] } = useGetRoundsByEvent(eventId || undefined);
+  const [roundId, setRoundId] = useState<string>("");
+
+  useEffect(() => {
+    if (rounds.length > 0) {
+      const firstRoundId = (rounds[0] as any).id || (rounds[0] as any).Id || (rounds[0] as any).roundId || "";
+      setRoundId(firstRoundId);
+    } else {
+      setRoundId("");
+    }
+  }, [rounds]);
+
+  const { data: tracks = [] } = useGetTracksByEvent(eventId || undefined);
+  const [trackId, setTrackId] = useState<string>("");
+
+  useEffect(() => {
+    if (tracks.length > 0) {
+      const firstTrackId = (tracks[0] as any).id || (tracks[0] as any).Id || (tracks[0] as any).trackId || "";
+      setTrackId(firstTrackId);
+    } else {
+      setTrackId("");
+    }
+  }, [tracks]);
+
+  const { data: serverCriterias = [], refetch: refetchCriterias } = useGetCriterias();
+  const { data: calibration, isLoading, refetch: refetchCalibration } = useGetTrackCalibration(trackId || undefined);
   const { mutateAsync: calculateRound, isPending: isCalculating } = useCalculateRoundResults();
   const { mutateAsync: exportCsv, isPending: isExporting } = useExportCsvAnonymized();
-
-  // Criteria State
-  const [criteriaList, setCriteriaList] = useState([
-    { id: "cr-1", name: "Ý tưởng & Đổi mới sáng tạo (Innovation)", maxScore: 10, weight: 30, description: "Đánh giá tính độc đáo, giải pháp đột phá và ứng dụng công nghệ mới." },
-    { id: "cr-2", name: "Kỹ thuật & Kiến trúc mã nguồn (Engineering)", maxScore: 10, weight: 40, description: "Chất lượng mã nguồn, độ tin cậy RBL, bảo mật và khả năng mở rộng." },
-    { id: "cr-3", name: "Tính khả thi & Tiềm năng thương mại (Feasibility)", maxScore: 10, weight: 20, description: "Khả năng ứng dụng thực tế và mô hình triển khai thương mại." },
-    { id: "cr-4", name: "Trình bày & Thuyết trình (Presentation)", maxScore: 10, weight: 10, description: "Kỹ năng pitching, trả lời phản biện của Giám khảo." },
-  ]);
 
   const [newCriteriaName, setNewCriteriaName] = useState("");
   const [newMaxScore, setNewMaxScore] = useState(10);
   const [newWeight, setNewWeight] = useState(20);
   const [newDesc, setNewDesc] = useState("");
 
-  const handleAddCriteria = () => {
+  const handleAddCriteria = async () => {
     if (!newCriteriaName.trim()) {
       alert("Vui lòng nhập tên tiêu chí chấm điểm!");
       return;
     }
-    const newCr = {
-      id: `cr-${Date.now()}`,
-      name: newCriteriaName.trim(),
-      maxScore: Number(newMaxScore),
-      weight: Number(newWeight),
-      description: newDesc.trim() || "Mô tả tiêu chí RBL mới",
-    };
-    setCriteriaList([...criteriaList, newCr]);
-    setNewCriteriaName("");
-    setNewDesc("");
-    alert("✓ Đã thêm tiêu chí mới vào Kho Tiêu Chí Chấm Điểm!");
+    try {
+      await templatesRepository.createCriteria({
+        criterionName: newCriteriaName.trim(),
+        description: newDesc.trim(),
+        maxScore: Number(newMaxScore),
+      });
+      setNewCriteriaName("");
+      setNewDesc("");
+      await refetchCriterias();
+      alert("✓ Đã thêm tiêu chí mới vào Kho Tiêu Chí Chấm Điểm!");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Tạo tiêu chí thất bại.");
+    }
   };
 
   const handleCalculate = async () => {
+    if (!roundId) {
+      alert("Vui lòng chọn Vòng thi để tính điểm!");
+      return;
+    }
     try {
       await calculateRound(roundId);
       alert("✓ Đã tính điểm tổng & xếp hạng Vòng thi thành công!");
-    } catch {
-      alert("Đã hoàn tất tính điểm & phân hạng Vòng thi (Mock Mode).");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Tính điểm & xếp hạng thất bại. Vui lòng kiểm tra lại dữ liệu bài nộp.");
     }
   };
 
   const handleExportCsv = async () => {
+    if (!eventId) {
+      alert("Vui lòng chọn Sự kiện để xuất báo cáo!");
+      return;
+    }
     try {
       const blob = await exportCsv(eventId);
       const url = window.URL.createObjectURL(new Blob([blob]));
@@ -77,8 +118,8 @@ export function CoordinatorCalibrationView() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch {
-      alert("Đã tải tập tin CSV ẩn danh phục vụ nghiên cứu RBL.");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Xuất file CSV thất bại.");
     }
   };
 
@@ -125,6 +166,80 @@ export function CoordinatorCalibrationView() {
         </div>
       </div>
 
+      {/* Selector Bar: Event, Round, Track */}
+      <div className="max-w-5xl mx-auto mb-6 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+        <div className="space-y-1">
+          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+            1. Chọn Sự Kiện:
+          </label>
+          <select
+            value={eventId}
+            onChange={(e) => setEventId(e.target.value)}
+            className="w-full px-2.5 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-coordinator)]"
+          >
+            {myEvents.map((ev: any) => {
+              const id = ev.id || ev.Id || ev.eventId || ev.EventId;
+              const name = ev.eventName || ev.EventName || "Sự kiện";
+              return (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+            2. Chọn Vòng Thi:
+          </label>
+          <select
+            value={roundId}
+            onChange={(e) => setRoundId(e.target.value)}
+            className="w-full px-2.5 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-coordinator)]"
+          >
+            {rounds.length === 0 ? (
+              <option value="">(Chưa có vòng thi)</option>
+            ) : (
+              rounds.map((r: any) => {
+                const id = r.id || r.Id || r.roundId;
+                const name = r.roundName || r.RoundName || `Vòng ${r.roundNumber || 1}`;
+                return (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                );
+              })
+            )}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+            3. Chọn Hạng Mục (Track):
+          </label>
+          <select
+            value={trackId}
+            onChange={(e) => setTrackId(e.target.value)}
+            className="w-full px-2.5 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-coordinator)]"
+          >
+            {tracks.length === 0 ? (
+              <option value="">(Chưa có hạng mục)</option>
+            ) : (
+              tracks.map((t: any) => {
+                const id = t.id || t.Id || t.trackId;
+                const name = t.trackName || t.TrackName || "Hạng mục";
+                return (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                );
+              })
+            )}
+          </select>
+        </div>
+      </div>
+
       {/* Navigation Tabs */}
       <div className="max-w-5xl mx-auto mb-6 flex border-b border-[var(--border-muted)] font-mono text-xs">
         <button
@@ -135,7 +250,7 @@ export function CoordinatorCalibrationView() {
               : "border-transparent text-[var(--text-muted)] hover:text-white"
           }`}
         >
-          <span>📐 Kho Tiêu Chí Chấm Điểm ({criteriaList.length})</span>
+          <span>📐 Kho Tiêu Chí Chấm Điểm ({serverCriterias.length})</span>
         </button>
         <button
           onClick={() => setActiveTab("calibration")}
@@ -181,7 +296,7 @@ export function CoordinatorCalibrationView() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Trọng số (%)</label>
+                    <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Trọng số mặc định (%)</label>
                     <input
                       type="number"
                       value={newWeight}
@@ -213,23 +328,31 @@ export function CoordinatorCalibrationView() {
               </div>
             </Card>
 
-            {/* Danh sách Tiêu Chí */}
+            {/* Danh sách Tiêu Chí Từ Database */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {criteriaList.map((cr) => (
-                <Card key={cr.id} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-2 hover:border-[var(--accent-judge)]/50 transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
-                      {cr.name}
-                    </span>
-                    <Badge tone="warning">
-                      Trọng số: {cr.weight}% | Max: {cr.maxScore}đ
-                    </Badge>
-                  </div>
-                  <p className="font-mono text-[11px] text-[var(--text-muted)] leading-relaxed">
-                    {cr.description}
-                  </p>
-                </Card>
-              ))}
+              {serverCriterias.map((cr: any, idx: number) => {
+                const id = cr.id || cr.Id || cr.criteriaId || cr.CriteriaId || `cr-${idx}`;
+                const name = cr.criterionName || cr.CriterionName || cr.criteriaName || cr.name || "Tiêu chí";
+                const desc = cr.description || cr.Description || "Mô tả tiêu chí";
+                const maxScore = cr.maxScore || cr.MaxScore || 10;
+                const weight = cr.weight || cr.Weight || 25;
+
+                return (
+                  <Card key={id} className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-2 hover:border-[var(--accent-judge)]/50 transition-all">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
+                        {name}
+                      </span>
+                      <Badge tone="warning">
+                        Trọng số: {weight}% | Max: {maxScore}đ
+                      </Badge>
+                    </div>
+                    <p className="font-mono text-[11px] text-[var(--text-muted)] leading-relaxed">
+                      {desc}
+                    </p>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
@@ -247,9 +370,19 @@ export function CoordinatorCalibrationView() {
                   onChange={(e) => setTrackId(e.target.value)}
                   className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
                 >
-                  <option value="track-1">Hạng mục 1: AI & Data Science</option>
-                  <option value="track-2">Hạng mục 2: Cyber Security</option>
-                  <option value="track-3">Hạng mục 3: Web3 & Blockchain</option>
+                  {tracks.length === 0 ? (
+                    <option value="">(Chưa có hạng mục)</option>
+                  ) : (
+                    tracks.map((t: any) => {
+                      const id = t.id || t.Id || t.trackId;
+                      const name = t.trackName || t.TrackName || "Hạng mục";
+                      return (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      );
+                    })
+                  )}
                 </select>
               </div>
 

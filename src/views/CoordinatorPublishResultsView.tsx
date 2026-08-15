@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   useGetFinalResultsByRound,
   usePublishRoundResults,
@@ -8,6 +8,9 @@ import {
   useGetPrizes,
   useCreatePrize,
 } from "@/repositories/finalResultsRepository";
+import { useMyEvents } from "@/repositories/eventsRepository";
+import { useGetRoundsByEvent } from "@/repositories/roundsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
 import { Button, Card, Badge, Table, TableHeader, TableRow, TableHead, TableCell, Input } from "@/components/ui";
 import {
   Trophy,
@@ -19,25 +22,60 @@ import {
   Plus,
   Send,
   PlusCircle,
+  Filter,
+  Layers,
+  Target,
 } from "lucide-react";
 import type { FinalResult, Prize } from "@/models/entities";
 
 export function CoordinatorPublishResultsView() {
-  const [roundId, setRoundId] = useState("round-1");
-  const [selectedTrackId, setSelectedTrackId] = useState("track-1");
+  const { data: myEvents = [] } = useMyEvents();
+  const [eventId, setEventId] = useState<string>("");
+
+  useEffect(() => {
+    if (myEvents.length > 0 && !eventId) {
+      const firstId = myEvents[0].id || myEvents[0].Id || myEvents[0].eventId || myEvents[0].EventId || "";
+      setEventId(firstId);
+    }
+  }, [myEvents, eventId]);
+
+  const { data: rounds = [] } = useGetRoundsByEvent(eventId || undefined);
+  const [roundId, setRoundId] = useState<string>("");
+
+  useEffect(() => {
+    if (rounds.length > 0) {
+      const firstRoundId = (rounds[0] as any).id || (rounds[0] as any).Id || (rounds[0] as any).roundId || "";
+      setRoundId(firstRoundId);
+    } else {
+      setRoundId("");
+    }
+  }, [rounds]);
+
+  const { data: tracks = [] } = useGetTracksByEvent(eventId || undefined);
+  const [selectedTrackId, setSelectedTrackId] = useState<string>("");
+
+  useEffect(() => {
+    if (tracks.length > 0) {
+      const firstTrackId = (tracks[0] as any).id || (tracks[0] as any).Id || (tracks[0] as any).trackId || "";
+      setSelectedTrackId(firstTrackId);
+    } else {
+      setSelectedTrackId("");
+    }
+  }, [tracks]);
+
   const [assignModal, setAssignModal] = useState<FinalResult | null>(null);
   const [createPrizeModal, setCreatePrizeModal] = useState(false);
 
   // Form state cho tạo giải thưởng mới theo Track
   const [prizeForm, setPrizeForm] = useState({
-    prizeName: "Giải Nhất AI Track",
+    prizeName: "Giải Nhất Track",
     rewardAmount: 10000000,
     quantity: 1,
-    description: "Dành cho đội thi đạt điểm tổng cao nhất trong Track AI & Data Science.",
+    description: "Dành cho đội thi đạt điểm tổng cao nhất trong Hạng mục.",
   });
 
-  const { data: results = [], isLoading, refetch } = useGetFinalResultsByRound(roundId);
-  const { data: prizes = [] } = useGetPrizes({ trackId: selectedTrackId });
+  const { data: results = [], isLoading, refetch } = useGetFinalResultsByRound(roundId || undefined);
+  const { data: prizes = [], refetch: refetchPrizes } = useGetPrizes({ trackId: selectedTrackId || undefined });
 
   const { mutateAsync: publishResults, isPending: isPublishing } = usePublishRoundResults();
   const { mutateAsync: assignPrize, isPending: isAssigning } = useAssignPrize();
@@ -47,6 +85,10 @@ export function CoordinatorPublishResultsView() {
   const isAnyPublished = results.some((r) => r.isPublished);
 
   const handleTogglePublish = async (shouldPublish: boolean) => {
+    if (!roundId) {
+      alert("Vui lòng chọn Vòng thi!");
+      return;
+    }
     try {
       await publishResults({ roundId, isPublished: shouldPublish });
       alert(
@@ -54,17 +96,22 @@ export function CoordinatorPublishResultsView() {
           ? "✓ CÔNG BỐ KẾT QUẢ THÀNH CÔNG! Sinh viên hiện đã có thể xem Bảng Xếp Hạng."
           : "✓ Đã THU HỒI CÔNG BỐ. Kết quả đã quay về bản nháp."
       );
-    } catch {
-      alert("Đã cập nhật trạng thái công bố kết quả (Mock Mode).");
+      refetch();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Cập nhật trạng thái công bố thất bại.");
     }
   };
 
   const handleCreatePrize = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedTrackId || !eventId) {
+      alert("Vui lòng chọn Sự kiện và Hạng mục thi!");
+      return;
+    }
     try {
       await createPrize({
         trackId: selectedTrackId,
-        eventId: "seal-2026-mua-he",
+        eventId: eventId,
         prizeName: prizeForm.prizeName,
         rewardAmount: Number(prizeForm.rewardAmount),
         quantity: Number(prizeForm.quantity),
@@ -72,9 +119,9 @@ export function CoordinatorPublishResultsView() {
       });
       alert("✓ Đã tạo Giải thưởng mới thành công cho Track!");
       setCreatePrizeModal(false);
-    } catch {
-      alert("Đã thêm Giải thưởng vào danh sách Track (Mock Mode).");
-      setCreatePrizeModal(false);
+      refetchPrizes();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Tạo giải thưởng thất bại.");
     }
   };
 
@@ -84,9 +131,9 @@ export function CoordinatorPublishResultsView() {
       await assignPrize({ resultId: assignModal.id || "res-1", prizeId });
       alert("✓ Đã gán Giải thưởng cho Đội thi thành công!");
       setAssignModal(null);
-    } catch {
-      alert("Đã cập nhật giải thưởng (Mock Mode).");
-      setAssignModal(null);
+      refetch();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Gán giải thưởng thất bại.");
     }
   };
 
@@ -133,23 +180,85 @@ export function CoordinatorPublishResultsView() {
       </div>
 
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Track Filter & Add Prize Control */}
-        <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-[var(--text-muted)] uppercase font-bold">
-              Chọn Hạng mục (Track):
-            </span>
+        {/* Selector Bar: Event, Round, Track */}
+        <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+          <div className="space-y-1">
+            <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              1. Chọn Sự Kiện:
+            </label>
             <select
-              value={selectedTrackId}
-              onChange={(e) => setSelectedTrackId(e.target.value)}
-              className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
+              value={eventId}
+              onChange={(e) => setEventId(e.target.value)}
+              className="w-full px-2.5 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-coordinator)]"
             >
-              <option value="track-1">Track 1: AI & Data Science</option>
-              <option value="track-2">Track 2: Cyber Security</option>
-              <option value="track-3">Track 3: Web3 & Blockchain</option>
+              {myEvents.map((ev: any) => {
+                const id = ev.id || ev.Id || ev.eventId || ev.EventId;
+                const name = ev.eventName || ev.EventName || "Sự kiện";
+                return (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
+          <div className="space-y-1">
+            <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              2. Chọn Vòng Thi:
+            </label>
+            <select
+              value={roundId}
+              onChange={(e) => setRoundId(e.target.value)}
+              className="w-full px-2.5 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-coordinator)]"
+            >
+              {rounds.length === 0 ? (
+                <option value="">(Chưa có vòng thi)</option>
+              ) : (
+                rounds.map((r: any) => {
+                  const id = r.id || r.Id || r.roundId;
+                  const name = r.roundName || r.RoundName || `Vòng ${r.roundNumber || 1}`;
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })
+              )}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
+              3. Chọn Hạng Mục (Track):
+            </label>
+            <select
+              value={selectedTrackId}
+              onChange={(e) => setSelectedTrackId(e.target.value)}
+              className="w-full px-2.5 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-coordinator)]"
+            >
+              {tracks.length === 0 ? (
+                <option value="">(Chưa có hạng mục)</option>
+              ) : (
+                tracks.map((t: any) => {
+                  const id = t.id || t.Id || t.trackId;
+                  const name = t.trackName || t.TrackName || "Hạng mục";
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })
+              )}
+            </select>
+          </div>
+        </div>
+
+        {/* Prize Action Control */}
+        <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex items-center justify-between gap-4">
+          <span className="font-mono text-xs text-[var(--text-muted)]">
+            Cấu hình danh sách giải thưởng (Prizes) áp dụng riêng cho Hạng mục đã chọn.
+          </span>
           <Button
             onClick={() => setCreatePrizeModal(true)}
             className="flex items-center gap-1.5 text-xs bg-[var(--accent-coordinator)] text-black font-bold"

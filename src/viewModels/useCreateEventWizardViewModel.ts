@@ -70,92 +70,32 @@ export function useCreateEventWizardViewModel() {
 
   // Step 1 State: Event Basic Info
   const [eventData, setEventData] = useState<EventFormState>({
-    eventName: "SEAL Hackathon 2026",
+    eventName: "",
     season: "Mùa Hè",
-    year: 2026,
-    startDate: "2026-07-15T08:00",
-    endDate: "2026-09-20T17:00",
-    registrationStartDate: "2026-06-01T08:00",
-    registrationEndDate: "2026-07-10T17:00",
+    year: new Date().getFullYear(),
+    startDate: "",
+    endDate: "",
+    registrationStartDate: "",
+    registrationEndDate: "",
     maxTeams: 50,
     minTeamSize: 3,
     maxTeamSize: 5,
-    tagline: "Đấu trường công nghệ RBL quy mô sinh viên toàn quốc",
-    description: "Đấu trường công nghệ dành cho sinh viên toàn quốc quy mô lớn nhất trong năm của SEAL.",
+    tagline: "",
+    description: "",
   });
 
   // Created Event Entity after Step 1 submit
   const [createdEvent, setCreatedEvent] = useState<EventEntity | null>(null);
 
-  // Step 2 State: Rounds
-  const [rounds, setRounds] = useState<RoundFormState[]>([
-    {
-      id: "tmp-r1",
-      roundName: "Vòng loại",
-      roundNumber: 1,
-      startDate: "2026-07-15",
-      endDate: "2026-08-10",
-      advancementRule: "top:20",
-    },
-    {
-      id: "tmp-r2",
-      roundName: "Chung kết",
-      roundNumber: 2,
-      startDate: "2026-08-15",
-      endDate: "2026-09-20",
-      advancementRule: "minscore:7.5",
-    },
-  ]);
+  // Step 2 State: Rounds (Clean initial state)
+  const [rounds, setRounds] = useState<RoundFormState[]>([]);
 
-  // Step 3 State: Tracks
-  const [tracks, setTracks] = useState<TrackFormState[]>([
-    {
-      id: "tmp-t1",
-      trackName: "AI & Machine Learning",
-      templateId: "__custom__",
-      description: "Hạng mục phát triển mô hình & ứng dụng Trí tuệ nhân tạo",
-    },
-    {
-      id: "tmp-t2",
-      trackName: "Phát triển Web & Mobile",
-      templateId: "__custom__",
-      description: "Hạng mục xây dựng giải pháp web hoàn chỉnh",
-    },
-  ]);
+  // Step 3 State: Tracks (Clean initial state)
+  const [tracks, setTracks] = useState<TrackFormState[]>([]);
 
-  // Step 4 State: Criteria & Template Config
+  // Step 4 State: Criteria & Template Config (Clean initial state)
   const [templateName, setTemplateName] = useState<string>("");
-  const [criterias, setCriterias] = useState<TemplateCriteriaFormState[]>([
-    {
-      criteriaId: "crit-1",
-      criterionName: "Tính đổi mới & sáng tạo (Innovation)",
-      description: "Đánh giá mức độ độc đáo của giải pháp công nghệ.",
-      weight: 30,
-      maxScore: 10,
-    },
-    {
-      criteriaId: "crit-2",
-      criterionName: "Kiến trúc hệ thống & Code Quality",
-      description: "Đánh giá thiết kế hệ thống, độ sạch của mã nguồn & khả năng mở rộng.",
-      weight: 40,
-      maxScore: 10,
-    },
-    {
-      criteriaId: "crit-3",
-      criterionName: "Trải nghiệm người dùng (UX/UI)",
-      description: "Giao diện trực quan, mượt mà và dễ sử dụng.",
-      weight: 15,
-      maxScore: 10,
-    },
-    {
-      criteriaId: "crit-4",
-      criterionName: "Kỹ năng thuyết trình & Đô thị thực chiến",
-      description: "Khả năng trình bày sản phẩm và trả lời phản biện.",
-      weight: 15,
-      maxScore: 10,
-    },
-  ]);
-
+  const [criterias, setCriterias] = useState<TemplateCriteriaFormState[]>([]);
   const [criteriasByTrack, setCriteriasByTrack] = useState<Record<string, TemplateCriteriaFormState[]>>({});
 
   const setCriteriasForTrack = (trackId: string, list: TemplateCriteriaFormState[]) => {
@@ -170,30 +110,19 @@ export function useCreateEventWizardViewModel() {
     setCriteriasByTrack(nextMap);
   };
 
-  // Step 5 State: Staff Assignments (Judges / Mentors)
-  const [staffInvites, setStaffInvites] = useState<StaffInviteFormState[]>([
-    {
-      id: "stf-1",
-      email: "judge.ai@fpt.edu.vn",
-      trackId: "tmp-t1",
-      roleName: "Judge",
-      status: "Pending",
-    },
-    {
-      id: "stf-2",
-      email: "mentor.web@fpt.edu.vn",
-      trackId: "tmp-t2",
-      roleName: "Mentor",
-      status: "Pending",
-    },
-  ]);
+  // Step 5 State: Staff Assignments (Judges / Mentors - Clean initial state)
+  const [staffInvites, setStaffInvites] = useState<StaffInviteFormState[]>([]);
 
   // Total weight computed live
   const totalWeight = criterias.reduce((acc, item) => acc + (Number(item.weight) || 0), 0);
   const isValidWeight100 = Math.abs(totalWeight - 100) < 0.01;
 
   // Real data-based Step completion checks
+  const rawObj = createdEvent as any;
+  const realEventId = rawObj?.id || rawObj?.Id || rawObj?.eventId || rawObj?.EventId || rawObj?.data?.id || rawObj?.data?.Id;
+
   const isStep1Done = Boolean(
+    realEventId &&
     eventData.eventName?.trim() &&
     eventData.startDate &&
     eventData.endDate &&
@@ -201,8 +130,11 @@ export function useCreateEventWizardViewModel() {
     (eventData.maxTeams ?? 0) > 0
   );
 
+  const existingRounds: any[] = (typeof window !== "undefined" && (window as any).__createdRoundsList__) || [];
   const isStep2Done = Boolean(
+    isStep1Done &&
     rounds.length > 0 &&
+    existingRounds.length >= rounds.length &&
     rounds.every((r) => {
       const scoringEnd = r.scoringEndDate || (r as any).ScoringEndDate;
       return (
@@ -215,12 +147,16 @@ export function useCreateEventWizardViewModel() {
     })
   );
 
+  const existingTracks: any[] = (typeof window !== "undefined" && (window as any).__createdTrackList__) || [];
   const isStep3Done = Boolean(
+    isStep2Done &&
     tracks.length > 0 &&
+    existingTracks.length >= tracks.length &&
     tracks.every((t) => t.trackName?.trim())
   );
 
   const isStep4Done = Boolean(
+    isStep3Done &&
     tracks.length > 0 &&
     tracks.every((trk) => {
       if (trk.templateId && trk.templateId !== "__custom__") {
@@ -234,6 +170,7 @@ export function useCreateEventWizardViewModel() {
   );
 
   const isStep5Done = Boolean(
+    isStep4Done &&
     staffInvites.length > 0 &&
     staffInvites.every((s) => s.email?.trim() && s.email.includes("@"))
   );
