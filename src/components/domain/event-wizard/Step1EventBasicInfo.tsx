@@ -180,13 +180,88 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
           {/* Nhóm 2: Mốc Thời Gian Đăng Ký & Sự Kiện */}
           <div className="space-y-4 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-muted)]/50 pb-2">
-              <h4 className="text-xs font-bold text-[var(--color-warning)] uppercase tracking-wider flex items-center gap-1.5">
-                <ClipboardList className="w-4 h-4 text-amber-400" /> 2. Thiết Lập Mở / Đóng Cổng Đăng Ký &amp; Sự Kiện
+              <h4 className="text-xs font-bold text-[var(--color-warning)] uppercase tracking-wider">
+                2. Thiết lập mở / đóng cổng đăng ký &amp; sự kiện
               </h4>
 
-              {/* Step 1 Quick Presets */}
-              <div className="flex flex-wrap items-center gap-1 font-mono text-[10px]">
-                <span className="text-[var(--text-muted)] mr-1">Mẫu nhanh:</span>
+              {/* Step 1 Quick Presets (Clean, no emoji spam) */}
+              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
+                <span className="text-[var(--text-muted)] font-bold uppercase mr-1">Mẫu nhanh:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
+                    const regEnd = new Date(now);
+                    regEnd.setDate(regEnd.getDate() + 7);
+                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
+                    const evStart = new Date(regEnd);
+                    evStart.setDate(evStart.getDate() + 1);
+                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
+                    const evEnd = new Date(evStart);
+                    evEnd.setDate(evEnd.getDate() + 1);
+                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T21:00`;
+
+                    onUpdateField("registrationStartDate", todayStr);
+                    onUpdateField("registrationEndDate", regEndStr);
+                    onUpdateField("startDate", evStartStr);
+                    onUpdateField("endDate", evEndStr);
+                  }}
+                  className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 rounded font-bold cursor-pointer transition-colors"
+                >
+                  24h (1 Ngày)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
+                    const regEnd = new Date(now);
+                    regEnd.setDate(regEnd.getDate() + 7);
+                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
+                    const evStart = new Date(regEnd);
+                    evStart.setDate(evStart.getDate() + 1);
+                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
+                    const evEnd = new Date(evStart);
+                    evEnd.setDate(evEnd.getDate() + 2);
+                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T22:00`;
+
+                    onUpdateField("registrationStartDate", todayStr);
+                    onUpdateField("registrationEndDate", regEndStr);
+                    onUpdateField("startDate", evStartStr);
+                    onUpdateField("endDate", evEndStr);
+                  }}
+                  className="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 rounded font-bold cursor-pointer transition-colors"
+                >
+                  36h Cuối tuần (Thứ 7 - CN)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
+                    const regEnd = new Date(now);
+                    regEnd.setDate(regEnd.getDate() + 14);
+                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
+                    const evStart = new Date(regEnd);
+                    evStart.setDate(evStart.getDate() + 1);
+                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
+                    const evEnd = new Date(evStart);
+                    evEnd.setDate(evEnd.getDate() + 2);
+                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T23:59`;
+
+                    onUpdateField("registrationStartDate", todayStr);
+                    onUpdateField("registrationEndDate", regEndStr);
+                    onUpdateField("startDate", evStartStr);
+                    onUpdateField("endDate", evEndStr);
+                  }}
+                  className="px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded font-bold cursor-pointer transition-colors"
+                >
+                  48h (2 Ngày)
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -208,59 +283,9 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                     onUpdateField("startDate", evStartStr);
                     onUpdateField("endDate", evEndStr);
                   }}
-                  className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 rounded cursor-pointer"
+                  className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 rounded font-bold cursor-pointer transition-colors"
                 >
-                  🚀 4 Tuần
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const now = new Date();
-                    const pad = (n: number) => String(n).padStart(2, "0");
-                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
-                    const regEnd = new Date(now);
-                    regEnd.setDate(regEnd.getDate() + 7);
-                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
-                    const evStart = new Date(regEnd);
-                    evStart.setDate(evStart.getDate() + 1);
-                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
-                    const evEnd = new Date(evStart);
-                    evEnd.setDate(evEnd.getDate() + 3);
-                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T23:59`;
-
-                    onUpdateField("registrationStartDate", todayStr);
-                    onUpdateField("registrationEndDate", regEndStr);
-                    onUpdateField("startDate", evStartStr);
-                    onUpdateField("endDate", evEndStr);
-                  }}
-                  className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 rounded cursor-pointer"
-                >
-                  ⚡ Sprint 48h
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const now = new Date();
-                    const pad = (n: number) => String(n).padStart(2, "0");
-                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
-                    const regEnd = new Date(now);
-                    regEnd.setDate(regEnd.getDate() + 14);
-                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
-                    const evStart = new Date(regEnd);
-                    evStart.setDate(evStart.getDate() + 1);
-                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
-                    const evEnd = new Date(evStart);
-                    evEnd.setDate(evEnd.getDate() + 60);
-                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T23:59`;
-
-                    onUpdateField("registrationStartDate", todayStr);
-                    onUpdateField("registrationEndDate", regEndStr);
-                    onUpdateField("startDate", evStartStr);
-                    onUpdateField("endDate", evEndStr);
-                  }}
-                  className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded cursor-pointer"
-                >
-                  🎓 8 Tuần
+                  4 Tuần (Dự án)
                 </button>
               </div>
             </div>

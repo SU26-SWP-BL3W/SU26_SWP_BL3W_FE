@@ -2,25 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui";
-import {
-  Calendar,
-  UploadCloud,
-  FileCheck,
-  Scale,
-  ArrowRight,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Zap,
-  Plus,
-  Sunrise,
-  Sun,
-  Sunset,
-  Moon,
-  Sliders,
-  Sparkles,
-  HelpCircle,
-} from "lucide-react";
 
 export interface RoundTimelineValues {
   startDate: string;
@@ -38,14 +19,13 @@ interface RoundTimelinePickerProps {
   defaultAnchorDate?: string;
 }
 
-export type TimeUnit = "hours" | "days" | "weeks" | "months" | "years";
+export type TimeUnit = "hours" | "days" | "weeks" | "months";
 
 export const TIME_UNIT_LABELS: Record<TimeUnit, string> = {
   hours: "Giờ",
   days: "Ngày",
   weeks: "Tuần",
   months: "Tháng",
-  years: "Năm",
 };
 
 // Format date to YYYY-MM-DDTHH:mm
@@ -58,6 +38,23 @@ const toDateTimeLocal = (val?: string, defaultTime = "08:00") => {
     return `${datePart}T${timePart}`;
   }
   return `${val}T${defaultTime}`;
+};
+
+// Format date to readable Vietnamese with day of week: "Thứ Bảy, 15/08/2026 08:00"
+const formatHumanDateTime = (val?: string) => {
+  if (!val) return "Chưa thiết lập";
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return val;
+    const daysOfWeek = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+    const dow = daysOfWeek[d.getDay()];
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const dateStr = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    return `${dow}, ${dateStr} lúc ${timeStr}`;
+  } catch {
+    return val;
+  }
 };
 
 // Add duration to date based on unit while preserving time
@@ -78,8 +75,6 @@ export const addDurationToDate = (baseStr: string, amount: number, unit: TimeUni
     d.setDate(d.getDate() + amount * 7);
   } else if (unit === "months") {
     d.setMonth(d.getMonth() + amount);
-  } else if (unit === "years") {
-    d.setFullYear(d.getFullYear() + amount);
   }
 
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -94,24 +89,17 @@ const setTimeToDateStr = (dateStr?: string, timeStr = "08:00") => {
   return `${datePart}T${timeStr}`;
 };
 
-// Add days to date while preserving exact time (HH:mm)
-const addDaysPreserveTime = (baseStr?: string, daysToAdd = 1, defaultTime = "23:59") => {
-  if (!baseStr) {
-    const d = new Date();
-    d.setDate(d.getDate() + daysToAdd);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${defaultTime}`;
-  }
-  const parts = baseStr.split("T");
-  const d = new Date(parts[0]);
+// Add hours directly to date string
+const addHoursToDateStr = (baseStr?: string, hoursToAdd = 4) => {
+  const base = baseStr || toDateTimeLocal(new Date().toISOString(), "08:00");
+  const d = new Date(base);
   if (isNaN(d.getTime())) return "";
-  d.setDate(d.getDate() + daysToAdd);
+  d.setHours(d.getHours() + hoursToAdd);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const timePart = parts[1]?.substring(0, 5) || defaultTime;
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${timePart}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-// Human-readable duration format (e.g. "14 ngày 9 giờ" or "48 giờ")
+// Human-readable duration format (e.g. "24 giờ" or "32 giờ (1.3 ngày)")
 const formatDetailedDuration = (startStr?: string, endStr?: string) => {
   if (!startStr || !endStr) return null;
   const s = new Date(startStr);
@@ -127,46 +115,40 @@ const formatDetailedDuration = (startStr?: string, endStr?: string) => {
   const remMinutes = totalMinutes % 60;
 
   if (days === 0) {
-    if (remMinutes > 0) return `${remHours} giờ ${remMinutes}p`;
+    if (remMinutes > 0) return `${remHours}h ${remMinutes}p`;
     return `${remHours} giờ`;
   }
-  if (remHours === 0 && remMinutes === 0) return `${days} ngày`;
-  if (remMinutes === 0) return `${days} ngày ${remHours}h`;
-  return `${days} ngày ${remHours}h ${remMinutes}p`;
+  if (remHours === 0 && remMinutes === 0) return `${days} ngày (${totalHours}h)`;
+  if (remMinutes === 0) return `${days} ngày ${remHours}h (${totalHours}h)`;
+  return `${days} ngày ${remHours}h ${remMinutes}p (${totalHours}h)`;
 };
 
-// Calculate days between two dates for Gantt bar
-const getDaysBetween = (startStr?: string, endStr?: string) => {
+// Calculate hours between two dates for Gantt bar
+const getHoursBetween = (startStr?: string, endStr?: string) => {
   if (!startStr || !endStr) return 0;
   const s = new Date(startStr);
   const e = new Date(endStr);
   if (isNaN(s.getTime()) || isNaN(e.getTime())) return 0;
   const diff = e.getTime() - s.getTime();
-  return Math.max(0, Math.round((diff / (1000 * 60 * 60 * 24)) * 10) / 10);
+  return Math.max(0, Math.round((diff / (1000 * 60 * 60)) * 10) / 10);
 };
 
 export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
   values,
   onChange,
-  title = "Mốc thời gian của vòng thi",
+  title = "Mốc thời gian vòng thi",
   defaultAnchorDate,
 }) => {
-  // Mode: "duration" (default) or "precision"
   const [activeMode, setActiveMode] = useState<"duration" | "precision">("duration");
   const [hasAppeal, setHasAppeal] = useState(Boolean(values.appealStartDate && values.appealEndDate));
 
-  // Duration State
-  const [subDuration, setSubDuration] = useState({ amount: 2, unit: "weeks" as TimeUnit });
-  const [scoreDuration, setScoreDuration] = useState({ amount: 1, unit: "weeks" as TimeUnit });
-  const [appealDuration, setAppealDuration] = useState({ amount: 3, unit: "days" as TimeUnit });
+  // Duration State (mặc định theo giờ/ngày cho hackathon 1-2 ngày)
+  const [subDuration, setSubDuration] = useState({ amount: 24, unit: "hours" as TimeUnit });
+  const [scoreDuration, setScoreDuration] = useState({ amount: 4, unit: "hours" as TimeUnit });
+  const [appealDuration, setAppealDuration] = useState({ amount: 1, unit: "hours" as TimeUnit });
 
-  // Quick Time Chips
-  const TIME_CHIPS = [
-    { label: "08:00", icon: Sunrise, title: "Sáng (08:00)" },
-    { label: "12:00", icon: Sun, title: "Trưa (12:00)" },
-    { label: "17:30", icon: Sunset, title: "Chiều (17:30)" },
-    { label: "23:59", icon: Moon, title: "Đêm chót (23:59)" },
-  ];
+  // Quick Time Chips (Không dùng emoji)
+  const TIME_CHIPS = ["08:00", "12:00", "13:30", "17:00", "20:00", "23:59"];
 
   // Auto-initialize anchor date if empty
   useEffect(() => {
@@ -187,20 +169,20 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
     if (!anchorStart) return;
 
     // 1. Submission Phase
-    const computedEndDate = addDurationToDate(anchorStart, sub.amount, sub.unit, "23:59");
+    const computedEndDate = addDurationToDate(anchorStart, sub.amount, sub.unit, "17:00");
     onChange("startDate", anchorStart);
     onChange("endDate", computedEndDate);
 
     // 2. Scoring Phase
     const computedScoreStart = computedEndDate;
-    const computedScoreEnd = addDurationToDate(computedScoreStart, score.amount, score.unit, "23:59");
+    const computedScoreEnd = addDurationToDate(computedScoreStart, score.amount, score.unit, "20:00");
     onChange("scoringStartDate", computedScoreStart);
     onChange("scoringEndDate", computedScoreEnd);
 
     // 3. Appeal Phase
     if (enableAppeal) {
       const computedAppealStart = computedScoreEnd;
-      const computedAppealEnd = addDurationToDate(computedAppealStart, appeal.amount, appeal.unit, "23:59");
+      const computedAppealEnd = addDurationToDate(computedAppealStart, appeal.amount, appeal.unit, "21:00");
       onChange("appealStartDate", computedAppealStart);
       onChange("appealEndDate", computedAppealEnd);
     } else {
@@ -209,194 +191,181 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
     }
   };
 
-  // 1-Click Presets
-  const applyPreset = (type: "hackathon" | "sprint" | "semester" | "finals") => {
+  // 1-Click Presets Tối Ưu Cho Cuộc Thi Trường (1 - 2 Ngày)
+  const applyPreset = (type: "24h" | "36h" | "48h" | "4h") => {
     const anchor = values.startDate || defaultAnchorDate || toDateTimeLocal(new Date().toISOString(), "08:00");
-    if (type === "hackathon") {
-      const sub = { amount: 2, unit: "weeks" as TimeUnit };
-      const score = { amount: 1, unit: "weeks" as TimeUnit };
-      const appeal = { amount: 3, unit: "days" as TimeUnit };
+    if (type === "24h") {
+      const sub = { amount: 24, unit: "hours" as TimeUnit };
+      const score = { amount: 4, unit: "hours" as TimeUnit };
+      const appeal = { amount: 1, unit: "hours" as TimeUnit };
       setSubDuration(sub);
       setScoreDuration(score);
       setAppealDuration(appeal);
       setHasAppeal(true);
       applyDurationCascade(anchor, sub, score, appeal, true);
-    } else if (type === "sprint") {
+    } else if (type === "36h") {
+      const sub = { amount: 32, unit: "hours" as TimeUnit };
+      const score = { amount: 3, unit: "hours" as TimeUnit };
+      const appeal = { amount: 1, unit: "hours" as TimeUnit };
+      setSubDuration(sub);
+      setScoreDuration(score);
+      setAppealDuration(appeal);
+      setHasAppeal(true);
+      applyDurationCascade(anchor, sub, score, appeal, true);
+    } else if (type === "48h") {
       const sub = { amount: 48, unit: "hours" as TimeUnit };
-      const score = { amount: 24, unit: "hours" as TimeUnit };
-      const appeal = { amount: 0, unit: "days" as TimeUnit };
+      const score = { amount: 6, unit: "hours" as TimeUnit };
+      const appeal = { amount: 2, unit: "hours" as TimeUnit };
+      setSubDuration(sub);
+      setScoreDuration(score);
+      setAppealDuration(appeal);
+      setHasAppeal(true);
+      applyDurationCascade(anchor, sub, score, appeal, true);
+    } else if (type === "4h") {
+      const sub = { amount: 4, unit: "hours" as TimeUnit };
+      const score = { amount: 1, unit: "hours" as TimeUnit };
+      const appeal = { amount: 30, unit: "hours" as TimeUnit };
       setSubDuration(sub);
       setScoreDuration(score);
       setAppealDuration(appeal);
       setHasAppeal(false);
       applyDurationCascade(anchor, sub, score, appeal, false);
-    } else if (type === "semester") {
-      const sub = { amount: 4, unit: "weeks" as TimeUnit };
-      const score = { amount: 2, unit: "weeks" as TimeUnit };
-      const appeal = { amount: 1, unit: "weeks" as TimeUnit };
-      setSubDuration(sub);
-      setScoreDuration(score);
-      setAppealDuration(appeal);
-      setHasAppeal(true);
-      applyDurationCascade(anchor, sub, score, appeal, true);
-    } else if (type === "finals") {
-      const sub = { amount: 1, unit: "weeks" as TimeUnit };
-      const score = { amount: 3, unit: "days" as TimeUnit };
-      const appeal = { amount: 2, unit: "days" as TimeUnit };
-      setSubDuration(sub);
-      setScoreDuration(score);
-      setAppealDuration(appeal);
-      setHasAppeal(true);
-      applyDurationCascade(anchor, sub, score, appeal, true);
     }
   };
 
   // Duration metrics for Gantt bar
-  const subDays = getDaysBetween(values.startDate, values.endDate);
-  const scoreDays = getDaysBetween(values.scoringStartDate, values.scoringEndDate);
-  const appealDays = hasAppeal ? getDaysBetween(values.appealStartDate, values.appealEndDate) : 0;
-  const totalDays = Math.max(1, subDays + scoreDays + appealDays);
+  const subHours = getHoursBetween(values.startDate, values.endDate);
+  const scoreHours = getHoursBetween(values.scoringStartDate, values.scoringEndDate);
+  const appealHours = hasAppeal ? getHoursBetween(values.appealStartDate, values.appealEndDate) : 0;
+  const totalHours = Math.max(1, subHours + scoreHours + appealHours);
 
-  const subPct = Math.round((subDays / totalDays) * 100);
-  const scorePct = Math.round((scoreDays / totalDays) * 100);
+  const subPct = Math.round((subHours / totalHours) * 100);
+  const scorePct = Math.round((scoreHours / totalHours) * 100);
   const appealPct = 100 - subPct - scorePct;
 
   return (
-    <div className="space-y-4">
-      {/* Header & Mode Switcher Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--bg-panel)] p-3 border border-[var(--border-muted)] rounded-lg">
+    <div className="space-y-3 font-mono text-xs">
+      {/* Header & Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[var(--bg-panel)] p-3 border border-[var(--border-muted)] rounded">
         <div>
-          <h4 className="text-xs font-bold font-mono text-[var(--text-primary)] uppercase flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-[var(--accent-coordinator)]" />
+          <span className="font-bold text-[var(--text-primary)] uppercase tracking-wider block">
             {title}
-          </h4>
-          <span className="text-[10px] text-[var(--text-muted)] font-mono">
-            {activeMode === "duration"
-              ? "⚡ Nhập lịch bằng số ngày/tuần/tháng — Hệ thống tự tính toàn bộ mốc liên hoàn."
-              : "📅 Tinh chỉnh trực tiếp ngày giờ từng mốc chi tiết đến từng phút."}
+          </span>
+          <span className="text-[11px] text-[var(--text-muted)] mt-0.5 block">
+            Bắt đầu: <strong className="text-cyan-300">{formatHumanDateTime(values.startDate)}</strong>
           </span>
         </div>
 
-        {/* Mode Switcher Tabs */}
-        <div className="flex items-center bg-[var(--bg-base)] p-1 rounded-lg border border-[var(--border-muted)] font-mono text-xs">
+        {/* Mode Switcher */}
+        <div className="flex items-center bg-[var(--bg-base)] p-0.5 rounded border border-[var(--border-muted)] text-[11px]">
           <button
             type="button"
             onClick={() => setActiveMode("duration")}
-            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 py-1 rounded font-bold transition-colors cursor-pointer ${
               activeMode === "duration"
-                ? "bg-[var(--accent-coordinator)] text-black shadow-md"
+                ? "bg-[var(--accent-coordinator)] text-black"
                 : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
-            <Zap className="w-3.5 h-3.5" />
-            Nhập Thời Lượng
+            Nhập thời lượng
           </button>
           <button
             type="button"
             onClick={() => setActiveMode("precision")}
-            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 py-1 rounded font-bold transition-colors cursor-pointer ${
               activeMode === "precision"
-                ? "bg-[var(--accent-coordinator)] text-black shadow-md"
+                ? "bg-[var(--accent-coordinator)] text-black"
                 : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
-            Tinh Chỉnh Chi Tiết
+            Tinh chỉnh chi tiết
           </button>
         </div>
       </div>
 
-      {/* 1-Click Presets Bar */}
-      <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-        <span className="text-[var(--text-muted)] text-[10px] uppercase font-bold flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-amber-400" />
-          Mẫu Nhanh:
-        </span>
+      {/* 1-Click Presets Tối Giản (Không Icon Rườm Rà) */}
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+        <span className="text-[var(--text-muted)] font-bold uppercase text-[10px]">Mẫu nhanh:</span>
         <button
           type="button"
-          onClick={() => applyPreset("hackathon")}
-          className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+          onClick={() => applyPreset("24h")}
+          className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded font-bold cursor-pointer transition-colors"
         >
-          🚀 Hackathon 4T
+          24h (1 Ngày)
         </button>
         <button
           type="button"
-          onClick={() => applyPreset("sprint")}
-          className="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+          onClick={() => applyPreset("36h")}
+          className="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded font-bold cursor-pointer transition-colors"
         >
-          ⚡ Sprint 48h
+          36h Cuối tuần (Thứ 7 - CN)
         </button>
         <button
           type="button"
-          onClick={() => applyPreset("semester")}
-          className="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+          onClick={() => applyPreset("48h")}
+          className="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded font-bold cursor-pointer transition-colors"
         >
-          🎓 Học kỳ 8T
+          48h (2 Ngày)
         </button>
         <button
           type="button"
-          onClick={() => applyPreset("finals")}
-          className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 rounded text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02]"
+          onClick={() => applyPreset("4h")}
+          className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded font-bold cursor-pointer transition-colors"
         >
-          🏆 Chung kết 1T
+          4h Thuật toán (Trong buổi)
         </button>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          MODE 1: DURATION BUILDER (Số + Đơn Vị Giờ/Ngày/Tuần/Tháng/Năm)
+          MODE 1: DURATION BUILDER (Gọn Gàng, Trực Quan Cho 1-2 Ngày)
       ───────────────────────────────────────────────────────────── */}
       {activeMode === "duration" && (
-        <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-4 font-mono text-xs">
+        <div className="p-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded space-y-3">
           {/* Anchor Date Input */}
-          <div className="p-3 bg-[var(--bg-base)] border border-cyan-500/40 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-2.5 bg-[var(--bg-base)] border border-cyan-500/30 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <label className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-cyan-400" />
-                Mốc Neo — Thời Gian Mở Cổng Nộp Bài (Ngày Tuyệt Đối Duy Nhất) *
+              <label className="text-[11px] font-bold text-cyan-300 uppercase block">
+                Mốc bắt đầu làm bài (Ngày neo) *
               </label>
-              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
-                Mọi giai đoạn tiếp theo sẽ tự động tính toán nối tiếp từ mốc neo này.
-              </p>
+              <span className="text-[10px] text-[var(--text-muted)]">
+                Các giai đoạn tiếp theo sẽ tự động tính nối tiếp theo số giờ/ngày.
+              </span>
             </div>
-            <div className="w-full sm:w-64">
+            <div className="w-full sm:w-60">
               <Input
                 type="datetime-local"
                 value={toDateTimeLocal(values.startDate)}
-                onChange={(e) => {
-                  const newAnchor = e.target.value;
-                  applyDurationCascade(newAnchor);
-                }}
-                className="bg-black/60 border-cyan-500/50 text-cyan-300 text-xs font-bold"
+                onChange={(e) => applyDurationCascade(e.target.value)}
+                className="bg-black/60 border-cyan-500/40 text-cyan-300 text-xs font-bold"
               />
             </div>
           </div>
 
           {/* 3 Duration Control Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
             {/* 1. Submission Duration */}
-            <div className="p-3.5 bg-[var(--bg-base)] border border-amber-500/30 rounded-lg space-y-2">
+            <div className="p-3 bg-[var(--bg-base)] border border-amber-500/30 rounded space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-amber-300 uppercase flex items-center gap-1">
-                  <UploadCloud className="w-3.5 h-3.5 text-amber-400" />
-                  1. Nộp Bài
+                <span className="text-[11px] font-bold text-amber-300 uppercase">
+                  1. Nộp bài
                 </span>
                 <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded">
-                  {formatDetailedDuration(values.startDate, values.endDate) || "Chưa tính"}
+                  {formatDetailedDuration(values.startDate, values.endDate) || "---"}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <input
                   type="number"
                   min="1"
-                  max="365"
+                  max="720"
                   value={subDuration.amount}
                   onChange={(e) => {
                     const newSub = { ...subDuration, amount: Math.max(1, Number(e.target.value)) };
                     setSubDuration(newSub);
                     applyDurationCascade(values.startDate, newSub);
                   }}
-                  className="w-20 px-2.5 py-1.5 bg-black/60 border border-amber-500/40 text-amber-300 rounded font-bold text-xs text-center"
+                  className="w-16 px-2 py-1 bg-black/60 border border-amber-500/40 text-amber-300 rounded font-bold text-xs text-center"
                 />
                 <select
                   value={subDuration.unit}
@@ -405,44 +374,41 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                     setSubDuration(newSub);
                     applyDurationCascade(values.startDate, newSub);
                   }}
-                  className="flex-1 px-2.5 py-1.5 bg-black/60 border border-amber-500/40 text-amber-300 rounded text-xs cursor-pointer"
+                  className="flex-1 px-2 py-1 bg-black/60 border border-amber-500/40 text-amber-300 rounded text-xs cursor-pointer"
                 >
                   <option value="hours">Giờ</option>
                   <option value="days">Ngày</option>
                   <option value="weeks">Tuần</option>
-                  <option value="months">Tháng</option>
-                  <option value="years">Năm</option>
                 </select>
               </div>
               <span className="text-[10px] text-[var(--text-muted)] block truncate">
-                Hạn chót: {values.endDate ? new Date(values.endDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+                Hạn chót: {formatHumanDateTime(values.endDate)}
               </span>
             </div>
 
             {/* 2. Scoring Duration */}
-            <div className="p-3.5 bg-[var(--bg-base)] border border-cyan-500/30 rounded-lg space-y-2">
+            <div className="p-3 bg-[var(--bg-base)] border border-cyan-500/30 rounded space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-1">
-                  <FileCheck className="w-3.5 h-3.5 text-cyan-400" />
-                  2. Chấm Điểm
+                <span className="text-[11px] font-bold text-cyan-300 uppercase">
+                  2. Chấm điểm &amp; Pitching
                 </span>
                 <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">
-                  {formatDetailedDuration(values.scoringStartDate, values.scoringEndDate) || "Chưa tính"}
+                  {formatDetailedDuration(values.scoringStartDate, values.scoringEndDate) || "---"}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <input
                   type="number"
                   min="1"
-                  max="365"
+                  max="720"
                   value={scoreDuration.amount}
                   onChange={(e) => {
                     const newScore = { ...scoreDuration, amount: Math.max(1, Number(e.target.value)) };
                     setScoreDuration(newScore);
                     applyDurationCascade(values.startDate, subDuration, newScore);
                   }}
-                  className="w-20 px-2.5 py-1.5 bg-black/60 border border-cyan-500/40 text-cyan-300 rounded font-bold text-xs text-center"
+                  className="w-16 px-2 py-1 bg-black/60 border border-cyan-500/40 text-cyan-300 rounded font-bold text-xs text-center"
                 />
                 <select
                   value={scoreDuration.unit}
@@ -451,26 +417,24 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                     setScoreDuration(newScore);
                     applyDurationCascade(values.startDate, subDuration, newScore);
                   }}
-                  className="flex-1 px-2.5 py-1.5 bg-black/60 border border-cyan-500/40 text-cyan-300 rounded text-xs cursor-pointer"
+                  className="flex-1 px-2 py-1 bg-black/60 border border-cyan-500/40 text-cyan-300 rounded text-xs cursor-pointer"
                 >
                   <option value="hours">Giờ</option>
                   <option value="days">Ngày</option>
                   <option value="weeks">Tuần</option>
-                  <option value="months">Tháng</option>
-                  <option value="years">Năm</option>
                 </select>
               </div>
               <span className="text-[10px] text-[var(--text-muted)] block truncate">
-                Khóa chấm: {values.scoringEndDate ? new Date(values.scoringEndDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+                Khóa chấm: {formatHumanDateTime(values.scoringEndDate)}
               </span>
             </div>
 
             {/* 3. Appeal Duration */}
-            <div className={`p-3.5 bg-[var(--bg-base)] border rounded-lg space-y-2 transition-all ${
+            <div className={`p-3 bg-[var(--bg-base)] border rounded space-y-1.5 transition-colors ${
               hasAppeal ? "border-purple-500/30" : "border-slate-800 opacity-60"
             }`}>
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-purple-300 uppercase flex items-center gap-1.5 cursor-pointer">
+                <label className="text-[11px] font-bold text-purple-300 uppercase flex items-center gap-1 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={hasAppeal}
@@ -481,29 +445,29 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                     }}
                     className="accent-purple-400 w-3.5 h-3.5 cursor-pointer"
                   />
-                  <span>3. Phúc Khảo</span>
+                  <span>3. Phúc khảo / Trao giải</span>
                 </label>
                 {hasAppeal && (
                   <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded">
-                    {formatDetailedDuration(values.appealStartDate, values.appealEndDate) || "Chưa tính"}
+                    {formatDetailedDuration(values.appealStartDate, values.appealEndDate) || "---"}
                   </span>
                 )}
               </div>
 
               {hasAppeal ? (
                 <>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="number"
                       min="1"
-                      max="365"
+                      max="720"
                       value={appealDuration.amount}
                       onChange={(e) => {
                         const newAppeal = { ...appealDuration, amount: Math.max(1, Number(e.target.value)) };
                         setAppealDuration(newAppeal);
                         applyDurationCascade(values.startDate, subDuration, scoreDuration, newAppeal, true);
                       }}
-                      className="w-20 px-2.5 py-1.5 bg-black/60 border border-purple-500/40 text-purple-300 rounded font-bold text-xs text-center"
+                      className="w-16 px-2 py-1 bg-black/60 border border-purple-500/40 text-purple-300 rounded font-bold text-xs text-center"
                     />
                     <select
                       value={appealDuration.unit}
@@ -512,22 +476,19 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                         setAppealDuration(newAppeal);
                         applyDurationCascade(values.startDate, subDuration, scoreDuration, newAppeal, true);
                       }}
-                      className="flex-1 px-2.5 py-1.5 bg-black/60 border border-purple-500/40 text-purple-300 rounded text-xs cursor-pointer"
+                      className="flex-1 px-2 py-1 bg-black/60 border border-purple-500/40 text-purple-300 rounded text-xs cursor-pointer"
                     >
                       <option value="hours">Giờ</option>
                       <option value="days">Ngày</option>
-                      <option value="weeks">Tuần</option>
-                      <option value="months">Tháng</option>
-                      <option value="years">Năm</option>
                     </select>
                   </div>
                   <span className="text-[10px] text-[var(--text-muted)] block truncate">
-                    Hết phúc khảo: {values.appealEndDate ? new Date(values.appealEndDate).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "---"}
+                    Hoàn tất: {formatHumanDateTime(values.appealEndDate)}
                   </span>
                 </>
               ) : (
-                <p className="text-[10px] text-[var(--text-muted)] py-2 text-center">
-                  ☐ Đã bỏ qua giai đoạn phúc khảo
+                <p className="text-[10px] text-[var(--text-muted)] py-1.5 text-center">
+                  Bỏ qua phúc khảo
                 </p>
               )}
             </div>
@@ -536,31 +497,27 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          MODE 2: PRECISION MANUAL MODE (Chỉnh Từng Mốc DateTime Chi Tiết)
+          MODE 2: PRECISION MODE (Tinh Chỉnh Chi Tiết Kèm Nút Giờ Nhanh)
       ───────────────────────────────────────────────────────────── */}
       {activeMode === "precision" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Phase 1: Submission */}
-          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-3">
-            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
-              <div className="flex items-center gap-2">
-                <UploadCloud className="w-4 h-4 text-amber-400" />
-                <span className="font-mono text-xs font-bold text-amber-300 uppercase">
-                  1. Giai Đoạn Nộp Bài (Submission Phase)
-                </span>
-              </div>
+          <div className="p-3.5 bg-[var(--bg-panel)] border border-amber-500/30 rounded space-y-2.5">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-1.5">
+              <span className="font-bold text-amber-300 uppercase text-[11px]">
+                1. Giai đoạn nộp bài
+              </span>
               {values.startDate && values.endDate && (
-                <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[10px] rounded font-bold">
-                  ⏳ Thời lượng: {formatDetailedDuration(values.startDate, values.endDate)}
+                <span className="px-2 py-0.5 bg-amber-500/10 text-amber-300 text-[10px] rounded font-bold">
+                  {formatDetailedDuration(values.startDate, values.endDate)}
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
-                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                  Mở Cổng Nộp Bài (Bắt Đầu Vòng) *
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
+                  Mở nộp bài *
                 </label>
                 <Input
                   type="datetime-local"
@@ -569,52 +526,51 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                     const val = e.target.value;
                     onChange("startDate", val);
                     if (!values.endDate && val) {
-                      onChange("endDate", addDaysPreserveTime(val, 14, "23:59"));
+                      onChange("endDate", addHoursToDateStr(val, 24));
                     }
                   }}
                   required
                 />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                <div className="flex items-center gap-1 text-[9px] pt-0.5">
                   <span className="text-[var(--text-muted)]">Giờ:</span>
                   {TIME_CHIPS.map((t) => (
                     <button
-                      key={t.label}
+                      key={t}
                       type="button"
-                      onClick={() => onChange("startDate", setTimeToDateStr(values.startDate, t.label))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                      onClick={() => onChange("startDate", setTimeToDateStr(values.startDate, t))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
                     >
-                      {t.label}
+                      {t}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
-                    Hạn Chót Nộp Bài *
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
+                    Hạn chót nộp bài *
                   </label>
                   <div className="flex items-center gap-1 text-[9px]">
                     <button
                       type="button"
-                      onClick={() => onChange("endDate", addDaysPreserveTime(values.endDate || values.startDate, 1))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                      onClick={() => onChange("endDate", addHoursToDateStr(values.endDate || values.startDate, 4))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
                     >
-                      +1d
+                      +4h
                     </button>
                     <button
                       type="button"
-                      onClick={() => onChange("endDate", addDaysPreserveTime(values.endDate || values.startDate, 7))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                      onClick={() => onChange("endDate", addHoursToDateStr(values.endDate || values.startDate, 24))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
                     >
-                      +7d
+                      +24h
                     </button>
                   </div>
                 </div>
                 <Input
                   type="datetime-local"
-                  value={toDateTimeLocal(values.endDate, "23:59")}
+                  value={toDateTimeLocal(values.endDate, "17:00")}
                   onChange={(e) => {
                     const val = e.target.value;
                     onChange("endDate", val);
@@ -624,16 +580,16 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                   }}
                   required
                 />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                <div className="flex items-center gap-1 text-[9px] pt-0.5">
                   <span className="text-[var(--text-muted)]">Giờ:</span>
                   {TIME_CHIPS.map((t) => (
                     <button
-                      key={t.label}
+                      key={t}
                       type="button"
-                      onClick={() => onChange("endDate", setTimeToDateStr(values.endDate, t.label))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
+                      onClick={() => onChange("endDate", setTimeToDateStr(values.endDate, t))}
+                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
                     >
-                      {t.label}
+                      {t}
                     </button>
                   ))}
                 </div>
@@ -642,79 +598,74 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
           </div>
 
           {/* Phase 2: Scoring */}
-          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-3">
-            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
-              <div className="flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-cyan-400" />
-                <span className="font-mono text-xs font-bold text-cyan-300 uppercase">
-                  2. Giai Đoạn Chấm Điểm (Scoring Phase)
-                </span>
-              </div>
+          <div className="p-3.5 bg-[var(--bg-panel)] border border-cyan-500/30 rounded space-y-2.5">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-1.5">
+              <span className="font-bold text-cyan-300 uppercase text-[11px]">
+                2. Giai đoạn chấm điểm &amp; Pitching
+              </span>
               {values.scoringStartDate && values.scoringEndDate && (
-                <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] rounded font-bold">
-                  ⏳ Thời lượng: {formatDetailedDuration(values.scoringStartDate, values.scoringEndDate)}
+                <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-300 text-[10px] rounded font-bold">
+                  {formatDetailedDuration(values.scoringStartDate, values.scoringEndDate)}
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  Bắt Đầu Mở Cổng Chấm
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
+                  Mở chấm điểm
                 </label>
                 <Input
                   type="datetime-local"
-                  value={toDateTimeLocal(values.scoringStartDate, "08:00")}
+                  value={toDateTimeLocal(values.scoringStartDate, "17:00")}
                   onChange={(e) => {
                     const val = e.target.value;
                     onChange("scoringStartDate", val);
                     if (!values.scoringEndDate && val) {
-                      onChange("scoringEndDate", addDaysPreserveTime(val, 7, "23:59"));
+                      onChange("scoringEndDate", addHoursToDateStr(val, 4));
                     }
                   }}
                 />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                <div className="flex items-center gap-1 text-[9px] pt-0.5">
                   <span className="text-[var(--text-muted)]">Giờ:</span>
                   {TIME_CHIPS.map((t) => (
                     <button
-                      key={t.label}
+                      key={t}
                       type="button"
-                      onClick={() => onChange("scoringStartDate", setTimeToDateStr(values.scoringStartDate, t.label))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                      onClick={() => onChange("scoringStartDate", setTimeToDateStr(values.scoringStartDate, t))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
                     >
-                      {t.label}
+                      {t}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
-                    <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                    Hạn Chót Khóa Chấm *
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
+                    Khóa chấm điểm *
                   </label>
                   <div className="flex items-center gap-1 text-[9px]">
                     <button
                       type="button"
-                      onClick={() => onChange("scoringEndDate", addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 1))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                      onClick={() => onChange("scoringEndDate", addHoursToDateStr(values.scoringEndDate || values.scoringStartDate, 2))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
                     >
-                      +1d
+                      +2h
                     </button>
                     <button
                       type="button"
-                      onClick={() => onChange("scoringEndDate", addDaysPreserveTime(values.scoringEndDate || values.scoringStartDate, 7))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                      onClick={() => onChange("scoringEndDate", addHoursToDateStr(values.scoringEndDate || values.scoringStartDate, 4))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
                     >
-                      +7d
+                      +4h
                     </button>
                   </div>
                 </div>
                 <Input
                   type="datetime-local"
-                  value={toDateTimeLocal(values.scoringEndDate, "23:59")}
+                  value={toDateTimeLocal(values.scoringEndDate, "20:00")}
                   onChange={(e) => {
                     const val = e.target.value;
                     onChange("scoringEndDate", val);
@@ -724,16 +675,16 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                   }}
                   required
                 />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
+                <div className="flex items-center gap-1 text-[9px] pt-0.5">
                   <span className="text-[var(--text-muted)]">Giờ:</span>
                   {TIME_CHIPS.map((t) => (
                     <button
-                      key={t.label}
+                      key={t}
                       type="button"
-                      onClick={() => onChange("scoringEndDate", setTimeToDateStr(values.scoringEndDate, t.label))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
+                      onClick={() => onChange("scoringEndDate", setTimeToDateStr(values.scoringEndDate, t))}
+                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
                     >
-                      {t.label}
+                      {t}
                     </button>
                   ))}
                 </div>
@@ -741,10 +692,10 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
             </div>
           </div>
 
-          {/* Phase 3: Appeal (Optional) */}
-          <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded-lg space-y-3">
-            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-2">
-              <label className="flex items-center gap-2 cursor-pointer font-mono text-xs font-bold text-purple-300 uppercase">
+          {/* Phase 3: Appeal */}
+          <div className="p-3.5 bg-[var(--bg-panel)] border border-purple-500/30 rounded space-y-2.5">
+            <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-1.5">
+              <label className="flex items-center gap-1.5 cursor-pointer font-bold text-purple-300 uppercase text-[11px]">
                 <input
                   type="checkbox"
                   checked={hasAppeal}
@@ -756,89 +707,42 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                       onChange("appealEndDate", "");
                     } else if (values.scoringEndDate) {
                       onChange("appealStartDate", values.scoringEndDate);
-                      onChange("appealEndDate", addDaysPreserveTime(values.scoringEndDate, 3, "23:59"));
+                      onChange("appealEndDate", addHoursToDateStr(values.scoringEndDate, 1));
                     }
                   }}
                   className="accent-purple-400 w-3.5 h-3.5 cursor-pointer"
                 />
-                <Scale className="w-4 h-4 text-purple-400" />
-                <span>3. Giai Đoạn Phúc Khảo (Tùy Chọn)</span>
+                <span>3. Phúc khảo / Trao giải (Tùy chọn)</span>
               </label>
               {hasAppeal && values.appealStartDate && values.appealEndDate && (
-                <span className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-[10px] rounded font-bold">
-                  ⏳ Thời lượng: {formatDetailedDuration(values.appealStartDate, values.appealEndDate)}
+                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-300 text-[10px] rounded font-bold">
+                  {formatDetailedDuration(values.appealStartDate, values.appealEndDate)}
                 </span>
               )}
             </div>
 
             {hasAppeal && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs pt-1 animate-fadeIn">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
-                    <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                    Bắt Đầu Mở Cổng Phúc Khảo
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
+                    Mở phúc khảo
                   </label>
                   <Input
                     type="datetime-local"
-                    value={toDateTimeLocal(values.appealStartDate, "08:00")}
+                    value={toDateTimeLocal(values.appealStartDate, "20:00")}
                     onChange={(e) => onChange("appealStartDate", e.target.value)}
                   />
-                  <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                    <span className="text-[var(--text-muted)]">Giờ:</span>
-                    {TIME_CHIPS.map((t) => (
-                      <button
-                        key={t.label}
-                        type="button"
-                        onClick={() => onChange("appealStartDate", setTimeToDateStr(values.appealStartDate, t.label))}
-                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold">
-                      <Clock className="w-3.5 h-3.5 text-purple-400" />
-                      Hạn Chót Đóng Phúc Khảo
-                    </label>
-                    <div className="flex items-center gap-1 text-[9px]">
-                      <button
-                        type="button"
-                        onClick={() => onChange("appealEndDate", addDaysPreserveTime(values.appealEndDate || values.appealStartDate, 1))}
-                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
-                      >
-                        +1d
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onChange("appealEndDate", addDaysPreserveTime(values.appealEndDate || values.appealStartDate, 3))}
-                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
-                      >
-                        +3d
-                      </button>
-                    </div>
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
+                    Đóng phúc khảo &amp; Trao giải
+                  </label>
                   <Input
                     type="datetime-local"
-                    value={toDateTimeLocal(values.appealEndDate, "23:59")}
+                    value={toDateTimeLocal(values.appealEndDate, "21:00")}
                     onChange={(e) => onChange("appealEndDate", e.target.value)}
                   />
-                  <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                    <span className="text-[var(--text-muted)]">Giờ:</span>
-                    {TIME_CHIPS.map((t) => (
-                      <button
-                        key={t.label}
-                        type="button"
-                        onClick={() => onChange("appealEndDate", setTimeToDateStr(values.appealEndDate, t.label))}
-                        className="px-1.5 py-0.5 bg-purple-500/10 hover:bg-purple-500/30 border border-purple-500/20 rounded text-purple-300 cursor-pointer"
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
             )}
@@ -846,52 +750,39 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
         </div>
       )}
 
-      {/* Visual Horizontal Timeline Bar (Gantt Overview) */}
-      <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded-lg space-y-2 font-mono text-[11px]">
-        <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)]">
-          <span className="flex items-center gap-1.5 text-slate-300">
-            <span>Sơ Đồ Tiến Trình Vòng Thi:</span>
-            <strong className="text-cyan-300">{totalDays} ngày tổng cộng</strong>
-          </span>
-          <span className="text-[10px] text-slate-400">
-            {values.startDate ? new Date(values.startDate).toLocaleDateString("vi-VN") : "---"} ──▶ {values.scoringEndDate ? new Date(values.scoringEndDate).toLocaleDateString("vi-VN") : "---"}
-          </span>
+      {/* Minimalist Hourly Gantt Bar */}
+      <div className="p-2.5 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5 text-[10px]">
+        <div className="flex items-center justify-between text-[var(--text-muted)]">
+          <span>Tiến trình vòng: <strong className="text-cyan-300">{totalHours} giờ tổng cộng</strong></span>
+          <span>{values.startDate ? new Date(values.startDate).toLocaleDateString("vi-VN") : "---"} ──▶ {values.scoringEndDate ? new Date(values.scoringEndDate).toLocaleDateString("vi-VN") : "---"}</span>
         </div>
 
-        {/* Progress Gantt Track */}
-        <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden flex border border-slate-700/80">
+        {/* Progress Bar */}
+        <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden flex border border-slate-700/80">
           <div
             style={{ width: `${subPct}%` }}
-            className="h-full bg-amber-500 hover:brightness-110 transition-all cursor-help relative group"
-            title={`Nộp bài: ${subDays} ngày (${subPct}%)`}
+            className="h-full bg-amber-500"
+            title={`Nộp bài: ${subHours}h (${subPct}%)`}
           />
           <div
             style={{ width: `${scorePct}%` }}
-            className="h-full bg-cyan-500 hover:brightness-110 transition-all cursor-help relative group"
-            title={`Chấm điểm: ${scoreDays} ngày (${scorePct}%)`}
+            className="h-full bg-cyan-500"
+            title={`Chấm điểm: ${scoreHours}h (${scorePct}%)`}
           />
           {hasAppeal && appealPct > 0 && (
             <div
               style={{ width: `${appealPct}%` }}
-              className="h-full bg-purple-500 hover:brightness-110 transition-all cursor-help relative group"
-              title={`Phúc khảo: ${appealDays} ngày (${appealPct}%)`}
+              className="h-full bg-purple-500"
+              title={`Phúc khảo: ${appealHours}h (${appealPct}%)`}
             />
           )}
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 text-[10px] pt-0.5">
-          <span className="flex items-center gap-1 text-amber-400">
-            <span className="w-2 h-2 rounded-full bg-amber-500" /> Nộp bài ({subDays}d)
-          </span>
-          <span className="flex items-center gap-1 text-cyan-400">
-            <span className="w-2 h-2 rounded-full bg-cyan-500" /> Chấm điểm ({scoreDays}d)
-          </span>
-          {hasAppeal && (
-            <span className="flex items-center gap-1 text-purple-400">
-              <span className="w-2 h-2 rounded-full bg-purple-500" /> Phúc khảo ({appealDays}d)
-            </span>
-          )}
+        <div className="flex items-center gap-3 text-[10px]">
+          <span className="text-amber-400">Nộp bài: {subHours}h</span>
+          <span className="text-cyan-400">Chấm điểm: {scoreHours}h</span>
+          {hasAppeal && <span className="text-purple-400">Phúc khảo: {appealHours}h</span>}
         </div>
       </div>
     </div>
