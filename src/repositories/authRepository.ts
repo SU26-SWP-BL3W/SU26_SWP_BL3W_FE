@@ -107,6 +107,15 @@ export function useVerifyEmail(token: string | null) {
   });
 }
 
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const res = await apiClient.post<BaseResponse<boolean>>("/Auth/resend-verification", { email });
+      return res.data;
+    },
+  });
+}
+
 // ─── Student Profile ─────────────────────────────────────────
 
 /** POST /api/Auth/student-profiles — Nộp hồ sơ lần đầu */

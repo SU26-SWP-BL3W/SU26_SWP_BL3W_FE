@@ -3,7 +3,8 @@ import { Link } from "@/i18n/routing";
 import { useMyInvitations, type MyInvitationItem } from "@/repositories/usersRepository";
 import { useAcceptOrDeclineInvitation } from "@/repositories/teamsRepository";
 import { useRespondEventRoleInvitation } from "@/repositories/eventRolesRepository";
-import { Mail, Check, X, Bell, ExternalLink, RefreshCw } from "lucide-react";
+import { useMyNotifications, useMarkNotificationRead } from "@/repositories/notificationsRepository";
+import { Check, X, ExternalLink, RefreshCw } from "lucide-react";
 
 interface NotificationBellProps {
   align?: "left" | "right";
@@ -14,9 +15,12 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: invData, isLoading, refetch } = useMyInvitations();
+  const { data: systemNotifs = [], isLoading: isLoadingNotifs, refetch: refetchNotifs } = useMyNotifications();
+  const { mutateAsync: markRead } = useMarkNotificationRead();
   const invitations = invData?.invitations ?? [];
   const pendingInvitations = invitations.filter((i) => i.status === "PendingAccept");
-  const unreadCount = invData?.totalPending ?? pendingInvitations.length;
+  const unreadNotifs = systemNotifs.filter((n) => !n.isRead);
+  const unreadCount = (invData?.totalPending ?? pendingInvitations.length) + unreadNotifs.length;
 
   const { mutateAsync: respondTeam, isPending: isRespondingTeam } = useAcceptOrDeclineInvitation();
   const { mutateAsync: respondEventRole, isPending: isRespondingEventRole } = useRespondEventRoleInvitation();
@@ -100,26 +104,26 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
               </span>
             </div>
             <button
-              onClick={() => refetch()}
+              onClick={() => { refetch(); refetchNotifs(); }}
               className="text-[10px] text-[var(--text-muted)] hover:text-white flex items-center gap-1 transition-colors"
             >
               <RefreshCw className="w-3 h-3" /> Làm mới
             </button>
           </div>
 
-          {/* List of Pending Invitations */}
           <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border-muted)]/60">
-            {isLoading ? (
+            {isLoading || isLoadingNotifs ? (
               <div className="p-6 text-center text-[var(--text-muted)] flex justify-center items-center gap-2">
                 <RefreshCw className="w-4 h-4 animate-spin text-[var(--accent-primary)]" />
                 Đang tải thông báo...
               </div>
-            ) : pendingInvitations.length === 0 ? (
+            ) : pendingInvitations.length === 0 && systemNotifs.length === 0 ? (
               <div className="p-6 text-center text-[var(--text-muted)] italic">
-                Không có lời mời đang chờ phản hồi
+                Không có lời mời hoặc thông báo mới
               </div>
             ) : (
-              pendingInvitations.map((item) => (
+              <>
+              {pendingInvitations.map((item) => (
                 <div
                   key={item.invitationId}
                   className="p-3 flex flex-col gap-1.5 bg-[var(--accent-primary)]/5 hover:bg-[var(--bg-input)]/40 transition-colors"
@@ -140,7 +144,6 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
                     {item.inviterName ? `${item.inviterName} đã gửi lời mời bạn tham gia.` : "Bạn nhận được lời mời mới."}
                   </p>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 pt-1 font-mono text-[10px]">
                     <button
                       disabled={isResponding}
@@ -158,7 +161,39 @@ export function NotificationBell({ align = "left" }: NotificationBellProps) {
                     </button>
                   </div>
                 </div>
-              ))
+              ))}
+              {systemNotifs.map((n) => (
+                <div
+                  key={n.id}
+                  className={`p-3 flex flex-col gap-1 ${n.isRead ? "opacity-60" : "bg-[var(--accent-primary)]/5"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-[var(--text-primary)] text-xs">{n.title}</span>
+                    {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shrink-0" />}
+                  </div>
+                  <p className="font-sans text-xs text-[var(--text-muted)] leading-relaxed">{n.message}</p>
+                  <div className="flex items-center gap-2 pt-1">
+                    {n.linkUrl && (
+                      n.linkUrl.startsWith("http") ? (
+                        <a href={n.linkUrl} className="text-[10px] text-[var(--accent-primary)] font-bold hover:underline">Mở</a>
+                      ) : (
+                        <Link href={n.linkUrl} onClick={() => { if (!n.isRead) markRead(n.id); setIsOpen(false); }} className="text-[10px] text-[var(--accent-primary)] font-bold hover:underline">
+                          Xem chi tiết
+                        </Link>
+                      )
+                    )}
+                    {!n.isRead && (
+                      <button
+                        onClick={() => markRead(n.id)}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-white uppercase"
+                      >
+                        Đánh dấu đã đọc
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              </>
             )}
           </div>
 

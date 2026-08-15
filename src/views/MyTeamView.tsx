@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useAuth } from "@/providers/AuthProvider";
+import { useMyTeam, useCreateTeam } from "@/repositories/teamsRepository";
+import { usePublicEvents } from "@/repositories/eventsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
+import { ApiMissingDataBadge } from "@/components/ui";
 export type TeamStatus = "Forming" | "PendingApproval" | "Approved" | "Registered" | "Rejected" | "Disqualified";
 import type { MemberItem } from "@/viewModels/teamTypes";
 import { Shield, Search, Crown, Users, LogOut, Trophy } from "lucide-react";
@@ -166,10 +170,44 @@ function MemberRow({
 function NoTeamState() {
   const [teamName, setTeamName] = useState("");
   const [description, setDescription] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [trackId, setTrackId] = useState("");
+  const [error, setError] = useState("");
 
-  const handleCreate = (e: React.FormEvent) => {
+  const { data: events = [] } = usePublicEvents();
+  const { data: tracks = [] } = useGetTracksByEvent(eventId);
+  const { mutateAsync: createTeam, isPending } = useCreateTeam();
+
+  useEffect(() => {
+    if (!eventId && Array.isArray(events) && events.length) {
+      const first = events[0] as any;
+      setEventId(first.id || first.Id || first.eventId || first.EventId || "");
+    }
+  }, [events, eventId]);
+
+  useEffect(() => {
+    if (tracks.length && !tracks.some((t: any) => (t.id || t.Id) === trackId)) {
+      setTrackId((tracks[0] as any).id || (tracks[0] as any).Id || "");
+    }
+  }, [tracks, trackId]);
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Khởi tạo đội: "${teamName}"\nDescription: "${description}"`);
+    setError("");
+    if (!eventId || !trackId) {
+      setError("Chọn sự kiện và hạng mục trước khi tạo đội.");
+      return;
+    }
+    try {
+      await createTeam({
+        name: teamName.trim(),
+        description: description.trim(),
+        eventId,
+        trackId,
+      });
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || "Không tạo được đội.");
+    }
   };
 
   return (
@@ -202,6 +240,51 @@ function NoTeamState() {
           <form onSubmit={handleCreate} className="flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <label className="font-mono text-[10px] tracking-[0.2em] text-[var(--text-muted)] uppercase">
+                Sự kiện <span className="text-[var(--color-danger)]">*</span>
+              </label>
+              <select
+                value={eventId}
+                onChange={(e) => { setEventId(e.target.value); setTrackId(""); }}
+                required
+                className="px-4 py-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-sm focus:outline-none focus:border-[var(--accent-team)]"
+              >
+                <option value="">-- Chọn sự kiện --</option>
+                {(Array.isArray(events) ? events : []).map((ev: any) => {
+                  const id = ev.id || ev.Id || ev.eventId || ev.EventId || "";
+                  return (
+                    <option key={id} value={id}>
+                      {ev.eventName || ev.EventName || ev.name || ev.Name || id}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="font-mono text-[10px] tracking-[0.2em] text-[var(--text-muted)] uppercase">
+                Hạng mục <span className="text-[var(--color-danger)]">*</span>
+              </label>
+              <select
+                value={trackId}
+                onChange={(e) => setTrackId(e.target.value)}
+                required
+                disabled={!eventId}
+                className="px-4 py-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-sm focus:outline-none focus:border-[var(--accent-team)] disabled:opacity-40"
+              >
+                <option value="">-- Chọn hạng mục --</option>
+                {tracks.map((t: any) => {
+                  const id = t.id || t.Id || "";
+                  return (
+                    <option key={id} value={id}>
+                      {t.trackName || t.TrackName || id}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="font-mono text-[10px] tracking-[0.2em] text-[var(--text-muted)] uppercase">
                 Tên đội thi <span className="text-[var(--color-danger)]">*</span>
               </label>
               <input
@@ -229,13 +312,17 @@ function NoTeamState() {
               />
             </div>
 
+            {error && (
+              <p className="font-mono text-xs text-[var(--color-danger)]">{error}</p>
+            )}
+
             <button
               id="create-team-btn"
               type="submit"
-              disabled={!teamName.trim()}
+              disabled={!teamName.trim() || !eventId || !trackId || isPending}
               className="hud-clipped mt-2 px-6 py-3.5 bg-[var(--accent-team)] text-[var(--bg-base)] font-mono font-bold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_20px_rgba(56,189,248,0.4)] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none"
             >
-              {"// KHỞI TẠO ĐỘI >"}
+              {isPending ? "ĐANG TẠO..." : "// KHỞI TẠO ĐỘI >"}
             </button>
           </form>
         </div>
@@ -264,9 +351,6 @@ function NoTeamState() {
     </div>
   );
 }
-
-import { useMyTeam } from "@/repositories/teamsRepository";
-import { ApiMissingDataBadge } from "@/components/ui";
 
 // ─── Main View ────────────────────────────────────────────────────────────────
 export function MyTeamView() {

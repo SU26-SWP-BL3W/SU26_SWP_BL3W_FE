@@ -12,6 +12,16 @@ export interface SubmitResultListItem {
   TrackId?: string;
   submissionUrl?: string;
   SubmissionUrl?: string;
+  repoUrl?: string;
+  RepoUrl?: string;
+  demoUrl?: string;
+  DemoUrl?: string;
+  slideUrl?: string;
+  SlideUrl?: string;
+  teamName?: string;
+  TeamName?: string;
+  displayCode?: string;
+  DisplayCode?: string;
   createdTime?: string;
   CreatedTime?: string;
 }
@@ -35,7 +45,10 @@ export interface SubmitResultRequest {
   TeamId: string;
   TrackId: string;
   RoundId: string;
-  SubmissionUrl: string;
+  SubmissionUrl?: string;
+  RepoUrl: string;
+  DemoUrl: string;
+  SlideUrl: string;
   Description?: string;
 }
 

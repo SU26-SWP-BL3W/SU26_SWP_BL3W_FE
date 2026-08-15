@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetTrackCalibration,
   useCalculateRoundResults,
   useExportCsvAnonymized,
 } from "@/repositories/scoresRepository";
+import { useMyEvents, useEventRounds } from "@/repositories/eventsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
 import { Button, Card, Badge, Table, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui";
 import {
   Shield,
@@ -17,11 +19,35 @@ import {
   Award,
 } from "lucide-react";
 
+function pickId(item: any): string {
+  return item?.id || item?.Id || item?.eventId || item?.EventId || "";
+}
+
 export function CoordinatorCalibrationView() {
   const [activeTab, setActiveTab] = useState<"calibration" | "criteria">("criteria");
-  const [trackId, setTrackId] = useState("track-1");
-  const [roundId, setRoundId] = useState("round-1");
-  const [eventId, setEventId] = useState("seal-2026-mua-he");
+  const [eventId, setEventId] = useState("");
+  const [trackId, setTrackId] = useState("");
+  const [roundId, setRoundId] = useState("");
+
+  const { data: myEvents = [] } = useMyEvents();
+  const { data: tracks = [] } = useGetTracksByEvent(eventId);
+  const { data: rounds = [] } = useEventRounds(eventId);
+
+  useEffect(() => {
+    if (!eventId && myEvents.length) setEventId(pickId(myEvents[0]));
+  }, [myEvents, eventId]);
+
+  useEffect(() => {
+    if (tracks.length && !tracks.some((t) => pickId(t) === trackId)) {
+      setTrackId(pickId(tracks[0]));
+    }
+  }, [tracks, trackId]);
+
+  useEffect(() => {
+    if (rounds.length && !rounds.some((r: any) => pickId(r) === roundId)) {
+      setRoundId(pickId(rounds[0]));
+    }
+  }, [rounds, roundId]);
 
   const { data: calibration, isLoading, refetch } = useGetTrackCalibration(trackId);
   const { mutateAsync: calculateRound, isPending: isCalculating } = useCalculateRoundResults();
@@ -102,7 +128,7 @@ export function CoordinatorCalibrationView() {
 
         <div className="flex items-center gap-3">
           <Button
-            disabled={isCalculating}
+            disabled={isCalculating || !roundId}
             onClick={handleCalculate}
             className="flex items-center gap-2 bg-[var(--accent-coordinator)] text-black font-bold hover:bg-purple-300 text-xs"
           >
@@ -114,7 +140,7 @@ export function CoordinatorCalibrationView() {
             TÍNH ĐIỂM & XẾP HẠNG &gt;
           </Button>
           <Button
-            disabled={isExporting}
+            disabled={isExporting || !eventId}
             onClick={handleExportCsv}
             variant="ghost"
             className="flex items-center gap-2 text-xs"
@@ -123,6 +149,54 @@ export function CoordinatorCalibrationView() {
             Xuất CSV RBL
           </Button>
         </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto mb-6 p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-wrap items-center gap-3">
+        <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Sự kiện</label>
+        <select
+          value={eventId}
+          onChange={(e) => { setEventId(e.target.value); setTrackId(""); setRoundId(""); }}
+          className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+        >
+          {myEvents.map((ev: any) => {
+            const id = pickId(ev);
+            return (
+              <option key={id} value={id}>
+                {ev.eventName || ev.EventName || id}
+              </option>
+            );
+          })}
+        </select>
+        <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Hạng mục</label>
+        <select
+          value={trackId}
+          onChange={(e) => setTrackId(e.target.value)}
+          className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+        >
+          {tracks.map((t: any) => {
+            const id = pickId(t);
+            return (
+              <option key={id} value={id}>
+                {t.trackName || t.TrackName || id}
+              </option>
+            );
+          })}
+        </select>
+        <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Vòng thi</label>
+        <select
+          value={roundId}
+          onChange={(e) => setRoundId(e.target.value)}
+          className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+        >
+          {rounds.map((r: any) => {
+            const id = pickId(r);
+            return (
+              <option key={id} value={id}>
+                {r.roundName || r.RoundName || id}
+              </option>
+            );
+          })}
+        </select>
       </div>
 
       {/* Navigation Tabs */}
@@ -247,9 +321,14 @@ export function CoordinatorCalibrationView() {
                   onChange={(e) => setTrackId(e.target.value)}
                   className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
                 >
-                  <option value="track-1">Hạng mục 1: AI & Data Science</option>
-                  <option value="track-2">Hạng mục 2: Cyber Security</option>
-                  <option value="track-3">Hạng mục 3: Web3 & Blockchain</option>
+                  {tracks.map((t: any) => {
+                    const id = pickId(t);
+                    return (
+                      <option key={id} value={id}>
+                        {t.trackName || t.TrackName || id}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -260,12 +339,17 @@ export function CoordinatorCalibrationView() {
               </Badge>
             </div>
 
-            {/* Matrix Table */}
             {isLoading ? (
               <div className="flex justify-center py-20">
                 <RefreshCw className="w-8 h-8 animate-spin text-[var(--accent-coordinator)]" />
               </div>
             ) : (
+              <>
+              <div className="flex justify-end">
+                <Button variant="ghost" onClick={() => refetch()} className="text-xs flex items-center gap-2">
+                  <RefreshCw className="w-3.5 h-3.5" /> Làm mới ma trận
+                </Button>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -276,36 +360,63 @@ export function CoordinatorCalibrationView() {
                   </TableRow>
                 </TableHeader>
                 <tbody>
-                  {(calibration?.scores ?? [
-                    { judgeId: "j-1", judgeName: "Giám khảo TS. Nguyễn Văn A", submitResultId: "sub-1", teamName: "CyberShield_FPT", totalScore: 9.2, isAccepted: true, isSubmitted: true },
-                    { judgeId: "j-2", judgeName: "Giám khảo ThS. Trần Thị B", submitResultId: "sub-1", teamName: "CyberShield_FPT", totalScore: 9.5, isAccepted: true, isSubmitted: true },
-                    { judgeId: "j-1", judgeName: "Giám khảo TS. Nguyễn Văn A", submitResultId: "sub-2", teamName: "ByteKnights", totalScore: 8.4, isAccepted: true, isSubmitted: true },
-                  ]).map((item: any, idx: number) => (
+                  {(calibration?.scores ?? calibration?.Scores ?? []).map((item: any, idx: number) => (
                     <TableRow key={idx}>
                       <TableCell>
                         <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
-                          {item.judgeName}
+                          {item.judgeName || item.JudgeName}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="font-mono text-xs text-[var(--accent-team)] font-bold">
-                          {item.teamName}
+                          {item.teamName || item.TeamName}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="font-mono text-xs font-bold text-[var(--accent-judge)]">
-                          {item.totalScore} / 10
+                          {item.totalScore ?? item.TotalScore} / 10
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge tone={item.isSubmitted ? "success" : "warning"}>
-                          {item.isSubmitted ? "ĐÃ CHỐT BẢNG ĐIỂM" : "DRAFT"}
+                        <Badge tone={(item.isSubmitted ?? item.IsSubmitted) ? "success" : "warning"}>
+                          {(item.isSubmitted ?? item.IsSubmitted) ? "ĐÃ CHỐT BẢNG ĐIỂM" : "DRAFT"}
                         </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
                 </tbody>
               </Table>
+
+              <Card className="p-5 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-3">
+                <h3 className="font-display text-sm font-bold text-[var(--accent-coordinator)] uppercase tracking-widest">
+                  Phương sai giám khảo (RBL)
+                </h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>GIÁM KHẢO</TableHead>
+                      <TableHead>MEAN</TableHead>
+                      <TableHead>STDDEV</TableHead>
+                      <TableHead>MIN</TableHead>
+                      <TableHead>MAX</TableHead>
+                      <TableHead>N</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <tbody>
+                    {(calibration?.judgeStats ?? calibration?.JudgeStats ?? []).map((j: any) => (
+                      <TableRow key={j.judgeId || j.JudgeId}>
+                        <TableCell>{j.judgeName || j.JudgeName}</TableCell>
+                        <TableCell>{j.mean ?? j.Mean}</TableCell>
+                        <TableCell>{j.stdDev ?? j.StdDev}</TableCell>
+                        <TableCell>{j.min ?? j.Min}</TableCell>
+                        <TableCell>{j.max ?? j.Max}</TableCell>
+                        <TableCell>{j.sampleCount ?? j.SampleCount}</TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </Table>
+              </Card>
+              </>
             )}
           </div>
         )}

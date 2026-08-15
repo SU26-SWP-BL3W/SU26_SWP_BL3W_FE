@@ -9,15 +9,19 @@ export interface TeamListItem {
   Name?: string;
   eventId?: string;
   EventId?: string;
+  trackId?: string;
+  TrackId?: string;
+  status?: string | number;
+  Status?: string | number;
 }
 
 /** Danh sách đội thi theo sự kiện (GET /api/Teams?EventId=...) — dùng để tra tên đội theo TeamId. */
-export function useGetTeamsByEvent(eventId?: string) {
+export function useGetTeamsByEvent(eventId?: string, status?: string) {
   return useQuery({
-    queryKey: ["teams-by-event", eventId],
+    queryKey: ["teams-by-event", eventId, status],
     queryFn: async () => {
       const res = await apiClient.get<BaseResponse<PagedResult<TeamListItem>>>("/Teams", {
-        params: { EventId: eventId, PageSize: 200 },
+        params: { EventId: eventId, Status: status, PageSize: 200 },
       });
       return res.data.data?.data ?? [];
     },
@@ -70,8 +74,13 @@ export function useMyTeam() {
 export function useCreateTeam() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { TeamName: string; Description?: string; EventId: string; TrackId?: string }) => {
-      const res = await apiClient.post<Team>("/Teams", data);
+    mutationFn: async (data: { name: string; description?: string; eventId: string; trackId: string }) => {
+      const res = await apiClient.post("/Teams", {
+        name: data.name,
+        description: data.description,
+        eventId: data.eventId,
+        trackId: data.trackId,
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -140,7 +149,7 @@ export function useGetPendingTeams() {
     queryFn: async () => {
       try {
         const res = await apiClient.get<BaseResponse<PagedResult<Team>>>("/Teams", {
-          params: { IsApproved: false, PageSize: 100 },
+          params: { Status: "PendingApproval", PageSize: 100 },
         });
         return res.data.data?.data ?? [];
       } catch (err: any) {
@@ -173,6 +182,20 @@ export function useRejectTeamRegistration() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-teams"] });
+    },
+  });
+}
+
+export function useDisqualifyTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, reason }: { teamId: string; reason: string }) => {
+      const res = await apiClient.post(`/Teams/${teamId}/disqualify`, { reason });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-teams"] });
+      queryClient.invalidateQueries({ queryKey: ["teams-by-event"] });
     },
   });
 }

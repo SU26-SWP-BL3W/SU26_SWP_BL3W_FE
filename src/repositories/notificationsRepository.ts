@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { BaseResponse } from "@/models/entities";
 
@@ -38,3 +39,32 @@ export const notificationsRepository = {
     }
   },
 };
+
+function unwrapList(raw: unknown): SystemNotification[] {
+  if (Array.isArray(raw)) return raw as SystemNotification[];
+  const inner = (raw as BaseResponse<SystemNotification[]> | undefined)?.data;
+  return Array.isArray(inner) ? inner : [];
+}
+
+export function useMyNotifications() {
+  return useQuery({
+    queryKey: ["my-notifications"],
+    queryFn: async () => {
+      const res = await notificationsRepository.getNotifications();
+      return unwrapList(res);
+    },
+    refetchInterval: 30_000,
+  });
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      await notificationsRepository.markAsRead(notificationId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-notifications"] });
+    },
+  });
+}

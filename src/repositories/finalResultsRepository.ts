@@ -4,14 +4,17 @@ import type { FinalResult, Prize, BaseResponse } from "@/models/entities";
 
 // ─── GET /api/FinalResults/round/{roundId} ───────────────────
 
-export function useGetFinalResultsByRound(roundId?: string) {
+export function useGetFinalResultsByRound(roundId?: string, trackId?: string) {
   return useQuery({
-    queryKey: ["final-results", roundId],
+    queryKey: ["final-results", roundId, trackId],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<FinalResult[]>>(
-        `/FinalResults/round/${roundId}`
+      const res = await apiClient.get<BaseResponse<any>>(
+        `/FinalResults/round/${roundId}`,
+        { params: { trackId: trackId || undefined, pageSize: 200 } }
       );
-      return res.data?.data ?? [];
+      const payload = res.data?.data;
+      if (Array.isArray(payload)) return payload as FinalResult[];
+      return (payload?.data ?? []) as FinalResult[];
     },
     enabled: !!roundId,
   });

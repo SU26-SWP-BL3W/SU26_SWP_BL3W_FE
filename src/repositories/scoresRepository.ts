@@ -50,7 +50,8 @@ export function useGetTrackCalibration(trackId?: string) {
       const res = await apiClient.get<BaseResponse<CalibrationModel>>(
         `/Scores/track/${trackId}/calibration`
       );
-      return res.data?.data;
+      const raw = res.data as any;
+      return raw?.data ?? raw;
     },
     enabled: !!trackId,
   });

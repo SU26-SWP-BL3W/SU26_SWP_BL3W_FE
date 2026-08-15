@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetFinalResultsByRound,
   usePublishRoundResults,
@@ -8,6 +8,8 @@ import {
   useGetPrizes,
   useCreatePrize,
 } from "@/repositories/finalResultsRepository";
+import { useMyEvents, useEventRounds } from "@/repositories/eventsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
 import { Button, Card, Badge, Table, TableHeader, TableRow, TableHead, TableCell, Input } from "@/components/ui";
 import {
   Trophy,
@@ -22,22 +24,47 @@ import {
 } from "lucide-react";
 import type { FinalResult, Prize } from "@/models/entities";
 
+function pickId(item: any): string {
+  return item?.id || item?.Id || item?.eventId || item?.EventId || "";
+}
+
 export function CoordinatorPublishResultsView() {
-  const [roundId, setRoundId] = useState("round-1");
-  const [selectedTrackId, setSelectedTrackId] = useState("track-1");
+  const [eventId, setEventId] = useState("");
+  const [roundId, setRoundId] = useState("");
+  const [selectedTrackId, setSelectedTrackId] = useState("");
   const [assignModal, setAssignModal] = useState<FinalResult | null>(null);
   const [createPrizeModal, setCreatePrizeModal] = useState(false);
 
+  const { data: myEvents = [] } = useMyEvents();
+  const { data: tracks = [] } = useGetTracksByEvent(eventId);
+  const { data: rounds = [] } = useEventRounds(eventId);
+
+  useEffect(() => {
+    if (!eventId && myEvents.length) setEventId(pickId(myEvents[0]));
+  }, [myEvents, eventId]);
+
+  useEffect(() => {
+    if (tracks.length && !tracks.some((t) => pickId(t) === selectedTrackId)) {
+      setSelectedTrackId(pickId(tracks[0]));
+    }
+  }, [tracks, selectedTrackId]);
+
+  useEffect(() => {
+    if (rounds.length && !rounds.some((r: any) => pickId(r) === roundId)) {
+      setRoundId(pickId(rounds[0]));
+    }
+  }, [rounds, roundId]);
+
   // Form state cho tạo giải thưởng mới theo Track
   const [prizeForm, setPrizeForm] = useState({
-    prizeName: "Giải Nhất AI Track",
+    prizeName: "Giải Nhất",
     rewardAmount: 10000000,
     quantity: 1,
-    description: "Dành cho đội thi đạt điểm tổng cao nhất trong Track AI & Data Science.",
+    description: "Dành cho đội thi đạt điểm tổng cao nhất trong hạng mục.",
   });
 
-  const { data: results = [], isLoading, refetch } = useGetFinalResultsByRound(roundId);
-  const { data: prizes = [] } = useGetPrizes({ trackId: selectedTrackId });
+  const { data: results = [], isLoading, refetch } = useGetFinalResultsByRound(roundId, selectedTrackId);
+  const { data: prizes = [] } = useGetPrizes({ eventId, trackId: selectedTrackId });
 
   const { mutateAsync: publishResults, isPending: isPublishing } = usePublishRoundResults();
   const { mutateAsync: assignPrize, isPending: isAssigning } = useAssignPrize();
@@ -64,7 +91,7 @@ export function CoordinatorPublishResultsView() {
     try {
       await createPrize({
         trackId: selectedTrackId,
-        eventId: "seal-2026-mua-he",
+        eventId,
         prizeName: prizeForm.prizeName,
         rewardAmount: Number(prizeForm.rewardAmount),
         quantity: Number(prizeForm.quantity),
@@ -135,25 +162,59 @@ export function CoordinatorPublishResultsView() {
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Track Filter & Add Prize Control */}
         <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-[var(--text-muted)] uppercase font-bold">
-              Chọn Hạng mục (Track):
-            </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-mono text-[var(--text-muted)] uppercase font-bold">Sự kiện</span>
+            <select
+              value={eventId}
+              onChange={(e) => { setEventId(e.target.value); setSelectedTrackId(""); setRoundId(""); }}
+              className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
+            >
+              {myEvents.map((ev: any) => {
+                const id = pickId(ev);
+                return (
+                  <option key={id} value={id}>
+                    {ev.eventName || ev.EventName || id}
+                  </option>
+                );
+              })}
+            </select>
+            <span className="text-xs font-mono text-[var(--text-muted)] uppercase font-bold">Vòng</span>
+            <select
+              value={roundId}
+              onChange={(e) => setRoundId(e.target.value)}
+              className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
+            >
+              {rounds.map((r: any) => {
+                const id = pickId(r);
+                return (
+                  <option key={id} value={id}>
+                    {r.roundName || r.RoundName || id}
+                  </option>
+                );
+              })}
+            </select>
+            <span className="text-xs font-mono text-[var(--text-muted)] uppercase font-bold">Hạng mục</span>
             <select
               value={selectedTrackId}
               onChange={(e) => setSelectedTrackId(e.target.value)}
               className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped cursor-pointer"
             >
-              <option value="track-1">Track 1: AI & Data Science</option>
-              <option value="track-2">Track 2: Cyber Security</option>
-              <option value="track-3">Track 3: Web3 & Blockchain</option>
+              {tracks.map((t: any) => {
+                const id = pickId(t);
+                return (
+                  <option key={id} value={id}>
+                    {t.trackName || t.TrackName || id}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
-          <Button
-            onClick={() => setCreatePrizeModal(true)}
-            className="flex items-center gap-1.5 text-xs bg-[var(--accent-coordinator)] text-black font-bold"
-          >
+            <Button
+              onClick={() => setCreatePrizeModal(true)}
+              disabled={!eventId || !selectedTrackId}
+              className="flex items-center gap-1.5 text-xs bg-[var(--accent-coordinator)] text-black font-bold"
+            >
             <PlusCircle className="w-4 h-4" /> CẤU HÌNH GIẢI THƯỞNG CHO TRACK
           </Button>
         </div>

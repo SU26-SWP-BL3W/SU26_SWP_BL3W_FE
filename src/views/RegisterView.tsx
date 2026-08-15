@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRegister } from "@/repositories/authRepository";
+import { useRegister, useResendVerification } from "@/repositories/authRepository";
 import { Button, Input, Card } from "@/components/ui";
 import { Link } from "@/i18n/routing";
 import { Shield, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -19,6 +19,8 @@ export function RegisterView() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { mutateAsync: registerApi, isPending } = useRegister();
+  const { mutateAsync: resendApi, isPending: isResending } = useResendVerification();
+  const [resendMsg, setResendMsg] = useState("");
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -92,6 +94,22 @@ export function RegisterView() {
           </div>
 
           <div className="flex flex-col gap-3">
+            <Button
+              variant="primary"
+              disabled={isResending}
+              className="w-full justify-center"
+              onClick={async () => {
+                try {
+                  await resendApi(email);
+                  setResendMsg("Đã gửi lại email xác thực.");
+                } catch {
+                  setResendMsg("Không gửi lại được. Thử lại sau.");
+                }
+              }}
+            >
+              {isResending ? "Đang gửi..." : "Gửi lại email xác thực"}
+            </Button>
+            {resendMsg && <p className="text-xs font-mono text-[var(--text-muted)]">{resendMsg}</p>}
             <Link href="/login">
               <Button variant="ghost" className="w-full justify-center flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />

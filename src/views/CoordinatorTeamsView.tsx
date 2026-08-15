@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetPendingTeams,
   useApproveTeamRegistration,
   useRejectTeamRegistration,
+  useGetTeamsByEvent,
+  useDisqualifyTeam,
 } from "@/repositories/teamsRepository";
+import { useMyEvents } from "@/repositories/eventsRepository";
 import { Button, Card, Badge } from "@/components/ui";
 import {
   Users,
@@ -18,21 +21,36 @@ import {
   Crown,
   Building2,
   FileText,
+  Ban,
 } from "lucide-react";
 import type { TeamEntity } from "@/models/entities";
+
+function pickId(item: any): string {
+  return item?.id || item?.Id || item?.eventId || item?.EventId || item?.TeamId || "";
+}
 
 export function CoordinatorTeamsView() {
   const [rejectModal, setRejectModal] = useState<{ teamId: string; teamName: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [disqualifyModal, setDisqualifyModal] = useState<{ teamId: string; teamName: string } | null>(null);
+  const [disqualifyReason, setDisqualifyReason] = useState("");
   const [detailModal, setDetailModal] = useState<TeamEntity | null>(null);
+  const [eventId, setEventId] = useState("");
+
+  const { data: myEvents = [] } = useMyEvents();
+  useEffect(() => {
+    if (!eventId && myEvents.length) setEventId(pickId(myEvents[0]));
+  }, [myEvents, eventId]);
 
   const { data: rawPendingTeams, isLoading, refetch } = useGetPendingTeams();
   const pendingTeams: TeamEntity[] = Array.isArray(rawPendingTeams)
     ? rawPendingTeams
     : (rawPendingTeams as any)?.data ?? [];
 
+  const { data: registeredTeams = [], refetch: refetchRegistered } = useGetTeamsByEvent(eventId, "Registered");
   const { mutateAsync: approveTeam, isPending: isApproving } = useApproveTeamRegistration();
   const { mutateAsync: rejectTeam, isPending: isRejecting } = useRejectTeamRegistration();
+  const { mutateAsync: disqualifyTeam, isPending: isDisqualifying } = useDisqualifyTeam();
 
   const handleApprove = async (teamId: string) => {
     try {
@@ -57,6 +75,20 @@ export function CoordinatorTeamsView() {
       setRejectModal(null);
       setDetailModal(null);
       setRejectReason("");
+    }
+  };
+
+  const handleDisqualify = async () => {
+    if (!disqualifyModal) return;
+    if (!disqualifyReason.trim()) return;
+    try {
+      await disqualifyTeam({ teamId: disqualifyModal.teamId, reason: disqualifyReason.trim() });
+      refetchRegistered();
+    } catch {
+      alert("Đã loại đội khỏi cuộc thi.");
+    } finally {
+      setDisqualifyModal(null);
+      setDisqualifyReason("");
     }
   };
 
@@ -85,7 +117,7 @@ export function CoordinatorTeamsView() {
             </div>
             <Button
               variant="ghost"
-              onClick={() => refetch()}
+              onClick={() => { refetch(); refetchRegistered(); }}
               className="flex items-center gap-2 text-xs font-mono"
             >
               <RefreshCw className="w-3 h-3" />
@@ -93,6 +125,23 @@ export function CoordinatorTeamsView() {
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto mb-6">
+        <select
+          value={eventId}
+          onChange={(e) => setEventId(e.target.value)}
+          className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+        >
+          {myEvents.map((ev: any) => {
+            const id = pickId(ev);
+            return (
+              <option key={id} value={id}>
+                {ev.eventName || ev.EventName || id}
+              </option>
+            );
+          })}
+        </select>
       </div>
 
       {/* Content */}
@@ -168,6 +217,39 @@ export function CoordinatorTeamsView() {
               );
             })}
           </div>
+        )}
+      </div>
+
+      <div className="max-w-5xl mx-auto mt-10 space-y-4">
+        <h2 className="font-display text-sm font-bold text-[var(--accent-coordinator)] tracking-widest uppercase">
+          Đội đã duyệt — loại khỏi cuộc thi
+        </h2>
+        {registeredTeams.length === 0 ? (
+          <p className="font-mono text-xs text-[var(--text-muted)]">Chưa có đội Registered trong sự kiện này.</p>
+        ) : (
+          registeredTeams.map((team: any) => {
+            const teamId = pickId(team);
+            const teamName = team.name || team.Name || team.teamName || team.TeamName || "Đội thi";
+            return (
+              <Card
+                key={teamId}
+                className="w-full p-4 bg-[var(--bg-panel)] hud-clipped border-[var(--border-muted)] flex items-center justify-between gap-4"
+              >
+                <div>
+                  <h3 className="font-mono text-sm font-bold text-[var(--text-primary)]">{teamName}</h3>
+                  <p className="font-mono text-[10px] text-[var(--text-muted)]">
+                    {team.description || team.Description || ""}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setDisqualifyModal({ teamId, teamName })}
+                  className="flex items-center gap-1.5 text-xs bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)]/40 text-[var(--color-danger)] font-mono"
+                >
+                  <Ban className="w-3.5 h-3.5" /> LOẠI ĐỘI
+                </Button>
+              </Card>
+            );
+          })
         )}
       </div>
 
@@ -323,6 +405,45 @@ export function CoordinatorTeamsView() {
                 className="flex-1 justify-center bg-[var(--color-danger)] text-white font-mono text-xs font-bold"
               >
                 {isRejecting ? "Đang gửi..." : "// XÁC NHẬN TỪ CHỐI"}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {disqualifyModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+          <Card className="w-full max-w-md p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--color-danger)]/40 space-y-4">
+            <div className="flex items-center gap-3">
+              <Ban className="w-5 h-5 text-[var(--color-danger)]" />
+              <h3 className="font-display text-base font-bold text-[var(--color-danger)] tracking-widest uppercase">
+                LOẠI ĐỘI KHỎI CUỘC THI
+              </h3>
+            </div>
+            <p className="text-xs font-mono text-[var(--text-muted)]">
+              Đội <strong className="text-white">{disqualifyModal.teamName}</strong> sẽ bị Disqualified. Lý do gửi tới đội trưởng.
+            </p>
+            <textarea
+              value={disqualifyReason}
+              onChange={(e) => setDisqualifyReason(e.target.value)}
+              placeholder="Lý do loại đội (bắt buộc)"
+              rows={3}
+              className="w-full px-4 py-2.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs resize-none focus:outline-none focus:border-[var(--color-danger)]"
+            />
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="ghost"
+                onClick={() => { setDisqualifyModal(null); setDisqualifyReason(""); }}
+                className="flex-1 justify-center font-mono text-xs"
+              >
+                Hủy
+              </Button>
+              <Button
+                disabled={!disqualifyReason.trim() || isDisqualifying}
+                onClick={handleDisqualify}
+                className="flex-1 justify-center bg-[var(--color-danger)] text-white font-mono text-xs font-bold"
+              >
+                {isDisqualifying ? "Đang gửi..." : "// XÁC NHẬN LOẠI"}
               </Button>
             </div>
           </Card>

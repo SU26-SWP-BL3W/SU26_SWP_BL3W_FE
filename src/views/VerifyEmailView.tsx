@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useVerifyEmail } from "@/repositories/authRepository";
+import { useVerifyEmail, useResendVerification } from "@/repositories/authRepository";
 import { Button, Card } from "@/components/ui";
 import { Link, useRouter } from "@/i18n/routing";
 import { CheckCircle2, XCircle, ArrowRight, Shield, RefreshCw } from "lucide-react";
@@ -11,6 +11,8 @@ export function VerifyEmailView() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const router = useRouter();
+  const [resendEmail, setResendEmail] = useState("");
+  const { mutateAsync: resendApi, isPending: isResending } = useResendVerification();
 
   const { data, isLoading, isError, error } = useVerifyEmail(token);
   const isSuccessState = Boolean(data?.success || (data as any)?.isSuccess || (!isError && data !== undefined));
@@ -129,6 +131,24 @@ export function VerifyEmailView() {
       }
       actions={
         <div className="flex flex-col gap-3">
+          <input
+            type="email"
+            placeholder="Email đăng ký"
+            value={resendEmail}
+            onChange={(e) => setResendEmail(e.target.value)}
+            className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs"
+          />
+          <Button
+            variant="primary"
+            disabled={!resendEmail.trim() || isResending}
+            className="w-full justify-center"
+            onClick={async () => {
+              try { await resendApi(resendEmail.trim()); alert("Đã gửi lại email xác thực."); }
+              catch { alert("Không gửi lại được."); }
+            }}
+          >
+            {isResending ? "Đang gửi..." : "Gửi lại email xác thực"}
+          </Button>
           <Link href="/register">
             <Button variant="primary" className="w-full justify-center">
               Đăng Ký Lại

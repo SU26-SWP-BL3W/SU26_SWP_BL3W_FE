@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useCreateSubmission } from "@/repositories/submitResultsRepository";
 import { Link } from "@/i18n/routing";
+import { useCreateSubmission } from "@/repositories/submitResultsRepository";
 import { useMyTeam } from "@/repositories/teamsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
+import { useEventRounds } from "@/repositories/eventsRepository";
 import { ApiMissingDataBadge } from "@/components/ui";
 
 import type { RoundItem, TrackItem, DeliverableItem, SubmissionItem, DeliverableType } from "@/viewModels/teamTypes";
@@ -24,12 +26,20 @@ function TrackSubmissionCard({
   track,
   existingSubmission,
   onSubmitSuccess,
+  teamId,
+  roundId,
 }: {
   track: TrackItem;
   existingSubmission?: SubmissionItem;
   onSubmitSuccess: (trackId: string, updatedSub: SubmissionItem) => void;
+  teamId: string;
+  roundId: string;
 }) {
-  const deliverables: DeliverableItem[] = [];
+  const deliverables: DeliverableItem[] = [
+    { id: "github", type: "github", label: "GitHub / GitLab repo", placeholder: "https://github.com/org/repo", required: true, trackId: track.id },
+    { id: "deployed_url", type: "deployed_url", label: "Live demo", placeholder: "https://demo.example.com", required: true, trackId: track.id },
+    { id: "slides", type: "slides", label: "Slides", placeholder: "https://docs.google.com/presentation/...", required: true, trackId: track.id },
+  ];
   const createSubmission = useCreateSubmission();
 
   // Parse existing submission links if available
@@ -96,8 +106,13 @@ function TrackSubmissionCard({
     }));
 
     const payload = {
+      TeamId: teamId,
       TrackId: track.id,
-      SubmissionUrl: primaryUrl,
+      RoundId: roundId,
+      RepoUrl: (linkValues.github || "").trim(),
+      DemoUrl: (linkValues.deployed_url || "").trim(),
+      SlideUrl: (linkValues.slides || "").trim(),
+      SubmissionUrl: (linkValues.github || primaryUrl).trim(),
       Description: JSON.stringify({ links: allLinks, notes }),
     };
 
@@ -317,11 +332,27 @@ function TrackSubmissionCard({
 // ─── Main NewSubmissionView Component ──────────────────────────────────────────
 export function NewSubmissionView() {
   const { data: realTeam, isLoading } = useMyTeam();
-  const team = realTeam;
+  const team = realTeam?.team ?? realTeam;
+  const eventId = (team as any)?.EventId || (team as any)?.eventId || "";
+  const teamId = (team as any)?.TeamId || (team as any)?.id || "";
+  const teamTrackId = (team as any)?.TrackId || (team as any)?.trackId || "";
+  const { data: tracks = [] } = useGetTracksByEvent(eventId);
+  const { data: rounds = [] } = useEventRounds(eventId);
+  const roundId = rounds.length
+    ? (rounds[rounds.length - 1].id || rounds[rounds.length - 1].Id || "")
+    : "";
+
+  const availableTracks: TrackItem[] = (tracks as any[])
+    .filter((t) => !teamTrackId || (t.id || t.Id) === teamTrackId)
+    .map((t: any) => ({
+      id: t.id || t.Id,
+      trackName: t.trackName || t.TrackName || "",
+      description: t.description || t.Description || "",
+      roundId,
+      templateId: t.templateId || t.TemplateId || null,
+    }));
 
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem>>({});
-
-  const availableTracks: TrackItem[] = [];
 
   const handleTrackSubmitSuccess = (trackId: string, updatedSub: SubmissionItem) => {
     setSubmissions((prev) => ({
@@ -435,6 +466,8 @@ export function NewSubmissionView() {
                 track={track}
                 existingSubmission={submissions[track.id]}
                 onSubmitSuccess={handleTrackSubmitSuccess}
+                teamId={teamId}
+                roundId={roundId || track.roundId}
               />
             ))
           )}
