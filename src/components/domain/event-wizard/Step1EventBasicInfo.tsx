@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Card, Input, SmartDateTimePicker } from "@/components/ui";
 import { EventFormState } from "@/viewModels/useCreateEventWizardViewModel";
 import { Calendar, Shield, Edit3, CheckCircle2, ArrowRight, Users, Clock, ClipboardList } from "lucide-react";
 
@@ -291,154 +291,78 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold text-amber-300">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
-                  Thời Gian Mở Cổng Đăng Ký (Giờ &amp; Ngày) *
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(eventData.registrationStartDate)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onUpdateField("registrationStartDate", val);
-                    if (!eventData.registrationEndDate && val) {
-                      const d = new Date(val);
-                      d.setDate(d.getDate() + 14);
-                      const pad = (n: number) => String(n).padStart(2, "0");
-                      onUpdateField("registrationEndDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:59`);
-                    }
-                  }}
-                  required
-                />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        const base = eventData.registrationStartDate || toDateTimeLocal(new Date().toISOString(), "08:00");
-                        onUpdateField("registrationStartDate", `${base.split("T")[0]}T${t}`);
-                      }}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-[10px] text-[var(--text-muted)] block">
-                  Thời điểm thí sinh bắt đầu được phép nộp hồ sơ đăng ký.
-                </span>
-              </div>
+              <SmartDateTimePicker
+                label="1. Thời gian mở cổng đăng ký"
+                value={eventData.registrationStartDate}
+                onChange={(val) => {
+                  onUpdateField("registrationStartDate", val);
+                  if (!eventData.registrationEndDate && val) {
+                    const d = new Date(val);
+                    d.setDate(d.getDate() + 7);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    onUpdateField("registrationEndDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:59`);
+                  }
+                }}
+                required
+                variant="amber"
+                defaultTime="08:00"
+                helperText="Thời điểm thí sinh bắt đầu được phép nộp hồ sơ đăng ký."
+              />
 
-              <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold text-amber-300">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
-                  Thời Gian Đóng Cổng Đăng Ký (Giờ &amp; Ngày) *
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(eventData.registrationEndDate)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onUpdateField("registrationEndDate", val);
-                    if (!eventData.startDate && val) {
-                      const d = new Date(val);
-                      d.setDate(d.getDate() + 1);
-                      const pad = (n: number) => String(n).padStart(2, "0");
-                      onUpdateField("startDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T08:00`);
-                    }
-                  }}
-                  required
-                />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        const base = eventData.registrationEndDate || toDateTimeLocal(new Date().toISOString(), "23:59");
-                        onUpdateField("registrationEndDate", `${base.split("T")[0]}T${t}`);
-                      }}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/20 rounded text-amber-300 cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-[10px] text-[var(--text-muted)] block">
-                  Hạn chót khóa form đăng ký của thí sinh.
-                </span>
-              </div>
+              <SmartDateTimePicker
+                label="2. Thời gian đóng cổng đăng ký"
+                value={eventData.registrationEndDate}
+                onChange={(val) => {
+                  onUpdateField("registrationEndDate", val);
+                  if (!eventData.startDate && val) {
+                    const d = new Date(val);
+                    d.setDate(d.getDate() + 1);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    onUpdateField("startDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T08:00`);
+                  }
+                }}
+                required
+                variant="amber"
+                defaultTime="23:59"
+                quickOffsets={[
+                  { label: "+7 ngày", days: 7 },
+                  { label: "+14 ngày", days: 14 },
+                ]}
+                helperText="Hạn chót khóa cổng đăng ký của thí sinh."
+              />
 
-              <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold text-cyan-300">
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  Ngày Bắt Đầu Sự Kiện *
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(eventData.startDate)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onUpdateField("startDate", val);
-                    if (!eventData.endDate && val) {
-                      const d = new Date(val);
-                      d.setDate(d.getDate() + 30);
-                      const pad = (n: number) => String(n).padStart(2, "0");
-                      onUpdateField("endDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:59`);
-                    }
-                  }}
-                  required
-                />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        const base = eventData.startDate || toDateTimeLocal(new Date().toISOString(), "08:00");
-                        onUpdateField("startDate", `${base.split("T")[0]}T${t}`);
-                      }}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SmartDateTimePicker
+                label="3. Ngày bắt đầu sự kiện"
+                value={eventData.startDate}
+                onChange={(val) => {
+                  onUpdateField("startDate", val);
+                  if (!eventData.endDate && val) {
+                    const d = new Date(val);
+                    d.setDate(d.getDate() + 2);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    onUpdateField("endDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T21:00`);
+                  }
+                }}
+                required
+                variant="cyan"
+                defaultTime="08:00"
+                helperText="Thời điểm chính thức khai mạc & bắt đầu sự kiện."
+              />
 
-              <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold text-cyan-300">
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  Ngày Kết Thúc Sự Kiện *
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(eventData.endDate)}
-                  onChange={(e) => onUpdateField("endDate", e.target.value)}
-                  required
-                />
-                <div className="flex items-center gap-1 font-mono text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {["08:00", "12:00", "17:30", "23:59"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        const base = eventData.endDate || toDateTimeLocal(new Date().toISOString(), "23:59");
-                        onUpdateField("endDate", `${base.split("T")[0]}T${t}`);
-                      }}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/30 border border-cyan-500/20 rounded text-cyan-300 cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SmartDateTimePicker
+                label="4. Ngày kết thúc sự kiện"
+                value={eventData.endDate}
+                onChange={(val) => onUpdateField("endDate", val)}
+                required
+                variant="cyan"
+                defaultTime="21:00"
+                quickOffsets={[
+                  { label: "+24h (1 ngày)", hours: 24 },
+                  { label: "+48h (2 ngày)", hours: 48 },
+                  { label: "+4 Tuần", days: 28 },
+                ]}
+                helperText="Thời điểm bế mạc & kết thúc sự kiện."
+              />
             </div>
           </div>
 

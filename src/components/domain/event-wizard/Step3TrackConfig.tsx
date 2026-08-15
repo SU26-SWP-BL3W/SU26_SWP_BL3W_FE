@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Input, Card } from "@/components/ui";
+import { Button, Input, Card, SmartDateTimePicker } from "@/components/ui";
 import { RoundFormState, TrackFormState } from "@/viewModels/useCreateEventWizardViewModel";
 import { useGetTemplates } from "@/repositories/templatesRepository";
 import { Target, Plus, Trash2, ArrowLeft, LayoutTemplate, Calendar, ChevronDown, ChevronUp } from "lucide-react";
@@ -146,25 +146,29 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
               </button>
 
               {expandedScheduleTrackId === track.id && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 p-3 bg-[var(--bg-input)]/50 border border-[var(--border-muted)] rounded font-mono text-xs animate-fadeIn">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-[var(--text-muted)] uppercase">Bắt đầu nộp bài riêng</label>
-                    <Input
-                      type="datetime-local"
-                      value={track.startDate || ""}
-                      onChange={(e) => onUpdateTrack(track.id, "startDate", e.target.value)}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-[var(--text-muted)] uppercase">Hạn chót nộp bài riêng</label>
-                    <Input
-                      type="datetime-local"
-                      value={track.endDate || ""}
-                      onChange={(e) => onUpdateTrack(track.id, "endDate", e.target.value)}
-                      disabled={isReadOnly}
-                    />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 p-3 bg-[var(--bg-panel)] border border-purple-500/30 rounded font-mono text-xs animate-fadeIn">
+                  <SmartDateTimePicker
+                    label="Bắt đầu nộp bài riêng (Hạng mục)"
+                    value={track.startDate || ""}
+                    onChange={(val) => onUpdateTrack(track.id, "startDate", val)}
+                    disabled={isReadOnly}
+                    variant="purple"
+                    defaultTime="08:00"
+                    helperText="Thời điểm mở nộp bài riêng cho bảng đấu/hạng mục này."
+                  />
+                  <SmartDateTimePicker
+                    label="Hạn chót nộp bài riêng (Hạng mục)"
+                    value={track.endDate || ""}
+                    onChange={(val) => onUpdateTrack(track.id, "endDate", val)}
+                    disabled={isReadOnly}
+                    variant="purple"
+                    defaultTime="17:00"
+                    quickOffsets={[
+                      { label: "+4h", hours: 4 },
+                      { label: "+24h (1 ngày)", hours: 24 },
+                    ]}
+                    helperText="Hạn chót khóa nộp bài riêng cho bảng đấu/hạng mục này."
+                  />
                 </div>
               )}
             </div>

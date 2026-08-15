@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Input } from "@/components/ui";
+import { SmartDateTimePicker } from "@/components/ui/SmartDateTimePicker";
 
 export interface RoundTimelineValues {
   startDate: string;
@@ -20,13 +20,6 @@ interface RoundTimelinePickerProps {
 }
 
 export type TimeUnit = "hours" | "days" | "weeks" | "months";
-
-export const TIME_UNIT_LABELS: Record<TimeUnit, string> = {
-  hours: "Giờ",
-  days: "Ngày",
-  weeks: "Tuần",
-  months: "Tháng",
-};
 
 // Format date to YYYY-MM-DDTHH:mm
 const toDateTimeLocal = (val?: string, defaultTime = "08:00") => {
@@ -82,23 +75,6 @@ export const addDurationToDate = (baseStr: string, amount: number, unit: TimeUni
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${timePart}`;
 };
 
-// Set specific time (HH:mm) on an existing date string
-const setTimeToDateStr = (dateStr?: string, timeStr = "08:00") => {
-  const base = dateStr || toDateTimeLocal(new Date().toISOString(), "08:00");
-  const datePart = base.split("T")[0];
-  return `${datePart}T${timeStr}`;
-};
-
-// Add hours directly to date string
-const addHoursToDateStr = (baseStr?: string, hoursToAdd = 4) => {
-  const base = baseStr || toDateTimeLocal(new Date().toISOString(), "08:00");
-  const d = new Date(base);
-  if (isNaN(d.getTime())) return "";
-  d.setHours(d.getHours() + hoursToAdd);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
 // Human-readable duration format (e.g. "24 giờ" or "32 giờ (1.3 ngày)")
 const formatDetailedDuration = (startStr?: string, endStr?: string) => {
   if (!startStr || !endStr) return null;
@@ -146,9 +122,6 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
   const [subDuration, setSubDuration] = useState({ amount: 24, unit: "hours" as TimeUnit });
   const [scoreDuration, setScoreDuration] = useState({ amount: 4, unit: "hours" as TimeUnit });
   const [appealDuration, setAppealDuration] = useState({ amount: 1, unit: "hours" as TimeUnit });
-
-  // Quick Time Chips (Không dùng emoji)
-  const TIME_CHIPS = ["08:00", "12:00", "13:30", "17:00", "20:00", "23:59"];
 
   // Auto-initialize anchor date if empty
   useEffect(() => {
@@ -283,7 +256,7 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
         </div>
       </div>
 
-      {/* 1-Click Presets Tối Giản (Không Icon Rườm Rà) */}
+      {/* 1-Click Presets Tối Giản */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
         <span className="text-[var(--text-muted)] font-bold uppercase text-[10px]">Mẫu nhanh:</span>
         <button
@@ -321,25 +294,16 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
       ───────────────────────────────────────────────────────────── */}
       {activeMode === "duration" && (
         <div className="p-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] rounded space-y-3">
-          {/* Anchor Date Input */}
-          <div className="p-2.5 bg-[var(--bg-base)] border border-cyan-500/30 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div>
-              <label className="text-[11px] font-bold text-cyan-300 uppercase block">
-                Mốc bắt đầu làm bài (Ngày neo) *
-              </label>
-              <span className="text-[10px] text-[var(--text-muted)]">
-                Các giai đoạn tiếp theo sẽ tự động tính nối tiếp theo số giờ/ngày.
-              </span>
-            </div>
-            <div className="w-full sm:w-60">
-              <Input
-                type="datetime-local"
-                value={toDateTimeLocal(values.startDate)}
-                onChange={(e) => applyDurationCascade(e.target.value)}
-                className="bg-black/60 border-cyan-500/40 text-cyan-300 text-xs font-bold"
-              />
-            </div>
-          </div>
+          {/* Anchor Date using SmartDateTimePicker */}
+          <SmartDateTimePicker
+            label="Mốc bắt đầu làm bài (Ngày neo)"
+            value={values.startDate}
+            onChange={(val) => applyDurationCascade(val)}
+            required
+            variant="cyan"
+            defaultTime="08:00"
+            helperText="Các giai đoạn nộp bài, chấm thi, trao giải sẽ tự động tính toán nối tiếp theo số giờ/ngày."
+          />
 
           {/* 3 Duration Control Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -497,7 +461,7 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          MODE 2: PRECISION MODE (Tinh Chỉnh Chi Tiết Kèm Nút Giờ Nhanh)
+          MODE 2: PRECISION MODE (100% Sử Dụng SmartDateTimePicker)
       ───────────────────────────────────────────────────────────── */}
       {activeMode === "precision" && (
         <div className="space-y-3">
@@ -515,85 +479,43 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                  Mở nộp bài *
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(values.startDate)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onChange("startDate", val);
-                    if (!values.endDate && val) {
-                      onChange("endDate", addHoursToDateStr(val, 24));
-                    }
-                  }}
-                  required
-                />
-                <div className="flex items-center gap-1 text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {TIME_CHIPS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => onChange("startDate", setTimeToDateStr(values.startDate, t))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SmartDateTimePicker
+                label="Mở nộp bài"
+                value={values.startDate}
+                onChange={(val) => {
+                  onChange("startDate", val);
+                  if (!values.endDate && val) {
+                    const d = new Date(val);
+                    d.setHours(d.getHours() + 24);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    onChange("endDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T17:00`);
+                  }
+                }}
+                required
+                variant="amber"
+                defaultTime="08:00"
+                helperText="Thời điểm bắt đầu tính giờ làm bài và mở cổng nộp link bài thi."
+              />
 
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                    Hạn chót nộp bài *
-                  </label>
-                  <div className="flex items-center gap-1 text-[9px]">
-                    <button
-                      type="button"
-                      onClick={() => onChange("endDate", addHoursToDateStr(values.endDate || values.startDate, 4))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
-                    >
-                      +4h
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onChange("endDate", addHoursToDateStr(values.endDate || values.startDate, 24))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
-                    >
-                      +24h
-                    </button>
-                  </div>
-                </div>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(values.endDate, "17:00")}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onChange("endDate", val);
-                    if (!values.scoringStartDate && val) {
-                      onChange("scoringStartDate", val);
-                    }
-                  }}
-                  required
-                />
-                <div className="flex items-center gap-1 text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {TIME_CHIPS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => onChange("endDate", setTimeToDateStr(values.endDate, t))}
-                      className="px-1.5 py-0.5 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 rounded cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SmartDateTimePicker
+                label="Hạn chót nộp bài"
+                value={values.endDate}
+                onChange={(val) => {
+                  onChange("endDate", val);
+                  if (!values.scoringStartDate && val) {
+                    onChange("scoringStartDate", val);
+                  }
+                }}
+                required
+                variant="amber"
+                defaultTime="17:00"
+                quickOffsets={[
+                  { label: "+4h", hours: 4 },
+                  { label: "+24h (1 ngày)", hours: 24 },
+                  { label: "+36h (Cuối tuần)", hours: 32 },
+                ]}
+                helperText="Hạn chót khóa cổng nộp bài thi của thí sinh."
+              />
             </div>
           </div>
 
@@ -611,84 +533,42 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                  Mở chấm điểm
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(values.scoringStartDate, "17:00")}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onChange("scoringStartDate", val);
-                    if (!values.scoringEndDate && val) {
-                      onChange("scoringEndDate", addHoursToDateStr(val, 4));
-                    }
-                  }}
-                />
-                <div className="flex items-center gap-1 text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {TIME_CHIPS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => onChange("scoringStartDate", setTimeToDateStr(values.scoringStartDate, t))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SmartDateTimePicker
+                label="Bắt đầu mở chấm điểm"
+                value={values.scoringStartDate}
+                onChange={(val) => {
+                  onChange("scoringStartDate", val);
+                  if (!values.scoringEndDate && val) {
+                    const d = new Date(val);
+                    d.setHours(d.getHours() + 4);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    onChange("scoringEndDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T20:00`);
+                  }
+                }}
+                variant="cyan"
+                defaultTime="17:00"
+                helperText="Giám khảo bắt đầu xem bài thi và tiến hành chấm điểm / phỏng vấn."
+              />
 
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                    Khóa chấm điểm *
-                  </label>
-                  <div className="flex items-center gap-1 text-[9px]">
-                    <button
-                      type="button"
-                      onClick={() => onChange("scoringEndDate", addHoursToDateStr(values.scoringEndDate || values.scoringStartDate, 2))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
-                    >
-                      +2h
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onChange("scoringEndDate", addHoursToDateStr(values.scoringEndDate || values.scoringStartDate, 4))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
-                    >
-                      +4h
-                    </button>
-                  </div>
-                </div>
-                <Input
-                  type="datetime-local"
-                  value={toDateTimeLocal(values.scoringEndDate, "20:00")}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    onChange("scoringEndDate", val);
-                    if (hasAppeal && !values.appealStartDate && val) {
-                      onChange("appealStartDate", val);
-                    }
-                  }}
-                  required
-                />
-                <div className="flex items-center gap-1 text-[9px] pt-0.5">
-                  <span className="text-[var(--text-muted)]">Giờ:</span>
-                  {TIME_CHIPS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => onChange("scoringEndDate", setTimeToDateStr(values.scoringEndDate, t))}
-                      className="px-1.5 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 rounded cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SmartDateTimePicker
+                label="Khóa chấm điểm"
+                value={values.scoringEndDate}
+                onChange={(val) => {
+                  onChange("scoringEndDate", val);
+                  if (hasAppeal && !values.appealStartDate && val) {
+                    onChange("appealStartDate", val);
+                  }
+                }}
+                required
+                variant="cyan"
+                defaultTime="20:00"
+                quickOffsets={[
+                  { label: "+2h", hours: 2 },
+                  { label: "+4h", hours: 4 },
+                  { label: "+6h", hours: 6 },
+                ]}
+                helperText="Hạn chót khóa điểm số của Ban Giám Khảo."
+              />
             </div>
           </div>
 
@@ -707,7 +587,10 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
                       onChange("appealEndDate", "");
                     } else if (values.scoringEndDate) {
                       onChange("appealStartDate", values.scoringEndDate);
-                      onChange("appealEndDate", addHoursToDateStr(values.scoringEndDate, 1));
+                      const d = new Date(values.scoringEndDate);
+                      d.setHours(d.getHours() + 1);
+                      const pad = (n: number) => String(n).padStart(2, "0");
+                      onChange("appealEndDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T21:00`);
                     }
                   }}
                   className="accent-purple-400 w-3.5 h-3.5 cursor-pointer"
@@ -723,27 +606,27 @@ export const RoundTimelinePicker: React.FC<RoundTimelinePickerProps> = ({
 
             {hasAppeal && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                    Mở phúc khảo
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    value={toDateTimeLocal(values.appealStartDate, "20:00")}
-                    onChange={(e) => onChange("appealStartDate", e.target.value)}
-                  />
-                </div>
+                <SmartDateTimePicker
+                  label="Mở phúc khảo"
+                  value={values.appealStartDate}
+                  onChange={(val) => onChange("appealStartDate", val)}
+                  variant="purple"
+                  defaultTime="20:00"
+                  helperText="Thí sinh được xem kết quả tạm thời và gửi yêu cầu phúc khảo."
+                />
 
-                <div className="space-y-1">
-                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                    Đóng phúc khảo &amp; Trao giải
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    value={toDateTimeLocal(values.appealEndDate, "21:00")}
-                    onChange={(e) => onChange("appealEndDate", e.target.value)}
-                  />
-                </div>
+                <SmartDateTimePicker
+                  label="Đóng phúc khảo &amp; Trao giải"
+                  value={values.appealEndDate}
+                  onChange={(val) => onChange("appealEndDate", val)}
+                  variant="purple"
+                  defaultTime="21:00"
+                  quickOffsets={[
+                    { label: "+1h", hours: 1 },
+                    { label: "+2h", hours: 2 },
+                  ]}
+                  helperText="Thời điểm chốt kết quả chung cuộc và bế mạc trao giải."
+                />
               </div>
             )}
           </div>
