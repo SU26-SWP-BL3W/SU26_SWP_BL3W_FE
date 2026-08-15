@@ -43,47 +43,54 @@ export const AdminCreateEventView: React.FC = () => {
 
     setIsSubmitting(true);
 
-    const payload = {
-      eventName: form.eventName,
-      season: form.season,
-      year: Number(form.year),
-      startDate: new Date(form.startDate).toISOString(),
-      endDate: new Date(form.endDate).toISOString(),
-      registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : new Date(form.startDate).toISOString(),
-      registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : new Date(form.endDate).toISOString(),
-      description: form.description,
-      maxTeams: Number(form.maxTeams),
-      status: true,
-      rounds: [],
-    };
+    try {
+      const payload = {
+        eventName: form.eventName,
+        season: form.season,
+        year: Number(form.year),
+        startDate: new Date(form.startDate).toISOString(),
+        endDate: new Date(form.endDate).toISOString(),
+        registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : new Date(form.startDate).toISOString(),
+        registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : new Date(form.endDate).toISOString(),
+        description: form.description,
+        maxTeams: Number(form.maxTeams),
+        status: true,
+        rounds: [],
+      };
 
-    const res = await eventsRepository.createEvent(payload);
+      const res = await eventsRepository.createEvent(payload);
 
-    if (res && res.success !== false && (res.data || res.id || res.Id || res.eventId || res.EventId)) {
-      const innerData = res.data || res;
-      const eventId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId || "";
-      if (form.coordinatorEmail.trim()) {
-        const foundUser = await usersRepository.findUserByEmail(form.coordinatorEmail.trim());
-        if (foundUser) {
-          const realUserId = foundUser.id || (foundUser as any).Id || (foundUser as any).userId || (foundUser as any).UserId;
-          try {
-            await staffRepository.assignRoleDirectly({
-              userId: realUserId,
-              eventId: eventId,
-              roleName: "EventCoordinator",
-            });
-          } catch (err: any) {
-            console.error("Lỗi phân công EC:", err);
+      if (res && res.success !== false && (res.data || res.id || res.Id || res.eventId || res.EventId)) {
+        const innerData = res.data || res;
+        const eventId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId || "";
+        if (form.coordinatorEmail.trim()) {
+          const foundUser = await usersRepository.findUserByEmail(form.coordinatorEmail.trim());
+          if (foundUser) {
+            const realUserId = foundUser.id || (foundUser as any).Id || (foundUser as any).userId || (foundUser as any).UserId;
+            try {
+              await staffRepository.assignRoleDirectly({
+                userId: realUserId,
+                eventId: eventId,
+                roleName: "EventCoordinator",
+              });
+            } catch (err: any) {
+              console.error("Lỗi phân công EC:", err);
+            }
+          } else {
+            alert(`Cảnh báo: Đã tạo thành công Sự kiện, nhưng không tìm thấy tài khoản với email "${form.coordinatorEmail}". Bạn có thể phân công lại EC ở danh sách sự kiện.`);
           }
-        } else {
-          alert(`Cảnh báo: Đã tạo thành công Sự kiện, nhưng không tìm thấy tài khoản với email "${form.coordinatorEmail}". Bạn có thể phân công lại EC ở danh sách sự kiện.`);
         }
+        setSuccessEventId(eventId);
+      } else {
+        setErrorMessage(res?.message || "Tạo sự kiện thất bại. Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.");
       }
-      setSuccessEventId(eventId);
-    } else {
-      setErrorMessage(res?.message || "Tạo sự kiện thất bại. Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.");
+    } catch (err: any) {
+      console.error("Lỗi tạo sự kiện:", err);
+      const apiMsg = err?.response?.data?.message || err?.message || "Tạo sự kiện thất bại. Vui lòng kiểm tra kết nối mạng và thử lại.";
+      setErrorMessage(apiMsg);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
