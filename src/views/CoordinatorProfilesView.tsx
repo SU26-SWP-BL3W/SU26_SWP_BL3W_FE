@@ -40,6 +40,8 @@ import {
   ExternalLink,
   Crown,
   Award,
+  Maximize2,
+  FileText,
 } from "lucide-react";
 import type { User } from "@/models/entities";
 
@@ -64,6 +66,7 @@ export function CoordinatorProfilesView() {
 
   // Modal States
   const [previewModal, setPreviewModal] = useState<User | null>(null);
+  const [previewStudentCardImage, setPreviewStudentCardImage] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ user: User } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [detailUserModal, setDetailUserModal] = useState<{ user: User; isEditing: boolean } | null>(null);
@@ -75,6 +78,7 @@ export function CoordinatorProfilesView() {
     studentCode: "",
     schoolId: "",
     schoolName: "",
+    photoStudentCardUrl: "",
   });
 
   // Create user form state
@@ -315,6 +319,7 @@ export function CoordinatorProfilesView() {
       studentCode: user.studentCode || (user as any).StudentCode || "",
       schoolId: user.schoolId || "",
       schoolName: user.schoolName || "",
+      photoStudentCardUrl: user.photoStudentCardUrl || (user as any).PhotoStudentCardUrl || "",
     });
   };
 
@@ -330,6 +335,7 @@ export function CoordinatorProfilesView() {
         studentCode: editForm.studentCode,
         schoolId: editForm.schoolId,
         schoolName: selectedSchool ? selectedSchool.schoolName : editForm.schoolName,
+        photoStudentCardUrl: editForm.photoStudentCardUrl,
       });
       return next;
     });
@@ -1193,18 +1199,73 @@ export function CoordinatorProfilesView() {
             {!detailUserModal.isEditing ? (
               // VIEW MODE
               <div className="space-y-4 font-mono text-xs">
-                {/* Photo if available */}
-                {detailUserModal.user.photoStudentCardUrl && (
-                  <div className="text-center p-2 bg-black/40 border border-[var(--border-muted)] rounded">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={detailUserModal.user.photoStudentCardUrl}
-                      alt="Ảnh thẻ"
-                      className="max-h-40 mx-auto object-contain rounded"
-                    />
-                    <span className="text-[10px] text-[var(--text-muted)] block mt-1">Ảnh thẻ sinh viên đính kèm</span>
+                {/* Photo Student Card Section */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5 text-cyan-300">
+                      <FileText className="w-3.5 h-3.5" />
+                      Ảnh Thẻ Sinh Viên Đính Kèm
+                    </span>
+                    {detailUserModal.user.photoStudentCardUrl && (
+                      <a
+                        href={detailUserModal.user.photoStudentCardUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-cyan-400 hover:underline flex items-center gap-1 lowercase font-mono"
+                      >
+                        <ExternalLink className="w-3 h-3" /> mở ảnh gốc
+                      </a>
+                    )}
                   </div>
-                )}
+
+                  {detailUserModal.user.photoStudentCardUrl ? (
+                    <div className="group relative p-2.5 bg-black/60 border border-[var(--border-muted)] hover:border-cyan-500/60 rounded transition-all text-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={detailUserModal.user.photoStudentCardUrl}
+                        alt={`Ảnh thẻ ${detailUserModal.user.fullName}`}
+                        onClick={() => setPreviewStudentCardImage(detailUserModal.user.photoStudentCardUrl!)}
+                        className="max-h-48 mx-auto object-contain rounded cursor-zoom-in hover:brightness-110 transition-all shadow-md"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80";
+                        }}
+                      />
+                      <div className="pt-2 flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewStudentCardImage(detailUserModal.user.photoStudentCardUrl!)}
+                          className="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 rounded text-[10px] flex items-center gap-1 cursor-pointer font-bold"
+                        >
+                          <Maximize2 className="w-3 h-3" /> Phóng To Chi Tiết
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-slate-900/60 border border-dashed border-[var(--border-muted)] rounded text-center space-y-1">
+                      {detailUserModal.user.isFpt ? (
+                        <div className="text-emerald-400 text-xs flex flex-col items-center justify-center gap-1">
+                          <span className="font-bold flex items-center gap-1">
+                            <GraduationCap className="w-4 h-4 text-emerald-400" />
+                            Sinh Viên Đại Học FPT
+                          </span>
+                          <span className="text-[10px] text-[var(--text-muted)] font-normal">
+                            (Hệ thống tự động đối chiếu MSSV &amp; Email trường, không bắt buộc nộp ảnh thẻ)
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="space-y-0.5">
+                          <p className="text-amber-400 text-xs font-bold flex items-center justify-center gap-1">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Chưa tải lên ảnh thẻ sinh viên</span>
+                          </p>
+                          <p className="text-[10px] text-[var(--text-muted)]">
+                            Thí sinh ngoài trường chưa nộp ảnh thẻ tại trang Hồ Sơ Sinh Viên. Bạn có thể bấm [Chỉnh Sửa Thông Tin] để dán link ảnh bổ sung.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <div className="space-y-2 divide-y divide-[var(--border-muted)]/50">
                   <div className="flex justify-between py-1.5">
@@ -1217,7 +1278,7 @@ export function CoordinatorProfilesView() {
                   </div>
                   <div className="flex justify-between py-1.5">
                     <span className="text-[var(--text-muted)]">Mã Số Sinh Viên:</span>
-                    <span className="text-amber-300 font-bold">{detailUserModal.user.studentCode || "—"}</span>
+                    <span className="text-amber-300 font-bold">{detailUserModal.user.studentCode || "— (Chưa điền)"}</span>
                   </div>
                   <div className="flex justify-between py-1.5">
                     <span className="text-[var(--text-muted)]">Trường Đại Học:</span>
@@ -1313,6 +1374,35 @@ export function CoordinatorProfilesView() {
                   </select>
                 </div>
 
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold flex items-center justify-between">
+                    <span>Link Ảnh Thẻ Sinh Viên (URL)</span>
+                    {editForm.photoStudentCardUrl && (
+                      <span className="text-cyan-400 text-[9px] lowercase font-normal">đã có liên kết</span>
+                    )}
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://... (Link ảnh thẻ thí sinh nộp bổ sung)"
+                    value={editForm.photoStudentCardUrl}
+                    onChange={(e) => setEditForm({ ...editForm, photoStudentCardUrl: e.target.value })}
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] rounded text-xs focus:outline-none focus:border-cyan-400 font-mono"
+                  />
+                  {editForm.photoStudentCardUrl && (
+                    <div className="p-2 bg-black/40 border border-slate-700 rounded text-center mt-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editForm.photoStudentCardUrl}
+                        alt="Xem trước ảnh thẻ"
+                        className="max-h-28 mx-auto object-contain rounded"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80";
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
                   <button
                     type="button"
@@ -1332,6 +1422,35 @@ export function CoordinatorProfilesView() {
               </div>
             )}
           </Card>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          9b. FULLSCREEN LIGHTBOX FOR STUDENT CARD PHOTO
+      ───────────────────────────────────────────────────────────── */}
+      {previewStudentCardImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setPreviewStudentCardImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] bg-black/90 border border-cyan-500/60 p-3 rounded-lg shadow-[0_0_50px_rgba(6,182,212,0.4)] flex flex-col items-center">
+            <button
+              onClick={() => setPreviewStudentCardImage(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewStudentCardImage}
+              alt="Ảnh thẻ sinh viên full-size"
+              className="max-h-[78vh] max-w-full object-contain rounded"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="mt-2 text-center text-xs font-mono text-cyan-300">
+              🔍 Ảnh thẻ sinh viên kích thước đầy đủ • Bấm ra ngoài hoặc nút [✕] để đóng
+            </div>
+          </div>
         </div>
       )}
 
