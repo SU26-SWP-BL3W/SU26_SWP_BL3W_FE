@@ -55,7 +55,11 @@ export const CreateEventWizardView: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {steps.map((step) => {
             const isActive = wizard.currentStep === step.number;
-            const isCompleted = step.number === 6 ? wizard.canPublishEvent : Boolean(wizard.stepDoneMap[step.number]);
+            // Badge luỹ tiến: bước n chỉ "Xong" khi nó và mọi bước trước đều xong (tránh "Bước 5 Xong / Bước 2 Chờ").
+            const isCompleted =
+              step.number === 6
+                ? wizard.canPublishEvent
+                : [1, 2, 3, 4, 5].slice(0, step.number).every((n) => Boolean(wizard.stepDoneMap[n]));
             const isClickable = step.number <= wizard.currentStep || Boolean(wizard.stepDoneMap[step.number - 1]);
 
             return (

@@ -5,6 +5,7 @@ import { Link } from "@/i18n/routing";
 import { useGetUsers, useApproveUser, useRejectUser } from "@/repositories/usersRepository";
 import { useGetSchools } from "@/repositories/schoolsRepository";
 import { usePublicEvents } from "@/repositories/eventsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
 import { Button, Card, Badge } from "@/components/ui";
 import {
   Users,
@@ -44,14 +45,6 @@ import type { User } from "@/models/entities";
 
 type TabType = "all" | "pending" | "approved" | "rejected";
 type SortOption = "latest" | "name_asc" | "name_desc" | "code" | "school";
-
-const TRACK_LIST = [
-  { id: "all", name: "— Tất Cả Hạng Mục —" },
-  { id: "trk-ai", name: "AI & Machine Learning" },
-  { id: "trk-web", name: "Web & Mobile Product" },
-  { id: "trk-game", name: "Game Development" },
-  { id: "trk-sec", name: "Cybersecurity & Cloud" },
-];
 
 export function CoordinatorProfilesView() {
   // Navigation & Tab state
@@ -101,6 +94,16 @@ export function CoordinatorProfilesView() {
   const { data: usersData, isLoading: loadingUsers, isError: isUsersError, error: usersError, refetch } = useGetUsers({ pageNumber: 1, pageSize: 200 });
   const { data: schoolsList = [] } = useGetSchools();
   const { data: eventsList = [] } = usePublicEvents();
+  const { data: realTracks = [] } = useGetTracksByEvent(selectedEventId !== "all" ? selectedEventId : undefined);
+
+  const TRACK_LIST = useMemo(() => {
+    const base = [{ id: "all", name: "— Tất Cả Hạng Mục —" }];
+    const dynamic = (realTracks as any[]).map((t) => ({
+      id: t.id || t.Id || t.trackId || "",
+      name: t.trackName || t.TrackName || "Hạng mục",
+    }));
+    return [...base, ...dynamic];
+  }, [realTracks]);
 
   const { mutateAsync: approveUserMutation, isPending: isApproving } = useApproveUser();
   const { mutateAsync: rejectUserMutation, isPending: isRejecting } = useRejectUser();

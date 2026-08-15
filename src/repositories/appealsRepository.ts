@@ -13,18 +13,27 @@ export interface AppealDTO {
   RespondedAt?: string;
 }
 
-export function useAppeals(teamId?: string) {
+export function useAppeals({ roundId, teamId }: { roundId?: string; teamId?: string } = {}) {
   return useQuery({
-    queryKey: ["appeals", teamId],
+    queryKey: ["appeals", roundId, teamId],
     queryFn: async () => {
       try {
-        const url = teamId ? `/Appeals?teamId=${teamId}` : "/Appeals";
-        const res = await apiClient.get<AppealDTO[]>(url);
-        return res.data;
+        if (roundId) {
+          const res = await apiClient.get<any>(`/Appeals/round/${roundId}`);
+          const items = res.data?.data?.data || res.data?.data || res.data || [];
+          return Array.isArray(items) ? items : [];
+        }
+        if (teamId) {
+          const res = await apiClient.get<any>(`/Appeals/team/${teamId}`);
+          const items = res.data?.data?.data || res.data?.data || res.data || [];
+          return Array.isArray(items) ? items : [];
+        }
+        return [];
       } catch {
         return [];
       }
     },
+    enabled: !!roundId || !!teamId,
   });
 }
 

@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useGetSchools, useCreateSchool } from "@/repositories/schoolsRepository";
+import {
+  useGetSchoolsWithUserCount,
+  useCreateSchool,
+  useUpdateSchool,
+  useDeleteSchool,
+} from "@/repositories/schoolsRepository";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import {
   School as SchoolIcon,
@@ -13,6 +18,9 @@ import {
   CheckCircle2,
   X,
   ShieldAlert,
+  Edit3,
+  Trash2,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import type { School } from "@/models/entities";
@@ -39,15 +47,20 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export const AdminSchoolsView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingSchool, setEditingSchool] = useState<any | null>(null);
+  const [deletingSchool, setDeletingSchool] = useState<any | null>(null);
+
   const [newSchoolName, setNewSchoolName] = useState("");
   const [newSchoolCode, setNewSchoolCode] = useState("");
   const [newSchoolAddress, setNewSchoolAddress] = useState("");
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const { data: schoolsList = [], isLoading, refetch } = useGetSchools();
+  const { data: schoolsList = [], isLoading, refetch } = useGetSchoolsWithUserCount();
   const { mutateAsync: createSchool, isPending: isCreating } = useCreateSchool();
+  const { mutateAsync: updateSchool, isPending: isUpdating } = useUpdateSchool();
+  const { mutateAsync: deleteSchool, isPending: isDeleting } = useDeleteSchool();
 
-  const filteredSchools = schoolsList.filter((sch) => {
+  const filteredSchools = schoolsList.filter((sch: any) => {
     const sName = sch.schoolName || sch.name || "";
     const sCode = sch.code || "";
     const searchLower = searchTerm.toLowerCase().trim();
@@ -73,8 +86,43 @@ export const AdminSchoolsView: React.FC = () => {
         setSuccessMsg(null);
       }, 1800);
     } catch {
-      alert("Đã thêm trường học thành công!");
+      alert("Đã thêm trường học!");
       setShowAddModal(false);
+    }
+  };
+
+  const handleUpdateSchoolSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSchool || !editingSchool.schoolName.trim()) return;
+
+    try {
+      const schoolId = editingSchool.id || editingSchool.schoolId || editingSchool.Id;
+      await updateSchool({
+        id: schoolId,
+        data: {
+          schoolName: editingSchool.schoolName.trim(),
+          code: editingSchool.code?.trim(),
+          address: editingSchool.address?.trim() || "Việt Nam",
+        },
+      });
+      setSuccessMsg(`Đã cập nhật trường "${editingSchool.schoolName}" thành công!`);
+      setTimeout(() => {
+        setEditingSchool(null);
+        setSuccessMsg(null);
+      }, 1800);
+    } catch {
+      alert("Cập nhật trường học thất bại.");
+    }
+  };
+
+  const handleDeleteSchoolConfirm = async () => {
+    if (!deletingSchool) return;
+    try {
+      const schoolId = deletingSchool.id || deletingSchool.schoolId || deletingSchool.Id;
+      await deleteSchool(schoolId);
+      setDeletingSchool(null);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Không thể xóa trường học đã có sinh viên đăng ký.");
     }
   };
 
@@ -140,23 +188,32 @@ export const AdminSchoolsView: React.FC = () => {
                   <tr>
                     <th>MÃ TRƯỜNG</th>
                     <th>TÊN TRƯỜNG ĐẠI HỌC</th>
+                    <th>SĨ SỐ SINH VIÊN</th>
                     <th>ĐỊA CHỈ TRỤ SỞ</th>
                     <th>PHÂN LOẠI</th>
+                    <th className="text-right">THAO TÁC</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredSchools.map((sch, idx) => {
+                  {filteredSchools.map((sch: any, idx: number) => {
                     const name = sch.schoolName || sch.name || "Trường Đại Học";
                     const code = sch.code || `SCH-${idx + 1}`;
                     const isFpt = code.includes("FPT") || name.includes("FPT");
+                    const userCount = sch.userCount ?? sch.UserCount ?? 0;
 
                     return (
-                      <tr key={sch.id || idx}>
+                      <tr key={sch.id || sch.schoolId || idx}>
                         <td>
                           <Badge tone={isFpt ? "team" : "neutral"}>{code}</Badge>
                         </td>
                         <td>
                           <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{name}</div>
+                        </td>
+                        <td>
+                          <div className="font-mono text-xs flex items-center gap-1.5 text-[var(--accent-primary)] font-bold">
+                            <Users className="w-3.5 h-3.5" />
+                            <span>{userCount} sinh viên</span>
+                          </div>
                         </td>
                         <td>
                           <div className="font-mono text-xs text-[var(--text-muted)] flex items-center gap-1">
@@ -172,6 +229,26 @@ export const AdminSchoolsView: React.FC = () => {
                           }`}>
                             {isFpt ? "TRƯỜNG CHỦ TRÌ (FPTU)" : "TRƯỜNG ĐỐI TÁC (NON-FPT)"}
                           </span>
+                        </td>
+                        <td className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditingSchool({ ...sch, schoolName: name, code, address: sch.address || "" })}
+                              className="p-1.5 hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-transparent hover:border-[var(--accent-primary)]/30 hud-clipped transition-all cursor-pointer"
+                              title="Chỉnh sửa thông tin trường"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingSchool({ id: sch.id || sch.schoolId, name })}
+                              className="p-1.5 hover:bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-transparent hover:border-[var(--color-danger)]/30 hud-clipped transition-all cursor-pointer"
+                              title="Xóa trường học"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -261,6 +338,119 @@ export const AdminSchoolsView: React.FC = () => {
                   </div>
                 </form>
               )}
+            </Card>
+          </div>
+        )}
+
+        {/* Modal Chỉnh Sửa Trường */}
+        {editingSchool && (
+          <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fade-in">
+            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-primary)] space-y-4 relative hud-clipped">
+              <button
+                type="button"
+                onClick={() => setEditingSchool(null)}
+                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="space-y-1">
+                <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-[var(--accent-primary)]" />
+                  Cập Nhật Thông Tin Trường Đại Học
+                </h3>
+                <p className="font-mono text-xs text-[var(--text-muted)]">
+                  Chỉnh sửa tên trường, mã nhận diện hoặc địa chỉ trụ sở.
+                </p>
+              </div>
+
+              {successMsg ? (
+                <div className="p-4 bg-[rgba(16,185,129,0.1)] border border-[var(--color-success)] text-[var(--color-success)] font-mono text-xs hud-clipped flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[var(--color-success)]" />
+                  <span>{successMsg}</span>
+                </div>
+              ) : (
+                <form onSubmit={handleUpdateSchoolSubmit} className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                      Tên Trường Đại Học *
+                    </label>
+                    <Input
+                      type="text"
+                      value={editingSchool.schoolName || ""}
+                      onChange={(e) => setEditingSchool({ ...editingSchool, schoolName: e.target.value })}
+                      className="w-full text-xs font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                      Mã Trường (School Code)
+                    </label>
+                    <Input
+                      type="text"
+                      value={editingSchool.code || ""}
+                      onChange={(e) => setEditingSchool({ ...editingSchool, code: e.target.value })}
+                      className="w-full text-xs font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                      Địa Chỉ Trụ Sở
+                    </label>
+                    <Input
+                      type="text"
+                      value={editingSchool.address || ""}
+                      onChange={(e) => setEditingSchool({ ...editingSchool, address: e.target.value })}
+                      className="w-full text-xs font-mono"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="ghost" type="button" onClick={() => setEditingSchool(null)}>
+                      Hủy Bỏ
+                    </Button>
+                    <Button variant="primary" type="submit" disabled={isUpdating} className="font-mono text-xs font-bold">
+                      {isUpdating ? "Đang lưu..." : "// LƯU THAY ĐỔI >"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* Modal Xác Nhận Xóa Trường */}
+        {deletingSchool && (
+          <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fade-in">
+            <Card className="w-full max-w-md p-6 bg-[var(--bg-panel)] border border-[var(--color-danger)] space-y-4 relative hud-clipped">
+              <div className="space-y-2">
+                <h3 className="font-display font-bold text-lg text-[var(--color-danger)] uppercase tracking-wider flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-[var(--color-danger)]" />
+                  Xác Nhận Xóa Trường Học
+                </h3>
+                <p className="font-mono text-xs text-[var(--text-muted)]">
+                  Bạn có chắc chắn muốn xóa trường đại học{" "}
+                  <span className="text-[var(--text-primary)] font-bold">{deletingSchool.name}</span> khỏi hệ thống?
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" type="button" onClick={() => setDeletingSchool(null)}>
+                  Hủy Bỏ
+                </Button>
+                <Button
+                  variant="primary"
+                  type="button"
+                  onClick={handleDeleteSchoolConfirm}
+                  disabled={isDeleting}
+                  className="bg-[var(--color-danger)] text-white font-mono text-xs font-bold"
+                >
+                  {isDeleting ? "Đang xóa..." : "// XÓA VĨNH VIỄN >"}
+                </Button>
+              </div>
             </Card>
           </div>
         )}

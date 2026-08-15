@@ -643,7 +643,12 @@ export const CoordinatorEventDetailView: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {steps.map((step) => {
             const isActive = currentStep === step.number;
-            const isCompleted = step.number === 6 ? canPublishEvent : Boolean(stepDoneMap[step.number]);
+            // Badge luỹ tiến: bước n chỉ "Xong" khi CHÍNH nó và MỌI bước trước đều xong.
+            // Tránh cảnh vô lý "Bước 5 Xong" trong khi "Bước 2 Chờ" (trước đây tính độc lập từng bước).
+            const isCompleted =
+              step.number === 6
+                ? canPublishEvent
+                : [1, 2, 3, 4, 5].slice(0, step.number).every((n) => Boolean(stepDoneMap[n]));
 
             return (
               <button

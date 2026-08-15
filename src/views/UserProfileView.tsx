@@ -10,6 +10,7 @@ import {
 } from "@/repositories/authRepository";
 import { useGetUserRejections } from "@/repositories/usersRepository";
 import { useGetSchools } from "@/repositories/schoolsRepository";
+import { uploadRepository } from "@/repositories/uploadRepository";
 import { Button, Input, Card, Badge } from "@/components/ui";
 import {
   User,
@@ -193,17 +194,23 @@ export function UserProfileView() {
     }
 
     try {
-      const mockPhotoUrl = photoFile
-        ? `https://storage.seal.vn/student-cards/${Date.now()}-${encodeURIComponent(photoFile.name)}`
-        : photoPreview || undefined;
+      let finalPhotoUrl = photoPreview || undefined;
+
+      if (photoFile) {
+        const uploadRes = await uploadRepository.uploadFile(photoFile);
+        const uploadedUrl = (uploadRes.data as any)?.fileUrl || (uploadRes.data as any)?.FileUrl || (uploadRes as any)?.fileUrl;
+        if (uploadedUrl) {
+          finalPhotoUrl = uploadedUrl;
+        }
+      }
 
       await updateProfile({
         fullName: fullName.trim() || undefined,
         isFpt: schoolChoice === "FPT",
         schoolId: schoolChoice === "OTHER" ? schoolId : undefined,
         studentCode: studentCode.trim(),
-        photoStudentCardUrl: mockPhotoUrl,
-      } as any).catch((err) => console.warn("[SEAL] Profile update mocked:", err?.message));
+        photoStudentCardUrl: finalPhotoUrl,
+      } as any);
 
       setSubmitSuccess(true);
       setIsEditing(false);

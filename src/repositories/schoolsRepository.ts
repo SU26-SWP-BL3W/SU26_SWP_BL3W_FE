@@ -71,26 +71,72 @@ export function useGetSchools() {
   });
 }
 
+/** GET /api/Schools/with-user-count — Lấy danh sách trường học kèm số lượng sinh viên */
+export function useGetSchoolsWithUserCount() {
+  return useQuery({
+    queryKey: ["schools-with-user-count"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<BaseResponse<any[]>>("/Schools/with-user-count");
+        if (res.data?.data && Array.isArray(res.data.data)) {
+          return res.data.data;
+        }
+        if (Array.isArray(res.data)) {
+          return res.data;
+        }
+      } catch (err) {
+        console.warn("[SEAL] Failed to fetch schools with user count, falling back to /Schools");
+      }
+      const fallbackRes = await apiClient.get<BaseResponse<PagedResult<School>>>("/Schools", {
+        params: { PageNumber: 1, PageSize: 100 },
+      });
+      return fallbackRes.data?.data?.data || MOCK_SCHOOLS_LIST;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 /** POST /api/Schools — Tạo trường mới (Admin) */
 export function useCreateSchool() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { schoolName: string; code?: string; address?: string }) => {
-      try {
-        const res = await apiClient.post("/Schools", data);
-        return res.data;
-      } catch {
-        return {
-          id: `sch-${Date.now()}`,
-          schoolId: `sch-${Date.now()}`,
-          schoolName: data.schoolName,
-          code: data.code || data.schoolName.substring(0, 4).toUpperCase(),
-          address: data.address || "Việt Nam",
-        };
-      }
+      const res = await apiClient.post("/Schools", data);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schools"] });
+      queryClient.invalidateQueries({ queryKey: ["schools-with-user-count"] });
+    },
+  });
+}
+
+/** PUT /api/Schools/{id} — Cập nhật trường học (Admin) */
+export function useUpdateSchool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { schoolName: string; code?: string; address?: string } }) => {
+      const res = await apiClient.put(`/Schools/${id}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["schools"] });
+      queryClient.invalidateQueries({ queryKey: ["schools-with-user-count"] });
+    },
+  });
+}
+
+/** DELETE /api/Schools/{id} — Xóa trường học (Admin) */
+export function useDeleteSchool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/Schools/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["schools"] });
+      queryClient.invalidateQueries({ queryKey: ["schools-with-user-count"] });
     },
   });
 }

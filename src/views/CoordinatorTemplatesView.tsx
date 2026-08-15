@@ -56,6 +56,28 @@ export const CoordinatorTemplatesView: React.FC = () => {
     }
   };
 
+  const handleDeleteCriteria = async (critId: string) => {
+    if (!confirm("Bạn có chắc muốn xóa tiêu chí này khỏi thư viện?")) return;
+    try {
+      await templatesRepository.deleteCriteria(critId);
+      await refetchCriterias();
+      setMessage("Đã xóa tiêu chí thành công.");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Không thể xóa tiêu chí đang được sử dụng trong các Mẫu chấm.");
+    }
+  };
+
+  const handleDeleteTemplate = async (tplId: string) => {
+    if (!confirm("Bạn có chắc muốn xóa mẫu tiêu chí này?")) return;
+    try {
+      await templatesRepository.deleteTemplate(tplId);
+      await refetchTemplates();
+      setMessage("Đã xóa mẫu tiêu chí thành công.");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Không thể xóa mẫu tiêu chí đang được áp dụng.");
+    }
+  };
+
   const handleAddCriteriaToDraft = (crit: any) => {
     const critId = crit.id || crit.Id || crit.criteriaId || crit.CriteriaId;
     if (selectedCriterias.some((c) => c.criteriaId === critId)) return;
@@ -191,15 +213,25 @@ export const CoordinatorTemplatesView: React.FC = () => {
                         <p className="text-[11px] text-[var(--text-muted)] font-sans line-clamp-2">{desc || "Chưa có mô tả"}</p>
                       </div>
 
-                      <Button
-                        type="button"
-                        variant={isAdded ? "ghost" : "secondary"}
-                        disabled={isAdded}
-                        onClick={() => handleAddCriteriaToDraft(crit)}
-                        className="text-[10px] font-mono shrink-0"
-                      >
-                        {isAdded ? "ĐÃ CHỌN ✓" : "+ THÊM VÀO MẪU"}
-                      </Button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          type="button"
+                          variant={isAdded ? "ghost" : "secondary"}
+                          disabled={isAdded}
+                          onClick={() => handleAddCriteriaToDraft(crit)}
+                          className="text-[10px] font-mono"
+                        >
+                          {isAdded ? "ĐÃ CHỌN ✓" : "+ THÊM VÀO MẪU"}
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCriteria(id)}
+                          className="p-1.5 hover:bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-transparent hover:border-[var(--color-danger)]/30 hud-clipped transition-all cursor-pointer"
+                          title="Xóa tiêu chí này khỏi thư viện"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -327,7 +359,17 @@ export const CoordinatorTemplatesView: React.FC = () => {
                         <h4 className="font-mono font-bold text-xs text-[var(--text-primary)]">{name}</h4>
                         <p className="text-[11px] text-[var(--text-muted)] font-mono">ID: {id} | 100% Trọng số RBL</p>
                       </div>
-                      <Badge tone="success">SẴN SÀNG ÁP DỤNG</Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge tone="success">SẴN SÀNG ÁP DỤNG</Badge>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTemplate(id)}
+                          className="p-1.5 hover:bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-transparent hover:border-[var(--color-danger)]/30 hud-clipped transition-all cursor-pointer"
+                          title="Xóa mẫu tiêu chí này"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}

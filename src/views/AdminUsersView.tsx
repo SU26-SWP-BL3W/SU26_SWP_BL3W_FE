@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useGetUsers, useApproveUser, useRejectUser } from "@/repositories/usersRepository";
 import { staffRepository } from "@/repositories/staffRepository";
-import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
+import { useEvents } from "@/repositories/eventsRepository";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import {
   Users,
@@ -56,8 +56,19 @@ export const AdminUsersView: React.FC = () => {
   const [rejectUserModal, setRejectUserModal] = useState<{ userId: string; fullName: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  const { data: rawEvents = [] } = useEvents();
+  const realEvents: any[] = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data ?? [];
+
   const [selectedUserForEc, setSelectedUserForEc] = useState<User | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState(MOCK_EVENTS[0].id);
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+
+  React.useEffect(() => {
+    if (realEvents.length > 0 && !selectedEventId) {
+      const firstId = realEvents[0].id || realEvents[0].Id || realEvents[0].eventId || realEvents[0].EventId || "";
+      setSelectedEventId(firstId);
+    }
+  }, [realEvents, selectedEventId]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -568,11 +579,21 @@ export const AdminUsersView: React.FC = () => {
                       onChange={(e) => setSelectedEventId(e.target.value)}
                       className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--accent-coordinator)] cursor-pointer"
                     >
-                      {MOCK_EVENTS.map((ev) => (
-                        <option key={ev.id} value={ev.id}>
-                          {ev.eventName} ({ev.season} {ev.year})
-                        </option>
-                      ))}
+                      {realEvents.length === 0 ? (
+                        <option value="">(Chưa có sự kiện nào trong hệ thống)</option>
+                      ) : (
+                        realEvents.map((ev: any) => {
+                          const evId = ev.id || ev.Id || ev.eventId || ev.EventId || "";
+                          const evName = ev.eventName || ev.EventName || "Sự kiện";
+                          const evSeason = ev.season || ev.Season || "";
+                          const evYear = ev.year || ev.Year || "";
+                          return (
+                            <option key={evId} value={evId}>
+                              {evName} {evSeason ? `(${evSeason} ${evYear})` : ""}
+                            </option>
+                          );
+                        })
+                      )}
                     </select>
                   </div>
 

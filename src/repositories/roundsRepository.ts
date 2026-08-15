@@ -1,6 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import { RoundEntity } from "@/models/entities";
 import { BaseResponse } from "@/models/types";
+
+export function useGetRoundsByEvent(eventId?: string) {
+  return useQuery({
+    queryKey: ["rounds", eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      const res = await roundsRepository.getRoundsByEventId(eventId);
+      return res.data || [];
+    },
+    enabled: !!eventId,
+  });
+}
 
 export interface CreateRoundPayload {
   eventId: string;

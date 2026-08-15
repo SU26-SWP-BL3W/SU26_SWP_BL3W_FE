@@ -141,4 +141,14 @@ export const templatesRepository = {
     );
     return res.data;
   },
+
+  async deleteTemplate(id: string): Promise<BaseResponse<boolean>> {
+    const res = await apiClient.delete<BaseResponse<boolean>>(`/Templates/${id}`);
+    return res.data;
+  },
+
+  async deleteCriteria(id: string): Promise<BaseResponse<boolean>> {
+    const res = await apiClient.delete<BaseResponse<boolean>>(`/Criterias/${id}`);
+    return res.data;
+  },
 };

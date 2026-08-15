@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useGetAppeals,
   useCreateAppeal,
   useRespondAppeal,
 } from "@/repositories/appealsRepository";
+import { useMyEvents } from "@/repositories/eventsRepository";
+import { useGetRoundsByEvent } from "@/repositories/roundsRepository";
 import {
   Button,
   Card,
@@ -29,6 +31,8 @@ import {
   Eye,
   ExternalLink,
   FileText,
+  Filter,
+  Layers,
 } from "lucide-react";
 import type { Appeal, AppealStatus } from "@/models/entities";
 
@@ -37,11 +41,31 @@ export function AppealsView() {
   const [reason, setReason] = useState("");
   const [submitResultId, setSubmitResultId] = useState("sub-101");
 
+  const { data: myEvents = [] } = useMyEvents();
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+
+  React.useEffect(() => {
+    if (myEvents.length > 0 && !selectedEventId) {
+      const firstId = myEvents[0].id || myEvents[0].Id || myEvents[0].eventId || myEvents[0].EventId || "";
+      setSelectedEventId(firstId);
+    }
+  }, [myEvents, selectedEventId]);
+
+  const { data: rounds = [] } = useGetRoundsByEvent(selectedEventId);
+  const [selectedRoundId, setSelectedRoundId] = useState<string>("");
+
+  React.useEffect(() => {
+    if (rounds.length > 0 && !selectedRoundId) {
+      const firstRoundId = (rounds[0] as any).id || (rounds[0] as any).Id || (rounds[0] as any).roundId;
+      setSelectedRoundId(firstRoundId);
+    }
+  }, [rounds, selectedRoundId]);
+
   const [detailModal, setDetailModal] = useState<any | null>(null);
   const [respondModal, setRespondModal] = useState<any | null>(null);
   const [responseText, setResponseText] = useState("");
 
-  const { data: appeals = [], isLoading, refetch } = useGetAppeals();
+  const { data: appeals = [], isLoading, refetch } = useGetAppeals({ roundId: selectedRoundId || undefined });
 
   const { mutateAsync: createAppeal, isPending: isSubmitting } = useCreateAppeal();
   const { mutateAsync: respondAppeal, isPending: isResponding } = useRespondAppeal();
@@ -178,10 +202,63 @@ export function AppealsView() {
 
         {/* Right Column: Danh Sách Đơn Phúc Khảo */}
         <div className="lg:col-span-2 flex flex-col gap-4">
-          <h2 className="font-display text-lg font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2 flex items-center justify-between">
-            <span>DANH SÁCH ĐƠN PHÚC KHẢO ({appeals.length})</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-muted)] pb-2">
+            <h2 className="font-display text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2">
+              <span>DANH SÁCH ĐƠN PHÚC KHẢO ({appeals.length})</span>
+            </h2>
             {isEC && <Badge tone="coordinator">EC PROCESSING MODE</Badge>}
-          </h2>
+          </div>
+
+          {/* Event & Round Filter Bar for Coordinator */}
+          {isEC && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped">
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider block">
+                  1. Chọn Sự Kiện:
+                </label>
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--color-warning)]"
+                >
+                  {myEvents.map((ev: any) => {
+                    const id = ev.id || ev.Id || ev.eventId || ev.EventId;
+                    const name = ev.eventName || ev.EventName || "Sự kiện";
+                    return (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider block">
+                  2. Chọn Vòng Thi (Lọc Phúc Khảo):
+                </label>
+                <select
+                  value={selectedRoundId}
+                  onChange={(e) => setSelectedRoundId(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--color-warning)]"
+                >
+                  {rounds.length === 0 ? (
+                    <option value="">(Chưa có vòng thi)</option>
+                  ) : (
+                    rounds.map((r: any) => {
+                      const id = r.id || r.Id || r.roundId;
+                      const name = r.roundName || r.RoundName || `Vòng ${r.roundNumber || 1}`;
+                      return (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+              </div>
+            </div>
+          )}
 
           {isLoading ? (
             <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
