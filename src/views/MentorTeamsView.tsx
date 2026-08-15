@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useMyAssignedTracks, MENTOR_EVENT_ID } from "@/viewModels/useMyAssignedTracks";
+import { useMyAssignedTracks } from "@/viewModels/useMyAssignedTracks";
 import { useGetSubmitResultsByTrack } from "@/repositories/submitResultsRepository";
 import { useGetTeamsByEvent } from "@/repositories/teamsRepository";
 import { Card, Badge, Button } from "@/components/ui";
@@ -11,9 +11,11 @@ export function MentorTeamsView() {
   const { myTracks, isLoading: isLoadingTracks } = useMyAssignedTracks();
   const [explicitTrackId, setExplicitTrackId] = useState<string>("");
   const selectedTrackId = explicitTrackId || myTracks[0]?.id || myTracks[0]?.Id || "";
+  const selectedTrack = myTracks.find((t) => (t.id || t.Id) === selectedTrackId);
+  const selectedEventId = selectedTrack?.eventId || selectedTrack?.EventId || "";
 
   const { data: submissions = [], isLoading: isLoadingSubs, refetch } = useGetSubmitResultsByTrack(selectedTrackId);
-  const { data: teams = [] } = useGetTeamsByEvent(MENTOR_EVENT_ID);
+  const { data: teams = [] } = useGetTeamsByEvent(selectedEventId);
 
   const teamNameById = useMemo(() => {
     const map = new Map<string, string>();
