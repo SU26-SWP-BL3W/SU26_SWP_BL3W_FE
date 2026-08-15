@@ -36,19 +36,23 @@ export function UserProfileView() {
 
   const rawRole = activeRole?.roleName || activeRole?.RoleName;
   const userEmail = (user?.email || user?.Email || "").toLowerCase();
-  let roleName = rawRole || "";
-  if (roleName === "EventCoordinator") roleName = "Coordinator";
-  if (!roleName) {
-    if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
-      roleName = "Coordinator";
-    } else if (userEmail.includes("judge")) {
-      roleName = "Judge";
-    } else if (userEmail.includes("mentor")) {
-      roleName = "Mentor";
-    } else if (user?.isAdmin || user?.IsAdmin) {
-      roleName = "Admin";
-    } else {
-      roleName = "Student";
+
+  let roleName = "";
+  if (user?.isAdmin || user?.IsAdmin) {
+    roleName = "Admin";
+  } else {
+    roleName = rawRole || "";
+    if (roleName === "EventCoordinator") roleName = "Coordinator";
+    if (!roleName) {
+      if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
+        roleName = "Coordinator";
+      } else if (userEmail.includes("judge")) {
+        roleName = "Judge";
+      } else if (userEmail.includes("mentor")) {
+        roleName = "Mentor";
+      } else {
+        roleName = "Student";
+      }
     }
   }
 
