@@ -62,6 +62,8 @@ export interface StaffInviteFormState {
   status: "Pending" | "Accepted" | "Rejected";
 }
 
+export type StepState = "pending" | "incomplete" | "completed";
+
 export function useCreateEventWizardViewModel() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -117,10 +119,12 @@ export function useCreateEventWizardViewModel() {
   const totalWeight = criterias.reduce((acc, item) => acc + (Number(item.weight) || 0), 0);
   const isValidWeight100 = Math.abs(totalWeight - 100) < 0.01;
 
-  // Real data-based Step completion checks
+  // 3-State Step Calculation (pending | incomplete | completed)
   const rawObj = createdEvent as any;
   const realEventId = rawObj?.id || rawObj?.Id || rawObj?.eventId || rawObj?.EventId || rawObj?.data?.id || rawObj?.data?.Id;
 
+  // Step 1
+  const isStep1Pending = !eventData.eventName?.trim() && !eventData.startDate && !eventData.endDate;
   const isStep1Done = Boolean(
     realEventId &&
     eventData.eventName?.trim() &&
@@ -129,12 +133,12 @@ export function useCreateEventWizardViewModel() {
     new Date(eventData.startDate) <= new Date(eventData.endDate) &&
     (eventData.maxTeams ?? 0) > 0
   );
+  const step1State: StepState = isStep1Done ? "completed" : isStep1Pending ? "pending" : "incomplete";
 
-  const existingRounds: any[] = (typeof window !== "undefined" && (window as any).__createdRoundsList__) || [];
+  // Step 2
+  const isStep2Pending = rounds.length === 0;
   const isStep2Done = Boolean(
-    isStep1Done &&
     rounds.length > 0 &&
-    existingRounds.length >= rounds.length &&
     rounds.every((r) => {
       const scoringEnd = r.scoringEndDate || (r as any).ScoringEndDate;
       return (
@@ -146,17 +150,19 @@ export function useCreateEventWizardViewModel() {
       );
     })
   );
+  const step2State: StepState = isStep2Done ? "completed" : isStep2Pending ? "pending" : "incomplete";
 
-  const existingTracks: any[] = (typeof window !== "undefined" && (window as any).__createdTrackList__) || [];
+  // Step 3
+  const isStep3Pending = tracks.length === 0;
   const isStep3Done = Boolean(
-    isStep2Done &&
     tracks.length > 0 &&
-    existingTracks.length >= tracks.length &&
     tracks.every((t) => t.trackName?.trim())
   );
+  const step3State: StepState = isStep3Done ? "completed" : isStep3Pending ? "pending" : "incomplete";
 
+  // Step 4
+  const isStep4Pending = tracks.length === 0 || (criterias.length === 0 && Object.keys(criteriasByTrack).length === 0);
   const isStep4Done = Boolean(
-    isStep3Done &&
     tracks.length > 0 &&
     tracks.every((trk) => {
       if (trk.templateId && trk.templateId !== "__custom__") {
@@ -168,12 +174,28 @@ export function useCreateEventWizardViewModel() {
       return Math.abs(weight - 100) < 0.01;
     })
   );
+  const step4State: StepState = isStep4Done ? "completed" : isStep4Pending ? "pending" : "incomplete";
 
+  // Step 5
+  const isStep5Pending = staffInvites.length === 0;
   const isStep5Done = Boolean(
-    isStep4Done &&
     staffInvites.length > 0 &&
+    staffInvites.some((s) => s.roleName === "Judge") &&
     staffInvites.every((s) => s.email?.trim() && s.email.includes("@"))
   );
+  const step5State: StepState = isStep5Done ? "completed" : isStep5Pending ? "pending" : "incomplete";
+
+  const canPublishEvent = isStep1Done && isStep2Done && isStep3Done && isStep4Done;
+  const step6State: StepState = canPublishEvent ? "completed" : "incomplete";
+
+  const stepStateMap: Record<number, StepState> = {
+    1: step1State,
+    2: step2State,
+    3: step3State,
+    4: step4State,
+    5: step5State,
+    6: step6State,
+  };
 
   const stepDoneMap: Record<number, boolean> = {
     1: isStep1Done,
@@ -181,6 +203,7 @@ export function useCreateEventWizardViewModel() {
     3: isStep3Done,
     4: isStep4Done,
     5: isStep5Done,
+    6: canPublishEvent,
   };
 
   const validationMissingItems: string[] = [];
@@ -212,8 +235,6 @@ export function useCreateEventWizardViewModel() {
       validationMissingItems.push(`Bước 4: Hạng mục [${invalidTracks.map((t) => t.trackName).join(", ")}] chưa cân bằng đủ 100% trọng số tiêu chí.`);
     }
   }
-
-  const canPublishEvent = isStep1Done && isStep2Done && isStep3Done && isStep4Done;
 
   // Actions
   const handleUpdateEventField = (field: keyof EventFormState, value: any) => {
@@ -658,6 +679,7 @@ export function useCreateEventWizardViewModel() {
     isStep4Done,
     isStep5Done,
     stepDoneMap,
+    stepStateMap,
     canPublishEvent,
     validationMissingItems,
     staffInvites,

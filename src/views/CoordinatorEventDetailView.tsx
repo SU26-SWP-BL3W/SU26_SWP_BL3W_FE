@@ -31,6 +31,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Lock,
   EyeOff,
   Save,
@@ -319,7 +320,22 @@ export const CoordinatorEventDetailView: React.FC = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  // Step 6 Validation & Publish
+  // 3-State Step Calculation & Validation
+  type StepState = "pending" | "incomplete" | "completed";
+
+  // Step 1
+  const isStep1Pending = !eventData.eventName?.trim() && !eventData.startDate && !eventData.endDate;
+  const isStep1Done = Boolean(
+    eventData.eventName?.trim() &&
+    eventData.startDate &&
+    eventData.endDate &&
+    new Date(eventData.startDate) <= new Date(eventData.endDate) &&
+    (eventData.maxTeams ?? 0) > 0
+  );
+  const step1State: StepState = isStep1Done ? "completed" : isStep1Pending ? "pending" : "incomplete";
+
+  // Step 2
+  const isStep2Pending = rounds.length === 0;
   const isStep2Done = Boolean(
     rounds.length > 0 &&
     rounds.every((r) => {
@@ -333,23 +349,38 @@ export const CoordinatorEventDetailView: React.FC = () => {
       );
     })
   );
+  const step2State: StepState = isStep2Done ? "completed" : isStep2Pending ? "pending" : "incomplete";
 
-  const isStep3Done = Boolean(tracks.length > 0 && tracks.every((t) => t.trackName?.trim()));
+  // Step 3
+  const isStep3Pending = tracks.length === 0;
+  const isStep3Done = Boolean(
+    tracks.length > 0 &&
+    tracks.every((t) => t.trackName?.trim())
+  );
+  const step3State: StepState = isStep3Done ? "completed" : isStep3Pending ? "pending" : "incomplete";
 
+  // Step 4
+  const isStep4Pending = tracks.length === 0 || (criterias.length === 0 && Object.keys(criteriasByTrack).length === 0);
   const isStep4Done = Boolean(
     tracks.length > 0 &&
     tracks.every((trk) => {
-      if (trk.templateId && trk.templateId !== "__custom__") return true;
-      const list = criteriasByTrack[trk.id] ?? criterias;
+      if (trk.templateId && trk.templateId !== "__custom__") {
+        return true;
+      }
+      const list = criteriasByTrack[trk.id] ?? (trk.templateId === "__custom__" ? [] : criterias);
       if (!list || list.length === 0) return false;
       const weight = list.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
       return Math.abs(weight - 100) < 0.01;
     })
   );
+  const step4State: StepState = isStep4Done ? "completed" : isStep4Pending ? "pending" : "incomplete";
 
   const judgeCount = staffInvites.filter((s) => s.roleName === "Judge").length;
-  const validationMissingItems: string[] = [];
+  const isStep5Pending = staffInvites.length === 0 && judgeCount === 0;
+  const isStep5Done = Boolean(judgeCount > 0);
+  const step5State: StepState = isStep5Done ? "completed" : isStep5Pending ? "pending" : "incomplete";
 
+  const validationMissingItems: string[] = [];
   if (!eventData.eventName.trim()) validationMissingItems.push("Tên sự kiện (Bước 1)");
   if (!eventData.startDate || !eventData.endDate) validationMissingItems.push("Thời gian sự kiện bắt đầu & kết thúc (Bước 1)");
   if (!eventData.registrationStartDate || !eventData.registrationEndDate) validationMissingItems.push("Mốc mở & đóng cổng đăng ký (Bước 1)");
@@ -369,6 +400,25 @@ export const CoordinatorEventDetailView: React.FC = () => {
   if (judgeCount === 0) validationMissingItems.push("Ít nhất 1 Giám khảo (Bước 5)");
 
   const canPublishEvent = validationMissingItems.length === 0;
+  const step6State: StepState = canPublishEvent ? "completed" : "incomplete";
+
+  const stepStateMap: Record<number, StepState> = {
+    1: step1State,
+    2: step2State,
+    3: step3State,
+    4: step4State,
+    5: step5State,
+    6: step6State,
+  };
+
+  const stepDoneMap: Record<number, boolean> = {
+    1: isStep1Done,
+    2: isStep2Done,
+    3: isStep3Done,
+    4: isStep4Done,
+    5: isStep5Done,
+    6: canPublishEvent,
+  };
 
   // Persist Changes Handler (Save Draft / Save Changes)
   const handleSaveChanges = async (targetPublicStatus?: boolean) => {
@@ -535,15 +585,6 @@ export const CoordinatorEventDetailView: React.FC = () => {
     { number: 6, label: "Công Bố", icon: Rocket },
   ];
 
-  const stepDoneMap: Record<number, boolean> = {
-    1: Boolean(eventData.eventName && eventData.startDate && eventData.endDate),
-    2: rounds.length > 0,
-    3: tracks.length > 0,
-    4: isValidWeight100,
-    5: judgeCount > 0,
-    6: canPublishEvent,
-  };
-
   if (isLoadingEvent) {
     return (
       <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center p-8">
@@ -639,16 +680,11 @@ export const CoordinatorEventDetailView: React.FC = () => {
           </Button>
         </div>
 
-        {/* HUD Step Indicator Bar (Identical to Create Event Wizard) */}
+        {/* HUD Step Indicator Bar (3-State True Reflection) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {steps.map((step) => {
             const isActive = currentStep === step.number;
-            // Badge luỹ tiến: bước n chỉ "Xong" khi CHÍNH nó và MỌI bước trước đều xong.
-            // Tránh cảnh vô lý "Bước 5 Xong" trong khi "Bước 2 Chờ" (trước đây tính độc lập từng bước).
-            const isCompleted =
-              step.number === 6
-                ? canPublishEvent
-                : [1, 2, 3, 4, 5].slice(0, step.number).every((n) => Boolean(stepDoneMap[n]));
+            const state: StepState = stepStateMap[step.number] ?? "pending";
 
             return (
               <button
@@ -658,8 +694,10 @@ export const CoordinatorEventDetailView: React.FC = () => {
                 className={`p-3 border text-left transition-all duration-200 hud-clipped flex items-center gap-2.5 relative group cursor-pointer ${
                   isActive
                     ? "bg-[rgba(6,182,212,0.15)] border-2 border-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.35)] text-cyan-300 scale-[1.02] z-10"
-                    : isCompleted
+                    : state === "completed"
                     ? "bg-[rgba(16,185,129,0.1)] border-[var(--color-success)] text-[var(--color-success)] hover:bg-[rgba(16,185,129,0.2)]"
+                    : state === "incomplete"
+                    ? "bg-amber-500/10 border-amber-500/50 text-amber-300 hover:bg-amber-500/20"
                     : "bg-[var(--bg-panel)]/40 border-[var(--border-muted)] text-[var(--text-muted)] hover:border-slate-500 hover:text-[var(--text-primary)]"
                 }`}
               >
@@ -668,15 +706,19 @@ export const CoordinatorEventDetailView: React.FC = () => {
                   className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-all ${
                     isActive
                       ? "bg-cyan-400 text-black shadow-[0_0_8px_#22d3ee] font-black"
-                      : isCompleted
+                      : state === "completed"
                       ? "bg-[var(--color-success)] text-black"
+                      : state === "incomplete"
+                      ? "bg-amber-400 text-black font-bold"
                       : "bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-muted)]"
                   }`}
                 >
                   {isActive ? (
                     <span>{step.number}</span>
-                  ) : isCompleted ? (
+                  ) : state === "completed" ? (
                     <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
+                  ) : state === "incomplete" ? (
+                    <AlertTriangle className="w-3.5 h-3.5 text-black stroke-[2.5]" />
                   ) : (
                     <span>{step.number}</span>
                   )}
@@ -693,18 +735,26 @@ export const CoordinatorEventDetailView: React.FC = () => {
                       className={`font-mono text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
                         isActive
                           ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 animate-pulse"
-                          : isCompleted
-                          ? "bg-[var(--color-success)]/20 text-[var(--color-success)]"
+                          : state === "completed"
+                          ? "bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/30"
+                          : state === "incomplete"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                           : "bg-slate-800 text-slate-400"
                       }`}
                     >
-                      {isActive ? "⚡ Đang làm" : isCompleted ? "✓ Xong" : "Chờ"}
+                      {isActive ? "⚡ Đang làm" : state === "completed" ? "✓ Xong" : state === "incomplete" ? "⚠ Thiếu" : "Chờ"}
                     </span>
                   </div>
 
                   <span
                     className={`font-mono font-bold text-xs truncate block mt-0.5 ${
-                      isActive ? "text-cyan-200" : isCompleted ? "text-[var(--color-success)]" : "text-[var(--text-muted)]"
+                      isActive
+                        ? "text-cyan-200"
+                        : state === "completed"
+                        ? "text-[var(--color-success)]"
+                        : state === "incomplete"
+                        ? "text-amber-300"
+                        : "text-[var(--text-muted)]"
                     }`}
                   >
                     {step.label}
