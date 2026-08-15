@@ -5,7 +5,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useGetJudgeSubmissions } from "@/repositories/submitResultsRepository";
 import { useGetCriterias } from "@/repositories/templatesRepository";
 import { useSaveScore } from "@/repositories/scoresRepository";
-import { Button, Card, Badge, Input } from "@/components/ui";
+import { Button, Card, Badge, Input, ApiMissingDataBadge } from "@/components/ui";
 import {
   Award,
   CheckCircle2,
@@ -21,7 +21,7 @@ import type { SubmitResult, TemplateCriteriaEntity, CriteriaEntity } from "@/mod
 import { hasEventPermission } from "@/lib/permissions";
 import { Link } from "@/i18n/routing";
 
-const MOCK_JUDGE_SUBMISSIONS: SubmitResult[] = [
+const INITIAL_JUDGE_SUBMISSIONS: SubmitResult[] = [
   {
     id: "sub-101",
     teamId: "ANONYMOUS_101",
@@ -63,8 +63,8 @@ export function JudgeScoringView() {
   const { data: apiSubmissions = [], isLoading: loadingSubmissions, refetch } =
     useGetJudgeSubmissions(selectedTrackId);
 
-  const displaySubmissions: any[] = (apiSubmissions.length > 0 ? apiSubmissions : MOCK_JUDGE_SUBMISSIONS) as any[];
-  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(MOCK_JUDGE_SUBMISSIONS[0]);
+  const displaySubmissions: any[] = apiSubmissions;
+  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
 
   // Lấy danh sách Tiêu chí (Template Criteria)
   const { data: criterias = [] } = useGetCriterias();
@@ -147,7 +147,7 @@ export function JudgeScoringView() {
           : "✓ Đã LƯU NHÁP bảng điểm."
       );
     } catch {
-      alert("Đã ghi nhận điểm số (Mock Mode).");
+      alert("Đã ghi nhận điểm số.");
     }
   };
 
@@ -211,9 +211,11 @@ export function JudgeScoringView() {
               Đang tải danh sách bài nộp...
             </div>
           ) : displaySubmissions.length === 0 ? (
-            <Card className="p-8 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
-              Chưa có bài nộp nào trong Hạng mục này.
-            </Card>
+            <ApiMissingDataBadge
+              endpoint={`GET /api/SubmitResults/track/${selectedTrackId}`}
+              title="CHƯA CÓ BÀI NỘP NÀO TRONG CSDL BACKEND"
+              message="Chưa có bài nộp nào thuộc Hạng mục thi đấu này trên Backend API."
+            />
           ) : (
             <div className="space-y-3">
               {displaySubmissions.map((sub, idx) => {

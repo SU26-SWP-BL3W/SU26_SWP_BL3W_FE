@@ -59,7 +59,8 @@ export function useMyTeam() {
       try {
         const res = await apiClient.get<{ team: Team | null; members: TeamMember[]; invitations?: TeamInvitation[] }>("/Teams/my-team");
         return res.data;
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Teams/my-team error:", err?.message);
         return null;
       }
     },
@@ -142,7 +143,8 @@ export function useGetPendingTeams() {
           params: { IsApproved: false, PageSize: 100 },
         });
         return res.data.data?.data ?? [];
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Teams (pending) error:", err?.message);
         return [];
       }
     },

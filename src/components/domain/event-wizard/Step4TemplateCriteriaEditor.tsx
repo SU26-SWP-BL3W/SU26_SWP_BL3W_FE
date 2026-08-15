@@ -3,7 +3,7 @@
 import React from "react";
 import { Button, Input, Card } from "@/components/ui";
 import { TemplateCriteriaFormState } from "@/viewModels/useCreateEventWizardViewModel";
-import { MOCK_DEFAULT_CRITERIAS, useGetCriterias } from "@/repositories/templatesRepository";
+import { useGetCriterias } from "@/repositories/templatesRepository";
 import { Sliders, Plus, Trash2, ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Award } from "lucide-react";
 
 interface Step4TemplateCriteriaEditorProps {
@@ -44,7 +44,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
   isReadOnly = false,
 }) => {
   const { data: realCriteriaBank = [] } = useGetCriterias();
-  const criteriaPresetList = realCriteriaBank.length > 0 ? realCriteriaBank : MOCK_DEFAULT_CRITERIAS;
+  const criteriaPresetList = realCriteriaBank;
 
   const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
   const [saveStatus, setSaveStatus] = React.useState<Record<string, boolean>>({});

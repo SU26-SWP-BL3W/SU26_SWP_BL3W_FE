@@ -2,7 +2,7 @@
 // SEAL Hackathon — Core Entity Interfaces
 // Synced with backend Swagger: https://api.sealswp391.xyz
 // NOTE: API returns camelCase — these interfaces match the API response shape.
-// Optional PascalCase & helper fields are included for backward-compatibility with legacy mock data.
+// Optional PascalCase & helper fields are included for backward-compatibility with legacy components.
 // ============================================================
 
 export type UserRole = "Admin" | "Coordinator" | "Judge" | "Mentor" | "TeamLeader" | "TeamMember" | "Guest";

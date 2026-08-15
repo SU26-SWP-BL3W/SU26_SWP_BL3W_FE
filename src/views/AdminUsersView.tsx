@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useGetUsers, useApproveUser, useRejectUser } from "@/repositories/usersRepository";
 import { staffRepository } from "@/repositories/staffRepository";
-import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
+import { useEvents } from "@/repositories/eventsRepository";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import {
   Users,
@@ -56,8 +56,9 @@ export const AdminUsersView: React.FC = () => {
   const [rejectUserModal, setRejectUserModal] = useState<{ userId: string; fullName: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  const { data: eventsList = [] } = useEvents();
   const [selectedUserForEc, setSelectedUserForEc] = useState<User | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState(MOCK_EVENTS[0].id);
+  const [selectedEventId, setSelectedEventId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -439,7 +440,7 @@ export const AdminUsersView: React.FC = () => {
                         ) : (
                           <div className="text-center font-mono text-xs text-[var(--text-muted)] space-y-2">
                             <FileText className="w-10 h-10 text-[var(--accent-primary)] mx-auto opacity-50" />
-                            <p>[ DEMO MOCK: Ảnh Thẻ Sinh Viên HD {detailUserModal.fullName} ]</p>
+                            <p>[ Chưa Upload Ảnh Thẻ Sinh Viên HD: {detailUserModal.fullName} ]</p>
                             <p className="text-[10px] opacity-70">Mặt trước thẻ SV có khớp với Họ tên & Mã số SV không?</p>
                           </div>
                         )}
@@ -570,11 +571,17 @@ export const AdminUsersView: React.FC = () => {
                       onChange={(e) => setSelectedEventId(e.target.value)}
                       className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--accent-coordinator)] cursor-pointer"
                     >
-                      {MOCK_EVENTS.map((ev) => (
-                        <option key={ev.id} value={ev.id}>
-                          {ev.eventName} ({ev.season} {ev.year})
-                        </option>
-                      ))}
+                      {eventsList.map((ev: any) => {
+                        const id = ev.id || ev.Id || ev.eventId || ev.EventId;
+                        const name = ev.eventName || ev.EventName || "Sự kiện";
+                        const season = ev.season || ev.Season || "SWP";
+                        const year = ev.year || ev.Year || 2026;
+                        return (
+                          <option key={id} value={id}>
+                            {name} ({season} {year})
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 

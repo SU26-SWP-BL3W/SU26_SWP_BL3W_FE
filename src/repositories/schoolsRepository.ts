@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { School, BaseResponse, PagedResult } from "@/models/entities";
 
-export const MOCK_SCHOOLS_LIST: School[] = [
+export const DEFAULT_SCHOOLS_LIST: School[] = [
   {
     id: "sch-01",
     schoolId: "sch-01",
@@ -62,10 +62,10 @@ export function useGetSchools() {
         if (Array.isArray(res.data) && res.data.length > 0) {
           return res.data;
         }
-      } catch {
-        console.warn("[SEAL] Returning mock schools list");
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Schools error:", err?.message);
       }
-      return MOCK_SCHOOLS_LIST;
+      return [];
     },
     staleTime: 1000 * 60 * 10,
   });

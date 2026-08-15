@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { useAuth, PRESET_ACCOUNTS } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { Link, useRouter } from "@/i18n/routing";
-import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight, UserCheck } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight } from "lucide-react";
 import { SealShield } from "@/components/domain/SealShield";
 
 export function LoginView() {
@@ -13,11 +13,10 @@ export function LoginView() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const { loginWithRole, loginWithEmail, loginWithCredentials, loginWithGoogleCredential } = useAuth();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { loginWithCredentials, loginWithGoogleCredential } = useAuth();
+  const router = useRouter();
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -34,13 +33,6 @@ export function LoginView() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handlePresetSelect = (acc: (typeof PRESET_ACCOUNTS)[0]) => {
-    setEmail(acc.email);
-    setPassword("password123");
-    const targetPath = loginWithRole(acc.roleName);
-    router.push(targetPath);
   };
 
   const handleGoogleSuccess = async (response: CredentialResponse) => {
@@ -62,12 +54,6 @@ export function LoginView() {
 
   const handleGoogleError = () => {
     setErrorMessage("Đăng nhập với Google bị hủy hoặc gặp sự cố.");
-  };
-
-  const handleFptEduLogin = () => {
-    setEmail("student.fpt@fpt.edu.vn");
-    const targetPath = loginWithEmail("student.fpt@fpt.edu.vn");
-    router.push(targetPath);
   };
 
   return (
@@ -195,16 +181,6 @@ export function LoginView() {
                 width="100%"
               />
             </div>
-
-            {/* FPT Edu Login */}
-            <button
-              type="button"
-              onClick={handleFptEduLogin}
-              className="w-full py-2.5 bg-[#1a1813] hover:bg-amber-500/10 border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold text-xs hud-clipped transition-all flex items-center justify-center gap-2.5"
-            >
-              <GraduationCap className="w-4 h-4 text-amber-400" />
-              <span>Đăng nhập bằng FPT Edu (@fpt.edu.vn)</span>
-            </button>
           </div>
 
           {/* Footer Register Link */}
@@ -213,33 +189,6 @@ export function LoginView() {
             <Link href="/register" className="text-white hover:text-amber-400 font-bold transition-colors">
               Đăng ký ngay ›
             </Link>
-          </div>
-
-          {/* Preset Demo Accounts Picker (Collapsible / Compact for Testing) */}
-          <div className="pt-4 border-t border-[#1e2e4a]/60 space-y-2 font-mono">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-amber-400 flex items-center gap-1">
-                <UserCheck className="w-3.5 h-3.5" /> Demo Presets:
-              </span>
-              <span className="text-[10px] text-slate-500">Click để chọn vai trò</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {PRESET_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.roleName}
-                  type="button"
-                  onClick={() => handlePresetSelect(acc)}
-                  className="p-2 bg-[#152238]/60 hover:bg-[#152238] border border-[#1e2e4a] hover:border-amber-500/50 text-left transition-all hud-clipped text-[10px] font-mono space-y-0.5"
-                >
-                  <div className="flex items-center justify-between text-amber-400 font-bold">
-                    <span>[{acc.roleName}]</span>
-                    <ArrowRight className="w-3 h-3 text-slate-500" />
-                  </div>
-                  <div className="text-slate-300 truncate font-semibold">{acc.fullName}</div>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>

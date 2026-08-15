@@ -6,11 +6,11 @@ import { useMyEvents, eventsRepository, type MyEventModel } from "@/repositories
 import { useGetPendingTeams } from "@/repositories/teamsRepository";
 import { useAppeals } from "@/repositories/appealsRepository";
 import { useGetUsers } from "@/repositories/usersRepository";
-import { computeEventStatus, STATUS_LABEL, STATUS_TONE, STATUS_DOT_VAR, type MockEvent } from "@/viewModels/mockEventsData";
+import { computeEventStatus, STATUS_LABEL, STATUS_TONE, STATUS_DOT_VAR, type EventItem } from "@/viewModels/eventsMetadata";
 import { Shield, Settings, Activity, Users, CalendarPlus, Trash2, Edit3, Award, FileText, CheckCircle2, Sliders, ExternalLink, Eye, EyeOff, Rocket } from "lucide-react";
 import Link from "next/link";
 
-function toEventDates(ev: MyEventModel): Pick<MockEvent, "startDate" | "endDate" | "registrationEndDate"> {
+function toEventDates(ev: MyEventModel): Pick<EventItem, "startDate" | "endDate" | "registrationEndDate"> {
   return {
     startDate: ev.startDate || ev.StartDate || "",
     endDate: ev.endDate || ev.EndDate || "",
@@ -82,7 +82,7 @@ export const CoordinatorDashboardView: React.FC = () => {
     if (!deleteTargetId) return;
     setIsDeleting(true);
     try {
-      if (!deleteTargetId.startsWith("ev-id-") && !deleteTargetId.startsWith("ev-mock-")) {
+      if (!deleteTargetId.startsWith("ev-id-")) {
         await eventsRepository.deleteEvent(deleteTargetId);
       }
       setDeletedIds((prev) => [...prev, deleteTargetId]);
@@ -243,7 +243,7 @@ export const CoordinatorDashboardView: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEvents.map((ev, idx) => {
-                const status = computeEventStatus(toEventDates(ev) as MockEvent, now);
+                const status = computeEventStatus(toEventDates(ev) as EventItem, now);
                 const id = ev.id || ev.Id || ev.eventId || ev.EventId || `ev-id-${idx}`;
                 const name = ev.eventName || ev.EventName || "Sự kiện Hackathon";
                 const season = ev.season || ev.Season || "Mùa giải";

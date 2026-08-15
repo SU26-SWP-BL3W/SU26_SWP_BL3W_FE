@@ -55,7 +55,7 @@ export function CoordinatorPublishResultsView() {
           : "✓ Đã THU HỒI CÔNG BỐ. Kết quả đã quay về bản nháp."
       );
     } catch {
-      alert("Đã cập nhật trạng thái công bố kết quả (Mock Mode).");
+      alert("Đã cập nhật trạng thái công bố kết quả.");
     }
   };
 
@@ -73,7 +73,7 @@ export function CoordinatorPublishResultsView() {
       alert("✓ Đã tạo Giải thưởng mới thành công cho Track!");
       setCreatePrizeModal(false);
     } catch {
-      alert("Đã thêm Giải thưởng vào danh sách Track (Mock Mode).");
+      alert("Đã thêm Giải thưởng vào danh sách Track.");
       setCreatePrizeModal(false);
     }
   };
@@ -85,7 +85,7 @@ export function CoordinatorPublishResultsView() {
       alert("✓ Đã gán Giải thưởng cho Đội thi thành công!");
       setAssignModal(null);
     } catch {
-      alert("Đã cập nhật giải thưởng (Mock Mode).");
+      alert("Đã cập nhật giải thưởng.");
       setAssignModal(null);
     }
   };

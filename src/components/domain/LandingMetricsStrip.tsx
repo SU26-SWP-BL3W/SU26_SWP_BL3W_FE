@@ -1,8 +1,45 @@
 "use client";
 
-import { MOCK_LANDING_METRICS } from "@/viewModels/mockEventsData";
+import { useEvents } from "@/repositories/eventsRepository";
 
 export function LandingMetricsStrip() {
+  const { data: events = [] } = useEvents();
+
+  const totalEvents = events.length;
+  const totalPrize = events.reduce((sum: number, e: any) => sum + (e.totalPrizeVnd || e.TotalPrizeVnd || 0), 0);
+  const formattedPrize = totalPrize > 0 ? `${(totalPrize / 1_000_000).toFixed(0)} Triệu VNĐ` : "0 VNĐ";
+
+  const metrics = [
+    {
+      id: "events",
+      label: "TỔNG SỰ KIỆN",
+      value: totalEvents > 0 ? `${totalEvents} Sự kiện` : "0 Sự kiện",
+      subtext: "Đang & chuẩn bị diễn ra",
+      toneVar: "var(--accent-primary)",
+    },
+    {
+      id: "prizes",
+      label: "TỔNG GIẢI THƯỞNG",
+      value: formattedPrize,
+      subtext: "Quỹ thưởng chính thức từ BTC",
+      toneVar: "var(--color-warning)",
+    },
+    {
+      id: "evaluation",
+      label: "TIÊU CHÍ ĐÁNH GIÁ",
+      value: "100% RBL",
+      subtext: "Chấm điểm mù & Minh bạch",
+      toneVar: "var(--color-success)",
+    },
+    {
+      id: "platform",
+      label: "NỀN TẢNG",
+      value: "SEAL System",
+      subtext: "Tự động phân công & Hiệu chuẩn",
+      toneVar: "var(--accent-coordinator)",
+    },
+  ];
+
   return (
     <section className="w-full border-y border-[var(--border-muted)] bg-[var(--bg-panel)]/50 py-8 px-[var(--space-xl)] shadow-md">
       <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-5">
@@ -15,13 +52,13 @@ export function LandingMetricsStrip() {
             </span>
           </div>
           <span className="font-mono text-[11px] text-[var(--text-muted)] hidden sm:inline-block">
-            CẬP NHẬT THỜI GIAN THỰC
+            CẬP NHẬT THỜI GIAN THỰC TỪ BACKEND
           </span>
         </div>
 
-        {/* 4 Cards Grid Layout - Clean, structured & high-contrast without emojis */}
+        {/* 4 Cards Grid Layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {MOCK_LANDING_METRICS.map((metric) => (
+          {metrics.map((metric) => (
             <div
               key={metric.id}
               className="hud-clipped group relative flex flex-col justify-between border border-[var(--border-muted)] bg-[var(--bg-panel)] p-5 transition-all duration-200 hover:-translate-y-1 hover:border-[var(--accent-primary)]/50 shadow-sm"

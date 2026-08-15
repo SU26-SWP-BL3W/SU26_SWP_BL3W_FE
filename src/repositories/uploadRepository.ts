@@ -21,18 +21,9 @@ export const uploadRepository = {
       });
 
       return res.data;
-    } catch (error) {
-      // Fallback preview URL in mock mode
-      const mockUrl = URL.createObjectURL(file);
-      return {
-        success: true,
-        data: {
-          fileUrl: mockUrl,
-          fileName: file.name,
-          fileSize: file.size,
-        },
-        message: "Upload mock success",
-      };
+    } catch (error: any) {
+      console.warn("[SEAL BE-DATA MISSING] POST /api/Storage/upload error:", error?.message);
+      throw error;
     }
   },
 };

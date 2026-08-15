@@ -1,5 +1,4 @@
 import { useEvents } from "@/repositories/eventsRepository";
-import { MOCK_EVENTS } from "@/viewModels/mockEventsData";
 
 export interface JudgeTrackItem {
   eventId: string;
@@ -17,27 +16,33 @@ export interface JudgeTrackItem {
 export function useMyAssignedJudgeTracks() {
   const { data: rawEvents, isLoading } = useEvents();
 
-  const events = (Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data) || MOCK_EVENTS;
-  const eventsList = Array.isArray(events) && events.length > 0 ? events : MOCK_EVENTS;
+  const events = (Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data) || [];
+  const eventsList = Array.isArray(events) ? events : [];
 
   const assignedTracks: JudgeTrackItem[] = [];
 
-  eventsList.forEach((ev) => {
-    const tracks = ev.tracks || ["AI & Machine Learning", "Bảo mật & An ninh mạng", "Phát triển Web", "IoT & Phần cứng thông minh"];
-    tracks.forEach((track: string, idx: number) => {
-      assignedTracks.push({
-        eventId: ev.id,
-        eventName: ev.eventName,
-        season: ev.season,
-        roundName: "Vòng 2: Bán Kết",
-        trackName: track,
-        trackId: `track-j-${idx + 1}`,
-        totalSubmissions: 12 + idx * 3,
-        scoredSubmissions: 8 + idx * 2,
-        pendingSubmissions: 4 + idx,
-        status: idx === 0 ? "IN_PROGRESS" : "PENDING",
+  eventsList.forEach((ev: any) => {
+    const eId = ev.id || ev.Id || ev.eventId || ev.EventId;
+    const eName = ev.eventName || ev.EventName || "Sự kiện";
+    const eSeason = ev.season || ev.Season || "Mùa giải";
+    const tracks = ev.tracks || ev.Tracks || [];
+
+    if (Array.isArray(tracks)) {
+      tracks.forEach((track: string, idx: number) => {
+        assignedTracks.push({
+          eventId: eId,
+          eventName: eName,
+          season: eSeason,
+          roundName: "Vòng 2: Bán Kết",
+          trackName: track,
+          trackId: `track-j-${idx + 1}`,
+          totalSubmissions: 0,
+          scoredSubmissions: 0,
+          pendingSubmissions: 0,
+          status: "PENDING",
+        });
       });
-    });
+    }
   });
 
   return {

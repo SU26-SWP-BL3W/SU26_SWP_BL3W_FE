@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui";
 import { useAuth } from "@/providers/AuthProvider";
-import { getMockTeam } from "@/viewModels/mockTeamData";
+import { useMyTeam } from "@/repositories/teamsRepository";
 import {
   STATUS_LABEL,
   STATUS_DOT_VAR,
   STATUS_TONE,
   type EventCardData,
-} from "@/viewModels/mockEventsData";
+} from "@/viewModels/eventsMetadata";
 import {
   useEventsDiscoveryViewModel,
   type EventStatusFilter,
@@ -256,8 +256,9 @@ export function EventsDiscoveryView() {
   const { user, activeRole } = useAuth();
   const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
 
-  const team = getMockTeam();
-  const myEventId = team?.eventId || "event-seal-2026";
+  const { data: teamResponse } = useMyTeam();
+  const team = teamResponse?.team;
+  const myEventId = team?.EventId || (team as any)?.eventId || "event-seal-2026";
 
   const {
     events, totalCount, topTracks,
@@ -342,10 +343,10 @@ export function EventsDiscoveryView() {
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
-                  ⭐ SỰ KIỆN CỦA TÔI {roleName === "Mentor" ? "(VAI TRÒ: CỐ VẤN TRACK)" : roleName === "Coordinator" ? "(VAI TRÒ: BAN TỔ CHỨC)" : roleName === "Judge" ? "(VAI TRÒ: GIÁM KHẢO)" : team ? `(ĐỘI: ${team.name})` : ""}
+                  ⭐ SỰ KIỆN CỦA TÔI {roleName === "Mentor" ? "(VAI TRÒ: CỐ VẤN TRACK)" : roleName === "Coordinator" ? "(VAI TRÒ: BAN TỔ CHỨC)" : roleName === "Judge" ? "(VAI TRÒ: GIÁM KHẢO)" : team ? `(ĐỘI: ${team.TeamName || (team as any).teamName})` : ""}
                 </div>
                 <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">
-                  {team ? team.eventName : "SEAL Hackathon 2026 — Đang Hoạt Động"}
+                  {team ? (team as any).eventName || team.TeamName || (team as any).teamName : "SEAL Hackathon 2026 — Đang Hoạt Động"}
                 </h2>
                 <div className="flex items-center gap-3 font-mono text-xs text-[var(--text-muted)] mt-0.5">
                   <span>Vai trò hiện tại: <strong className="text-[var(--accent-primary)]">{roleName}</strong></span>

@@ -1,13 +1,13 @@
 "use client";
 
-import { MOCK_PODIUM_TEAMS, MOCK_PODIUM_EVENT_NAME, MOCK_PODIUM_TOTAL_PRIZE } from "@/viewModels/mockEventsData";
+import { ApiMissingDataBadge } from "@/components/ui";
 
 function formatVnd(val: number): string {
   return `${new Intl.NumberFormat("vi-VN").format(val)} ₫`;
 }
 
 // ─── Single Podium Card ────────────────────────────────────────────────────────
-type PodiumTeam = (typeof MOCK_PODIUM_TEAMS)[number];
+type PodiumTeam = any;
 
 function PodiumCard({
   team,
@@ -146,9 +146,10 @@ export function LandingLeaderboardPodium({
   season = "MÙA GIẢI 2026",
   totalPrizeVnd = 200_000_000,
 }: LandingLeaderboardPodiumProps) {
-  const gold   = MOCK_PODIUM_TEAMS.find((t) => t.rank === 1);
-  const silver = MOCK_PODIUM_TEAMS.find((t) => t.rank === 2);
-  const bronze = MOCK_PODIUM_TEAMS.find((t) => t.rank === 3);
+  const podiumTeams: any[] = [];
+  const gold   = podiumTeams.find((t) => t.rank === 1);
+  const silver = podiumTeams.find((t) => t.rank === 2);
+  const bronze = podiumTeams.find((t) => t.rank === 3);
 
   return (
     <section className="border-t border-[var(--border-muted)] bg-[var(--bg-panel)]/30 px-[var(--space-xl)] py-[calc(var(--space-xl)*1.5)]">
@@ -177,63 +178,40 @@ export function LandingLeaderboardPodium({
           <p className="max-w-2xl font-mono text-[11px] text-[var(--text-muted)] mt-1">
             Kết quả chính thức từ{" "}
             <strong className="text-[var(--text-primary)]">{eventName}</strong>
-            {" "}— 3 đội xuất sắc nhất trong hơn 98 đội thi đấu toàn quốc.
           </p>
         </div>
 
         {/* ── Podium Grid: Silver | Gold | Bronze ──────────────────────────── */}
-        {/*
-          Dùng items-end để 3 card "đứng trên cùng một đường nền",
-          Gold cao hơn tự nhiên do padding-top lớn hơn — không cần negative top.
-        */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
-          {/* #2 Silver — trái */}
-          {silver && (
-            <div className="md:mb-0">
-              <PodiumCard team={silver} rank={2} />
-            </div>
-          )}
+        {!gold && !silver && !bronze ? (
+          <ApiMissingDataBadge
+            endpoint="GET /api/FinalResults/podium"
+            title="CHƯA CÓ DỮ LIỆU BẢNG VÀNG TỪ BACKEND"
+            message="Chưa có kết quả vinh danh Podium Quán quân/Á quân được công bố từ Backend API."
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
+            {/* #2 Silver — trái */}
+            {silver && (
+              <div className="md:mb-0">
+                <PodiumCard team={silver} rank={2} />
+              </div>
+            )}
 
-          {/* #1 Gold — giữa, nhô lên bằng margin-bottom âm trên outer div */}
-          {gold && (
-            <div className="md:-mb-2">
-              <PodiumCard team={gold} rank={1} isCenter />
-            </div>
-          )}
+            {/* #1 Gold — giữa */}
+            {gold && (
+              <div className="md:-mb-2">
+                <PodiumCard team={gold} rank={1} isCenter />
+              </div>
+            )}
 
-          {/* #3 Bronze — phải */}
-          {bronze && (
-            <div className="md:mb-0">
-              <PodiumCard team={bronze} rank={3} />
-            </div>
-          )}
-        </div>
-
-        {/* ── RBL Transparency Banner ─────────────────────────────────────── */}
-        <div className="border border-[var(--accent-coordinator)]/30 bg-[var(--bg-panel)] p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-          <div className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9px] font-bold uppercase text-[var(--accent-coordinator)] tracking-widest">
-              {"[ RBL AUDIT LOG · MINH BẠCH KHOA HỌC ]"}
-            </span>
-            <h4 className="font-display text-base font-bold text-[var(--text-primary)]">
-              Chấm Điểm Đa Giám Khảo Độc Lập (Inter-Rater Reliability)
-            </h4>
-            <p className="font-mono text-[11px] text-[var(--text-muted)] max-w-2xl leading-relaxed">
-              Hệ thống tự động tính hệ số biến thiên giữa 4 giám khảo. Mọi điểm số bất thường
-              (Δ &gt; 2.0) được kiểm toán minh bạch tại {MOCK_PODIUM_EVENT_NAME}.
-            </p>
+            {/* #3 Bronze — phải */}
+            {bronze && (
+              <div className="md:mb-0">
+                <PodiumCard team={bronze} rank={3} />
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-3 shrink-0 font-mono text-xs">
-            <div className="border border-[var(--border-muted)] bg-[var(--bg-input)] px-4 py-2 text-center min-w-[80px]">
-              <span className="block text-[9px] text-[var(--text-muted)] mb-0.5">MEAN DELTA</span>
-              <span className="font-bold text-[var(--color-success)]">0.42</span>
-            </div>
-            <div className="border border-[var(--border-muted)] bg-[var(--bg-input)] px-4 py-2 text-center min-w-[80px]">
-              <span className="block text-[9px] text-[var(--text-muted)] mb-0.5">STATUS</span>
-              <span className="font-bold text-[var(--accent-coordinator)]">AUDITED</span>
-            </div>
-          </div>
-        </div>
+        )}
 
       </div>
     </section>

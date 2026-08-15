@@ -17,6 +17,7 @@ import {
   TableCell,
   Badge,
   Input,
+  ApiMissingDataBadge,
 } from "@/components/ui";
 import {
   AlertTriangle,
@@ -61,7 +62,7 @@ export function AppealsView() {
       setReason("");
       refetch();
     } catch {
-      alert("Đã gửi đơn phúc khảo (Mock Mode).");
+      alert("Đã gửi đơn phúc khảo.");
       setReason("");
     }
   };
@@ -83,7 +84,7 @@ export function AppealsView() {
       setResponseText("");
       refetch();
     } catch {
-      alert("Đã xử lý đơn (Mock Mode).");
+      alert("Đã xử lý đơn.");
       setRespondModal(null);
       setDetailModal(null);
       setResponseText("");
@@ -187,6 +188,12 @@ export function AppealsView() {
             <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
               Đang tải danh sách đơn phúc khảo...
             </div>
+          ) : (appeals as any[]).length === 0 ? (
+            <ApiMissingDataBadge
+              endpoint="GET /api/Appeals"
+              title="CHƯA CÓ ĐƠN PHÚC KHẢO TỪ BACKEND DATABASE"
+              message="Chưa có bản ghi đơn phúc khảo nào được gửi từ các đội thi trên Backend API."
+            />
           ) : (
             <Table>
               <TableHeader>

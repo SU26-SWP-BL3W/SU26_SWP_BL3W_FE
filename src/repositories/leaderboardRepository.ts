@@ -29,7 +29,8 @@ export function useLeaderboard(roundId: string) {
       try {
         const res = await apiClient.get<LeaderboardEntry[]>(`/FinalResults/round/${roundId}`);
         return res.data;
-      } catch {
+      } catch (err: any) {
+        console.warn("[SEAL BE-DATA MISSING] GET /api/FinalResults/round/" + roundId + " error:", err?.message);
         return [];
       }
     },

@@ -12,38 +12,7 @@ export interface PresetAccount {
   defaultRedirect: string;
 }
 
-export const PRESET_ACCOUNTS: PresetAccount[] = [
-  {
-    email: "admin.system@seal.edu.vn",
-    roleName: "Admin",
-    fullName: "Quản Trị Viên Hệ Thống (System Admin)",
-    defaultRedirect: "/admin/dashboard",
-  },
-  {
-    email: "ec.coordinator@seal.edu.vn",
-    roleName: "Coordinator",
-    fullName: "Điều Phối Viên Sự Kiện (Event Coordinator)",
-    defaultRedirect: "/coordinator/dashboard",
-  },
-  {
-    email: "mentor.ai@seal.edu.vn",
-    roleName: "Mentor",
-    fullName: "Cố Vấn Chuyên Môn AI (Mentor)",
-    defaultRedirect: "/mentor/tracks",
-  },
-  {
-    email: "judge.ai@seal.edu.vn",
-    roleName: "Judge",
-    fullName: "Giám Khảo Trí Tuệ Nhân Tạo (Judge)",
-    defaultRedirect: "/judge/tracks",
-  },
-  {
-    email: "leader.cybershield@fpt.edu.vn",
-    roleName: "TeamLeader",
-    fullName: "Trưởng Nhóm CyberShield (Team Leader)",
-    defaultRedirect: "/my-team",
-  },
-];
+export const PRESET_ACCOUNTS: PresetAccount[] = [];
 
 // Trang đích sau khi đăng nhập thật, theo vai trò backend trả về.
 const REDIRECT_BY_ROLE: Record<string, string> = {
@@ -58,9 +27,6 @@ interface AuthContextType {
   user: User | null;
   activeRole: EventRole | null;
   isInitialized: boolean;
-  login: (roleName?: string) => string;
-  loginWithRole: (roleName: string) => string;
-  loginWithEmail: (email: string) => string;
   loginWithCredentials: (email: string, password: string) => Promise<string>;
   loginWithGoogleCredential: (idToken: string) => Promise<string>;
   logout: () => void;
@@ -97,159 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         localStorage.removeItem("activeRole");
       }
-
-      // Automatically fetch real JWT token from Backend DB
-      const pass = newUser.isAdmin ? "AdminPassword123!" : "123456";
-      apiClient
-        .post<any>("/Auth/login", { email: newUser.email, password: pass })
-        .then((res) => {
-          const data = res.data?.data || res.data;
-          const realToken = data?.token || data?.accessToken;
-          if (realToken) {
-            localStorage.setItem("accessToken", realToken);
-          }
-        })
-        .catch((err) => {
-          console.warn("[Auth] Failed to authenticate seeded user for JWT:", err?.message);
-        });
     }
-  };
-
-  const loginWithRole = (roleName: string): string => {
-    let newUser: User;
-    let newRole: EventRole | null = null;
-    let targetPath = "/";
-
-    if (roleName === "Admin") {
-      newUser = {
-        id: "usr-admin-01",
-        userId: "usr-admin-01",
-        email: "admin@seal.com",
-        fullName: "Quản Trị Viên Hệ Thống",
-        isAdmin: true,
-        isApproved: true,
-        isFpt: true,
-        isStudent: false,
-        UserID: "usr-admin-01",
-        FullName: "Quản Trị Viên Hệ Thống",
-        IsAdmin: true,
-      };
-      newRole = null;
-      targetPath = "/admin/dashboard";
-    } else if (roleName === "Coordinator") {
-      newUser = {
-        id: "usr-ec-01",
-        userId: "usr-ec-01",
-        email: "ec1@example.com",
-        fullName: "Điều Phối Viên Sự Kiện",
-        isAdmin: false,
-        isApproved: true,
-        isFpt: true,
-        isStudent: false,
-        UserID: "usr-ec-01",
-        FullName: "Điều Phối Viên Sự Kiện",
-        IsAdmin: false,
-      };
-      newRole = {
-        eventRoleId: "er-ec-100",
-        userId: "usr-ec-01",
-        roleName: "Coordinator",
-        EventRoleId: "er-ec-100",
-        UserId: "usr-ec-01",
-        RoleName: "Coordinator",
-        assignedEventIds: ["event-seal-2026"],
-        AssignedEventIds: ["event-seal-2026"],
-      };
-      targetPath = "/coordinator/dashboard";
-    } else if (roleName === "Mentor") {
-      newUser = {
-        id: "usr-mentor-01",
-        userId: "usr-mentor-01",
-        email: "mentor1@example.com",
-        fullName: "Cố Vấn Chuyên Môn",
-        isAdmin: false,
-        isApproved: true,
-        isFpt: true,
-        isStudent: false,
-        UserID: "usr-mentor-01",
-        FullName: "Cố Vấn Chuyên Môn",
-        IsAdmin: false,
-      };
-      newRole = {
-        eventRoleId: "er-mentor-101",
-        userId: "usr-mentor-01",
-        roleName: "Mentor",
-        EventRoleId: "er-mentor-101",
-        UserId: "usr-mentor-01",
-        RoleName: "Mentor",
-        assignedEventIds: ["event-seal-2026"],
-        AssignedEventIds: ["event-seal-2026"],
-      };
-      targetPath = "/mentor/tracks";
-    } else if (roleName === "Judge") {
-      newUser = {
-        id: "usr-judge-01",
-        userId: "usr-judge-01",
-        email: "judge1@example.com",
-        fullName: "Giám Khảo Chấm Thi",
-        isAdmin: false,
-        isApproved: true,
-        isFpt: true,
-        isStudent: false,
-        UserID: "usr-judge-01",
-        FullName: "Giám Khảo Chấm Thi",
-        IsAdmin: false,
-      };
-      newRole = {
-        eventRoleId: "er-judge-200",
-        userId: "usr-judge-01",
-        roleName: "Judge",
-        EventRoleId: "er-judge-200",
-        UserId: "usr-judge-01",
-        RoleName: "Judge",
-        assignedEventIds: ["event-seal-2026"],
-        AssignedEventIds: ["event-seal-2026"],
-      };
-      targetPath = "/events";
-    } else {
-      newUser = {
-        id: "usr-student-01",
-        userId: "usr-student-01",
-        email: "student1@example.com",
-        fullName: "Sinh Viên Thí Sinh",
-        isAdmin: false,
-        isApproved: true,
-        isFpt: true,
-        isStudent: true,
-        UserID: "usr-student-01",
-        FullName: "Sinh Viên Thí Sinh",
-        IsAdmin: false,
-      };
-      newRole = {
-        eventRoleId: "er-student-300",
-        userId: "usr-student-01",
-        roleName: roleName === "TeamMember" ? "TeamMember" : "TeamLeader",
-        EventRoleId: "er-student-300",
-        UserId: "usr-student-01",
-        RoleName: roleName === "TeamMember" ? "TeamMember" : "TeamLeader",
-      };
-      targetPath = "/my-team";
-    }
-
-    saveSession(newUser, newRole);
-    return targetPath;
-  };
-
-  const loginWithEmail = (email: string): string => {
-    const found = PRESET_ACCOUNTS.find((acc) => acc.email.toLowerCase() === email.trim().toLowerCase());
-    if (found) {
-      return loginWithRole(found.roleName);
-    }
-    return loginWithRole("TeamLeader");
-  };
-
-  const login = (roleName: string = "TeamLeader") => {
-    return loginWithRole(roleName);
   };
 
   const loginWithCredentials = async (email: string, password: string): Promise<string> => {
@@ -337,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Lưu phiên trực tiếp — KHÔNG qua saveSession vì saveSession tự gọi lại
-    // /Auth/login với mật khẩu cứng "123456" (chỉ dùng cho tài khoản mock).
+    // /Auth/login với mật khẩu.
     setUser(authUser);
     setActiveRole(primaryRole);
     if (typeof window !== "undefined") {
@@ -446,9 +260,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user,
           activeRole,
           isInitialized,
-          login,
-          loginWithRole,
-          loginWithEmail,
           loginWithCredentials,
           loginWithGoogleCredential,
           logout,

@@ -8,13 +8,16 @@ import { useEventDetailViewModel } from "@/viewModels/useEventDetailViewModel";
 import type { RoundStatus } from "@/viewModels/useEventDetailViewModel";
 import { useCountdown } from "@/lib/useCountdown";
 import { useAuth } from "@/providers/AuthProvider";
-import { TRACK_META, DEFAULT_TRACK_META, type TrackIconKey } from "@/viewModels/mockEventsData";
+import { TRACK_META, DEFAULT_TRACK_META, type TrackIconKey } from "@/viewModels/eventsMetadata";
 
 import { hasEventPermission } from "@/lib/permissions";
-import { getMockTeam } from "@/viewModels/mockTeamData";
+import { useMyTeam } from "@/repositories/teamsRepository";
 
 export function EventDetailView({ eventId }: { eventId: string }) {
   const { user, activeRole } = useAuth();
+  const { data: teamResponse } = useMyTeam();
+  const team = teamResponse?.team;
+
   const rawRole = activeRole?.roleName || activeRole?.RoleName;
   const userEmail = (user?.email || user?.Email || "").toLowerCase();
   let roleName = rawRole || "";
@@ -32,11 +35,10 @@ export function EventDetailView({ eventId }: { eventId: string }) {
       roleName = "Guest";
     }
   }
-  const team = getMockTeam();
 
   // Kiểm tra user/đội thi có thuộc sự kiện này không
   const isJoinedParticipant =
-    (roleName === "TeamLeader" || roleName === "TeamMember") && team?.eventId === eventId;
+    (roleName === "TeamLeader" || roleName === "TeamMember") && ((team as any)?.eventId === eventId || team?.EventId === eventId);
   const isAuthorizedActor = hasEventPermission(user, activeRole, eventId);
 
   const {

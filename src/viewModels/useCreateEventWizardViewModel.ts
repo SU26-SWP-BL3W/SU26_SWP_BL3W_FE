@@ -2,7 +2,7 @@ import { useState } from "react";
 import { eventsRepository } from "@/repositories/eventsRepository";
 import { roundsRepository } from "@/repositories/roundsRepository";
 import { tracksRepository } from "@/repositories/tracksRepository";
-import { MOCK_DEFAULT_CRITERIAS, templatesRepository } from "@/repositories/templatesRepository";
+import { templatesRepository } from "@/repositories/templatesRepository";
 import { staffRepository } from "@/repositories/staffRepository";
 import { EventEntity, RoundEntity, TrackEntity, TemplateEntity, TemplateCriteriaEntity, EventRoleInvitationEntity } from "@/models/entities";
 
@@ -70,91 +70,32 @@ export function useCreateEventWizardViewModel() {
 
   // Step 1 State: Event Basic Info
   const [eventData, setEventData] = useState<EventFormState>({
-    eventName: "SEAL Hackathon 2026",
-    season: "Mùa Hè",
+    eventName: "",
+    season: "",
     year: 2026,
-    startDate: "2026-07-15T08:00",
-    endDate: "2026-09-20T17:00",
-    registrationStartDate: "2026-06-01T08:00",
-    registrationEndDate: "2026-07-10T17:00",
+    startDate: "",
+    endDate: "",
+    registrationStartDate: "",
+    registrationEndDate: "",
     maxTeams: 50,
     minTeamSize: 3,
     maxTeamSize: 5,
-    tagline: "Đấu trường công nghệ RBL quy mô sinh viên toàn quốc",
-    description: "Đấu trường công nghệ dành cho sinh viên toàn quốc quy mô lớn nhất trong năm của SEAL.",
+    tagline: "",
+    description: "",
   });
 
   // Created Event Entity after Step 1 submit
   const [createdEvent, setCreatedEvent] = useState<EventEntity | null>(null);
 
   // Step 2 State: Rounds
-  const [rounds, setRounds] = useState<RoundFormState[]>([
-    {
-      id: "tmp-r1",
-      roundName: "Vòng loại",
-      roundNumber: 1,
-      startDate: "2026-07-15",
-      endDate: "2026-08-10",
-      advancementRule: "top:20",
-    },
-    {
-      id: "tmp-r2",
-      roundName: "Chung kết",
-      roundNumber: 2,
-      startDate: "2026-08-15",
-      endDate: "2026-09-20",
-      advancementRule: "minscore:7.5",
-    },
-  ]);
+  const [rounds, setRounds] = useState<RoundFormState[]>([]);
 
   // Step 3 State: Tracks
-  const [tracks, setTracks] = useState<TrackFormState[]>([
-    {
-      id: "tmp-t1",
-      trackName: "AI & Machine Learning",
-      templateId: "__custom__",
-      description: "Hạng mục phát triển mô hình & ứng dụng Trí tuệ nhân tạo",
-    },
-    {
-      id: "tmp-t2",
-      trackName: "Phát triển Web & Mobile",
-      templateId: "__custom__",
-      description: "Hạng mục xây dựng giải pháp web hoàn chỉnh",
-    },
-  ]);
+  const [tracks, setTracks] = useState<TrackFormState[]>([]);
 
   // Step 4 State: Criteria & Template Config
   const [templateName, setTemplateName] = useState<string>("");
-  const [criterias, setCriterias] = useState<TemplateCriteriaFormState[]>([
-    {
-      criteriaId: "crit-1",
-      criterionName: "Tính đổi mới & sáng tạo (Innovation)",
-      description: "Đánh giá mức độ độc đáo của giải pháp công nghệ.",
-      weight: 30,
-      maxScore: 10,
-    },
-    {
-      criteriaId: "crit-2",
-      criterionName: "Kiến trúc hệ thống & Code Quality",
-      description: "Đánh giá thiết kế hệ thống, độ sạch của mã nguồn & khả năng mở rộng.",
-      weight: 40,
-      maxScore: 10,
-    },
-    {
-      criteriaId: "crit-3",
-      criterionName: "Trải nghiệm người dùng (UX/UI)",
-      description: "Giao diện trực quan, mượt mà và dễ sử dụng.",
-      weight: 15,
-      maxScore: 10,
-    },
-    {
-      criteriaId: "crit-4",
-      criterionName: "Kỹ năng thuyết trình & Đô thị thực chiến",
-      description: "Khả năng trình bày sản phẩm và trả lời phản biện.",
-      weight: 15,
-      maxScore: 10,
-    },
-  ]);
+  const [criterias, setCriterias] = useState<TemplateCriteriaFormState[]>([]);
 
   const [criteriasByTrack, setCriteriasByTrack] = useState<Record<string, TemplateCriteriaFormState[]>>({});
 
