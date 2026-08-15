@@ -376,13 +376,22 @@ export function NavigationBar() {
               <>
                 <Link
                   href="/mentor/tracks"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                    pathname.includes("/mentor")
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/mentor/tracks")
                       ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
                   }`}
                 >
                   <Briefcase className="w-4 h-4 shrink-0" /> Bàn Làm Việc Cố Vấn
+                </Link>
+
+                <Link
+                  href="/mentor/progress"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/mentor/progress")
+                      ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+                    }`}
+                >
+                  <span>📊</span> Theo Dõi Tiến Độ
                 </Link>
 
                 <Link
