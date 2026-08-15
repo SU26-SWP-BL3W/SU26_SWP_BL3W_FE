@@ -1,24 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
+import { useMyAssignedTracks, MENTOR_EVENT_ID } from "@/viewModels/useMyAssignedTracks";
+import { useGetSubmitResultsByTrack } from "@/repositories/submitResultsRepository";
+import { useGetTeamsByEvent } from "@/repositories/teamsRepository";
 import { useGetTeamScoreBreakdown } from "@/repositories/scoresRepository";
-import { Button, Card, Badge, Input } from "@/components/ui";
-import { Search, Shield, RefreshCw, BarChart2, CheckCircle2 } from "lucide-react";
+import { Button, Card } from "@/components/ui";
+import { Shield, RefreshCw, BarChart2 } from "lucide-react";
 
 export function MentorProgressView() {
   const { user } = useAuth();
-  const [inputTeamId, setInputTeamId] = useState("team-1");
-  const [activeTeamId, setActiveTeamId] = useState("team-1");
+  const { myTracks, isLoading: isLoadingTracks } = useMyAssignedTracks();
+  const [explicitTrackId, setExplicitTrackId] = useState("");
+  const selectedTrackId = explicitTrackId || myTracks[0]?.id || myTracks[0]?.Id || "";
+
+  const { data: submissions = [] } = useGetSubmitResultsByTrack(selectedTrackId);
+  const { data: teams = [] } = useGetTeamsByEvent(MENTOR_EVENT_ID);
+
+  const teamNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    teams.forEach((t) => map.set((t.id || t.Id) as string, t.name || t.Name || "Đội thi"));
+    return map;
+  }, [teams]);
+
+  const teamIdsInTrack = useMemo(() => {
+    const seen = new Set<string>();
+    submissions.forEach((s) => {
+      const teamId = (s.teamId || s.TeamId || "") as string;
+      if (teamId) seen.add(teamId);
+    });
+    return Array.from(seen);
+  }, [submissions]);
+
+  const [activeTeamId, setActiveTeamId] = useState("");
+
+  // Đội đang chọn phải nằm trong Track hiện tại — đổi Track thì tự chọn lại đội đầu tiên.
+  useEffect(() => {
+    if (teamIdsInTrack.length > 0 && !teamIdsInTrack.includes(activeTeamId)) {
+      setActiveTeamId(teamIdsInTrack[0]);
+    } else if (teamIdsInTrack.length === 0) {
+      setActiveTeamId("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamIdsInTrack]);
 
   const { data: scoreBreakdown, isLoading, refetch } = useGetTeamScoreBreakdown(activeTeamId);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputTeamId.trim()) {
-      setActiveTeamId(inputTeamId.trim());
-    }
-  };
 
   if (!user) {
     return (
@@ -46,30 +73,53 @@ export function MentorProgressView() {
           </div>
         </div>
 
-        <form onSubmit={handleSearch} className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="Mã đội thi (VD: team-1)"
-            value={inputTeamId}
-            onChange={(e) => setInputTeamId(e.target.value)}
-            className="w-48 text-xs font-mono"
-          />
-          <Button type="submit" variant="ghost" className="text-xs flex items-center gap-1">
-            <Search className="w-3.5 h-3.5" /> Tra cứu
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+          <span className="text-[var(--text-muted)] uppercase">Hạng mục:</span>
+          <select
+            value={selectedTrackId}
+            onChange={(e) => setExplicitTrackId(e.target.value)}
+            className="bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-mentor)]"
+          >
+            {myTracks.map((t) => (
+              <option key={t.id || t.Id} value={t.id || t.Id}>
+                {t.trackName || t.TrackName}
+              </option>
+            ))}
+          </select>
+
+          <span className="text-[var(--text-muted)] uppercase ml-2">Đội thi:</span>
+          <select
+            value={activeTeamId}
+            onChange={(e) => setActiveTeamId(e.target.value)}
+            disabled={teamIdsInTrack.length === 0}
+            className="bg-[var(--bg-input)] border border-[var(--border-muted)] px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-mentor)] disabled:opacity-50"
+          >
+            {teamIdsInTrack.length === 0 && <option value="">Chưa có đội nộp bài</option>}
+            {teamIdsInTrack.map((teamId) => (
+              <option key={teamId} value={teamId}>
+                {teamNameById.get(teamId) || `Đội #${teamId}`}
+              </option>
+            ))}
+          </select>
+
+          <Button variant="ghost" onClick={() => refetch()} className="text-xs flex items-center gap-1">
+            <RefreshCw className="w-3.5 h-3.5" /> Làm mới
           </Button>
-        </form>
+        </div>
       </div>
 
       {/* Content */}
       <div className="max-w-4xl mx-auto">
-        {isLoading ? (
+        {isLoadingTracks || isLoading ? (
           <div className="flex justify-center py-20">
             <RefreshCw className="w-8 h-8 animate-spin text-[var(--accent-mentor)]" />
           </div>
-        ) : !scoreBreakdown ? (
+        ) : !activeTeamId || !scoreBreakdown ? (
           <Card className="p-12 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)]">
             <Shield className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
-            Nhập mã Đội thi để tra cứu bảng phân rã điểm số theo từng tiêu chí.
+            {myTracks.length === 0
+              ? "Bạn chưa được phân công Cố vấn cho Hạng mục nào."
+              : "Chọn một Đội thi để xem bảng phân rã điểm số theo từng tiêu chí."}
           </Card>
         ) : (
           <Card className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-6">
