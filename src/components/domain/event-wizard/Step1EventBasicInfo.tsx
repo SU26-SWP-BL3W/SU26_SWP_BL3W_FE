@@ -179,9 +179,92 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
 
           {/* Nhóm 2: Mốc Thời Gian Đăng Ký & Sự Kiện */}
           <div className="space-y-4 pt-2">
-            <h4 className="text-xs font-bold text-[var(--color-warning)] uppercase tracking-wider flex items-center gap-1.5 border-b border-[var(--border-muted)]/50 pb-2">
-              <ClipboardList className="w-4 h-4 text-amber-400" /> 2. Thiết Lập Mở / Đóng Cổng Đăng Ký &amp; Sự Kiện
-            </h4>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-muted)]/50 pb-2">
+              <h4 className="text-xs font-bold text-[var(--color-warning)] uppercase tracking-wider flex items-center gap-1.5">
+                <ClipboardList className="w-4 h-4 text-amber-400" /> 2. Thiết Lập Mở / Đóng Cổng Đăng Ký &amp; Sự Kiện
+              </h4>
+
+              {/* Step 1 Quick Presets */}
+              <div className="flex flex-wrap items-center gap-1 font-mono text-[10px]">
+                <span className="text-[var(--text-muted)] mr-1">Mẫu nhanh:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
+                    const regEnd = new Date(now);
+                    regEnd.setDate(regEnd.getDate() + 14);
+                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
+                    const evStart = new Date(regEnd);
+                    evStart.setDate(evStart.getDate() + 1);
+                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
+                    const evEnd = new Date(evStart);
+                    evEnd.setDate(evEnd.getDate() + 28);
+                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T23:59`;
+
+                    onUpdateField("registrationStartDate", todayStr);
+                    onUpdateField("registrationEndDate", regEndStr);
+                    onUpdateField("startDate", evStartStr);
+                    onUpdateField("endDate", evEndStr);
+                  }}
+                  className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 rounded cursor-pointer"
+                >
+                  🚀 4 Tuần
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
+                    const regEnd = new Date(now);
+                    regEnd.setDate(regEnd.getDate() + 7);
+                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
+                    const evStart = new Date(regEnd);
+                    evStart.setDate(evStart.getDate() + 1);
+                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
+                    const evEnd = new Date(evStart);
+                    evEnd.setDate(evEnd.getDate() + 3);
+                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T23:59`;
+
+                    onUpdateField("registrationStartDate", todayStr);
+                    onUpdateField("registrationEndDate", regEndStr);
+                    onUpdateField("startDate", evStartStr);
+                    onUpdateField("endDate", evEndStr);
+                  }}
+                  className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 rounded cursor-pointer"
+                >
+                  ⚡ Sprint 48h
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date();
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T08:00`;
+                    const regEnd = new Date(now);
+                    regEnd.setDate(regEnd.getDate() + 14);
+                    const regEndStr = `${regEnd.getFullYear()}-${pad(regEnd.getMonth() + 1)}-${pad(regEnd.getDate())}T23:59`;
+                    const evStart = new Date(regEnd);
+                    evStart.setDate(evStart.getDate() + 1);
+                    const evStartStr = `${evStart.getFullYear()}-${pad(evStart.getMonth() + 1)}-${pad(evStart.getDate())}T08:00`;
+                    const evEnd = new Date(evStart);
+                    evEnd.setDate(evEnd.getDate() + 60);
+                    const evEndStr = `${evEnd.getFullYear()}-${pad(evEnd.getMonth() + 1)}-${pad(evEnd.getDate())}T23:59`;
+
+                    onUpdateField("registrationStartDate", todayStr);
+                    onUpdateField("registrationEndDate", regEndStr);
+                    onUpdateField("startDate", evStartStr);
+                    onUpdateField("endDate", evEndStr);
+                  }}
+                  className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded cursor-pointer"
+                >
+                  🎓 8 Tuần
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-3 bg-[var(--bg-base)] border border-[var(--border-muted)] rounded space-y-1.5">
                 <label className="text-[10px] text-[var(--text-muted)] uppercase flex items-center gap-1 font-bold text-amber-300">
@@ -191,7 +274,17 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                 <Input
                   type="datetime-local"
                   value={toDateTimeLocal(eventData.registrationStartDate)}
-                  onChange={(e) => onUpdateField("registrationStartDate", e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onUpdateField("registrationStartDate", val);
+                    // Smart Cascade: if registrationEndDate is empty, auto-fill +14 days
+                    if (!eventData.registrationEndDate && val) {
+                      const d = new Date(val);
+                      d.setDate(d.getDate() + 14);
+                      const pad = (n: number) => String(n).padStart(2, "0");
+                      onUpdateField("registrationEndDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:59`);
+                    }
+                  }}
                   required
                 />
                 <span className="text-[10px] text-[var(--text-muted)] block">
@@ -207,7 +300,17 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                 <Input
                   type="datetime-local"
                   value={toDateTimeLocal(eventData.registrationEndDate)}
-                  onChange={(e) => onUpdateField("registrationEndDate", e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onUpdateField("registrationEndDate", val);
+                    // Smart Cascade: if event startDate is empty, auto-fill registrationEndDate + 1 day
+                    if (!eventData.startDate && val) {
+                      const d = new Date(val);
+                      d.setDate(d.getDate() + 1);
+                      const pad = (n: number) => String(n).padStart(2, "0");
+                      onUpdateField("startDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T08:00`);
+                    }
+                  }}
                   required
                 />
                 <span className="text-[10px] text-[var(--text-muted)] block">
@@ -223,7 +326,17 @@ export const Step1EventBasicInfo: React.FC<Step1EventBasicInfoProps> = ({
                 <Input
                   type="datetime-local"
                   value={toDateTimeLocal(eventData.startDate)}
-                  onChange={(e) => onUpdateField("startDate", e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onUpdateField("startDate", val);
+                    // Smart Cascade: if event endDate is empty, auto-fill +30 days
+                    if (!eventData.endDate && val) {
+                      const d = new Date(val);
+                      d.setDate(d.getDate() + 30);
+                      const pad = (n: number) => String(n).padStart(2, "0");
+                      onUpdateField("endDate", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:59`);
+                    }
+                  }}
                   required
                 />
               </div>

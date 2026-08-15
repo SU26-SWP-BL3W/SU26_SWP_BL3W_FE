@@ -137,6 +137,14 @@ export const Step2RoundConfig: React.FC<Step2RoundConfigProps> = ({
 
               {/* Modern Timeline Picker */}
               <RoundTimelinePicker
+                title={`Mốc thời gian Vòng ${round.roundNumber}: ${round.roundName}`}
+                defaultAnchorDate={
+                  index > 0
+                    ? rounds[index - 1].appealEndDate ||
+                      rounds[index - 1].scoringEndDate ||
+                      rounds[index - 1].endDate
+                    : undefined
+                }
                 values={{
                   startDate: round.startDate,
                   endDate: round.endDate,
