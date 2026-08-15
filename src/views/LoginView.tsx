@@ -7,7 +7,11 @@ import { Link, useRouter } from "@/i18n/routing";
 import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight } from "lucide-react";
 import { SealShield } from "@/components/domain/SealShield";
 
+import { useSearchParams } from "next/navigation";
+
 export function LoginView() {
+  const searchParams = useSearchParams();
+  const isVerifiedNotice = searchParams.get("verified") === "true";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -76,6 +80,12 @@ export function LoginView() {
               Đăng nhập vào <span className="text-amber-400 font-bold">SEAL-HMS</span> để tiếp tục
             </p>
           </div>
+
+          {isVerifiedNotice && (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-mono text-xs hud-clipped">
+              ✓ Xác thực email thành công! Vui lòng đăng nhập để tiếp tục hoàn thiện hồ sơ sinh viên.
+            </div>
+          )}
 
           {errorMessage && (
             <div className="p-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 font-mono text-xs hud-clipped">

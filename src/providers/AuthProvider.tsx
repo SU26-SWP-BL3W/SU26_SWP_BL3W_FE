@@ -74,9 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!accessToken) throw new Error("Phản hồi đăng nhập thiếu token.");
 
     const userId = d.userId ?? d.UserId;
-    const isAdmin = Boolean(d.isAdmin ?? d.IsAdmin);
-    const isStudent = Boolean(d.isStudent ?? d.IsStudent);
-    const fullName = d.fullName ?? d.FullName ?? "";
+    const isAdmin = Boolean(d.isAdmin ?? d.IsAdmin ?? d.user?.isAdmin);
+    const isStudent = Boolean(d.isStudent ?? d.IsStudent ?? d.user?.isStudent);
+    const fullName = d.fullName ?? d.FullName ?? d.user?.fullName ?? "";
+    const isApproved = Boolean(d.isApproved ?? d.IsApproved ?? d.user?.isApproved ?? false);
     const authUser: User = {
       id: userId,
       userId,
@@ -84,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fullName,
       isAdmin,
       isStudent,
-      isApproved: true,
-      isFpt: false,
+      isApproved,
+      isFpt: Boolean(d.isFpt ?? d.IsFpt ?? email.toLowerCase().endsWith("@fpt.edu.vn")),
       UserID: userId,
       FullName: fullName,
       IsAdmin: isAdmin,

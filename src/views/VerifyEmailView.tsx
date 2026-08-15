@@ -13,16 +13,17 @@ export function VerifyEmailView() {
   const router = useRouter();
 
   const { data, isLoading, isError, error } = useVerifyEmail(token);
+  const isSuccessState = Boolean(data?.success || (data as any)?.isSuccess || (!isError && data !== undefined));
 
-  // Tự động chuyển hướng sang onboarding sau 3 giây nếu thành công
+  // Tự động chuyển hướng sang Login sau 3 giây nếu thành công
   useEffect(() => {
-    if (data?.success) {
+    if (isSuccessState) {
       const timer = setTimeout(() => {
-        router.push("/onboarding/profile");
+        router.push("/login?verified=true");
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [data, router]);
+  }, [isSuccessState, router]);
 
   // ── Token missing ────────────────────────────────────────────
   if (!token) {
@@ -30,11 +31,11 @@ export function VerifyEmailView() {
       <StateCard
         icon={<XCircle className="w-8 h-8 text-[var(--color-danger)]" />}
         iconColor="danger"
-        title="// LIÊN KẾT KHÔNG HỢP LỆ"
-        message="Không tìm thấy token xác thực trong URL. Vui lòng kiểm tra lại đường dẫn từ email."
+        title="LIÊN KẾT KHÔNG HỢP LỆ"
+        message="Không tìm thấy mã xác thực trong URL. Vui lòng kiểm tra lại đường dẫn từ email."
         actions={
-          <Link href="/login">
-            <Button variant="primary" className="justify-center">
+          <Link href="/login" className="w-full flex justify-center">
+            <Button variant="primary" className="w-full justify-center">
               Về Trang Đăng Nhập
             </Button>
           </Link>
@@ -68,10 +69,10 @@ export function VerifyEmailView() {
             </svg>
           </div>
           <h2 className="font-display text-[length:var(--fs-heading-md)] font-bold text-[var(--accent-primary)] mb-2 tracking-widest uppercase">
-            // XÁC THỰC
+            ĐANG XÁC THỰC
           </h2>
           <p className="text-sm font-mono text-[var(--text-muted)]">
-            Đang xác minh token email của bạn...
+            Đang kiểm tra mã xác nhận email của bạn...
           </p>
         </Card>
       </div>
@@ -79,25 +80,25 @@ export function VerifyEmailView() {
   }
 
   // ── Success ──────────────────────────────────────────────────
-  if (data?.success || (!isError && data !== undefined)) {
+  if (isSuccessState) {
     return (
       <StateCard
         icon={<CheckCircle2 className="w-8 h-8 text-[var(--color-success)]" />}
         iconColor="success"
-        title="// XÁC THỰC THÀNH CÔNG"
-        message="Email của bạn đã được xác thực. Đang chuyển đến trang hoàn thành hồ sơ sinh viên..."
+        title="XÁC THỰC EMAIL THÀNH CÔNG"
+        message="Email của bạn đã được xác thực thành công. Vui lòng đăng nhập để tiếp tục hoàn thành hồ sơ sinh viên."
         subContent={
           <div className="flex justify-center mt-4">
             <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              Tự động chuyển hướng sau 3 giây...
+              <RefreshCw className="w-3 h-3 animate-spin text-[var(--color-success)]" />
+              Tự động chuyển đến trang đăng nhập sau 3 giây...
             </div>
           </div>
         }
         actions={
-          <Link href="/onboarding/profile">
-            <Button variant="primary" className="justify-center flex items-center gap-2">
-              // TIẾP TỤC ONBOARDING <ArrowRight className="w-4 h-4" />
+          <Link href="/login?verified=true" className="w-full flex justify-center">
+            <Button variant="primary" className="w-full justify-center flex items-center gap-2">
+              ĐĂNG NHẬP ĐỂ HOÀN THÀNH HỒ SƠ <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         }
@@ -187,7 +188,7 @@ function StateCard({
         <div className="flex items-center justify-center gap-2 mb-4">
           <Shield className="w-4 h-4 text-[var(--accent-primary)]" />
           <span className="font-display text-xs text-[var(--accent-primary)] tracking-widest uppercase">
-            SEAL // AUTH
+            XÁC THỰC TÀI KHOẢN SEAL
           </span>
         </div>
 

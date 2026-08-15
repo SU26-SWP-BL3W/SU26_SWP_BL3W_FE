@@ -48,7 +48,7 @@ export function UserProfileView() {
     } else if (user?.isAdmin || user?.IsAdmin) {
       roleName = "Admin";
     } else {
-      roleName = user?.isStudent === false ? "Admin" : "Student";
+      roleName = "Student";
     }
   }
 
@@ -57,7 +57,7 @@ export function UserProfileView() {
     roleName === "Admin" ||
     roleName === "Judge" ||
     roleName === "Mentor" ||
-    (user?.isStudent === false && (user?.isAdmin || user?.IsAdmin));
+    Boolean(user?.isAdmin || user?.IsAdmin);
 
   // Staff Form states
   const [staffPhone, setStaffPhone] = useState("0912 345 678");
@@ -220,7 +220,7 @@ export function UserProfileView() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
           <div>
             <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--accent-primary)] tracking-widest uppercase font-bold">
-              <User className="w-3.5 h-3.5" /> ACCOUNT &amp; PROFILE CENTER
+              <User className="w-3.5 h-3.5" /> QUẢN LÝ THÔNG TIN HỒ SƠ
             </div>
             <h1 className="font-display text-3xl font-extrabold uppercase tracking-wide text-[var(--text-primary)] mt-1">
               {isStaff ? "HỒ SƠ CÁN BỘ & BAN TỔ CHỨC" : "HỒ SƠ CÁ NHÂN & THẺ SINH VIÊN"}
@@ -254,7 +254,7 @@ export function UserProfileView() {
                 </div>
                 <div>
                   <span className="font-mono text-[10px] font-bold tracking-widest uppercase block text-[var(--accent-coordinator)]">
-                    TÀI KHOẢN CÁN BỘ HỢP LỆ (VERIFIED OPERATOR)
+                    TÀI KHOẢN CÁN BỘ BAN TỔ CHỨC
                   </span>
                   <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-0.5">
                     {roleName === "Coordinator"
@@ -379,13 +379,13 @@ export function UserProfileView() {
             <Card className="p-6 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-6">
               <div className="flex flex-col items-center text-center pb-6 border-b border-[var(--border-muted)]">
                 <div className="w-20 h-20 rounded-full bg-[var(--accent-primary)]/10 border-2 border-[var(--accent-primary)]/40 flex items-center justify-center text-[var(--accent-primary)] text-2xl font-bold font-mono mb-3">
-                  {fullName ? fullName.charAt(0).toUpperCase() : (user?.fullName || "E").charAt(0).toUpperCase()}
+                  {fullName ? fullName.charAt(0).toUpperCase() : (user?.fullName || user?.email || "U").charAt(0).toUpperCase()}
                 </div>
                 <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">
-                  {fullName || user?.fullName || user?.FullName || (isStaff ? "EC Demo" : "Sinh Viên")}
+                  {fullName || user?.fullName || user?.FullName || user?.email || "Thí sinh"}
                 </h3>
                 <span className="font-mono text-xs text-[var(--text-muted)] flex items-center gap-1 mt-1">
-                  <Mail className="w-3.5 h-3.5" /> {user?.email || "ec_demo@yopmail.com"}
+                  <Mail className="w-3.5 h-3.5" /> {user?.email || "Chưa có email"}
                 </span>
                 
                 {/* Dynamic Role Badge */}
@@ -452,7 +452,7 @@ export function UserProfileView() {
                       <Building2 className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> Trường Học:
                     </span>
                     <span className="font-bold text-[var(--text-primary)] truncate max-w-[160px]">
-                      {schoolChoice === "FPT" ? "FPT University" : (schools.find(s => s.id === schoolId)?.schoolName || "ĐH Bách Khoa")}
+                      {schoolChoice === "FPT" ? "Trường Đại Học FPT" : (schools.find(s => s.id === schoolId || s.schoolId === schoolId)?.schoolName || (schoolId ? schoolId : "Chưa chọn trường"))}
                     </span>
                   </div>
 
@@ -548,7 +548,7 @@ export function UserProfileView() {
                     </label>
                     <Input
                       type="text"
-                      value={fullName || user?.fullName || user?.FullName || "EC Demo"}
+                      value={fullName || user?.fullName || user?.FullName || ""}
                       onChange={(e) => setFullName(e.target.value)}
                       disabled={!isEditing}
                       required
@@ -562,7 +562,7 @@ export function UserProfileView() {
                       </label>
                       <Input
                         type="email"
-                        value={user?.email || "ec_demo@yopmail.com"}
+                        value={user?.email || ""}
                         disabled
                         className="opacity-70 cursor-not-allowed"
                       />
