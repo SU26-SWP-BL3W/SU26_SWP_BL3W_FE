@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 import { SealShield } from "./SealShield";
 import { NotificationBell } from "./NotificationBell";
 import { hasEventPermission } from "@/lib/permissions";
+import { useMyAssignedTracks } from "@/viewModels/useMyAssignedTracks";
 import {
   Globe,
   Users,
@@ -26,6 +27,7 @@ import {
   UserPlus,
   Compass,
   User,
+  BarChart2,
 } from "lucide-react";
 
 export function NavigationBar() {
@@ -33,6 +35,7 @@ export function NavigationBar() {
   const { user, activeRole, logout } = useAuth();
   const rawRole = activeRole?.roleName || activeRole?.RoleName;
   const userEmail = (user?.email || user?.Email || "").toLowerCase();
+  const { myTracks: myMentorTracks } = useMyAssignedTracks();
   
   let roleName = "";
   if (user?.isAdmin || user?.IsAdmin) {
@@ -361,8 +364,12 @@ export function NavigationBar() {
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
               {user?.FullName || "Cố Vấn Chuyên Môn"}
             </span>
-            <span className="font-mono text-[10px] text-[var(--text-muted)]">
-              {isAuthorizedMentor ? "Phân công: AI & Machine Learning" : "Quyền hạn: Read-Only (Chỉ Xem)"}
+            <span className="font-mono text-[10px] text-[var(--text-muted)] truncate">
+              {isAuthorizedMentor
+                ? myMentorTracks.length > 0
+                  ? `Phân công: ${myMentorTracks.map((t) => t.trackName || t.TrackName).join(", ")}`
+                  : "Chưa được phân công Hạng mục nào"
+                : "Quyền hạn: Read-Only (Chỉ Xem)"}
             </span>
           </div>
 
@@ -385,13 +392,33 @@ export function NavigationBar() {
                 </Link>
 
                 <Link
+                  href="/mentor/teams"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/mentor/teams")
+                      ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+                    }`}
+                >
+                  <Users className="w-4 h-4 shrink-0" /> Đội Thi Cần Hỗ Trợ
+                </Link>
+
+                <Link
+                  href="/mentor/submissions"
+                  className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/mentor/submissions")
+                      ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+                    }`}
+                >
+                  <Send className="w-4 h-4 shrink-0" /> Tiến Độ Bài Nộp
+                </Link>
+
+                <Link
                   href="/mentor/progress"
                   className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${pathname.includes("/mentor/progress")
                       ? "bg-[#2dd4bf] text-[var(--bg-base)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
                     }`}
                 >
-                  <span>📊</span> Theo Dõi Tiến Độ
+                  <BarChart2 className="w-4 h-4 shrink-0" /> Theo Dõi Tiến Độ
                 </Link>
 
                 <Link
