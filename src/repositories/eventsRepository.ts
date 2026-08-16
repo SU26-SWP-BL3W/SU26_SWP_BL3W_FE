@@ -145,27 +145,23 @@ export function useEvents() {
 export function useMyEvents() {
   return useQuery({
     queryKey: ["my-events"],
-    queryFn: async () => {
+    queryFn: async (): Promise<MyEventModel[]> => {
       try {
         const res = await apiClient.get<any>("/Events/my-events");
-        const data = res.data?.data ?? res.data;
-        if (Array.isArray(data) && data.length > 0) {
-          return mergeCreatedWithDb(data) as MyEventModel[];
-        }
+        const raw = res.data;
+        const list = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.items)
+          ? raw.items
+          : [];
+
+        return list as MyEventModel[];
       } catch (err: any) {
         console.warn("[SEAL BE-DATA MISSING] GET /api/Events/my-events error:", err?.message);
       }
-
-      try {
-        const allRes = await apiClient.get<any>("/Events");
-        const allData = allRes.data?.data ?? allRes.data;
-        if (Array.isArray(allData) && allData.length > 0) {
-          return mergeCreatedWithDb(allData) as MyEventModel[];
-        }
-      } catch (err: any) {
-        console.warn("[SEAL BE-DATA MISSING] GET /api/Events error:", err?.message);
-      }
-      return mergeCreatedWithDb([]) as MyEventModel[];
+      return [];
     },
   });
 }

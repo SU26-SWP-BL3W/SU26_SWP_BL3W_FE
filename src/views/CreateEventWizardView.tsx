@@ -13,7 +13,11 @@ import Link from "next/link";
 
 import { useGetTemplates } from "@/repositories/templatesRepository";
 
+import { usePathname } from "next/navigation";
+
 export const CreateEventWizardView: React.FC = () => {
+  const pathname = usePathname();
+  const isAdmin = pathname.includes("/admin");
   const wizard = useCreateEventWizardViewModel();
   const { data: templates = [] } = useGetTemplates();
 
@@ -33,8 +37,8 @@ export const CreateEventWizardView: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
           <div>
             <div className="flex items-center gap-2 font-mono text-xs text-[var(--text-muted)] mb-2">
-              <Link href="/coordinator/dashboard" className="hover:text-[var(--accent-primary)] flex items-center gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" /> Coordinator Control Center
+              <Link href={isAdmin ? "/admin/dashboard" : "/coordinator/dashboard"} className="hover:text-[var(--accent-primary)] flex items-center gap-1">
+                <ArrowLeft className="w-3.5 h-3.5" /> {isAdmin ? "Bảng Điều Hành Admin" : "Coordinator Control Center"}
               </Link>
               <span>/</span>
               <span className="text-[var(--accent-primary)] font-bold">Cấu Hình Chi Tiết Sự Kiện</span>
@@ -47,7 +51,7 @@ export const CreateEventWizardView: React.FC = () => {
 
           <div className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped font-mono text-xs">
             <span className="text-[var(--text-muted)] block uppercase text-[10px]">Trạng Thái Nghiệp Vụ:</span>
-            <span className="text-[var(--accent-primary)] font-bold">CẤU HÌNH BAN TỔ CHỨC</span>
+            <span className="text-[var(--accent-primary)] font-bold">{isAdmin ? "QUẢN TRỊ ADMIN" : "CẤU HÌNH BAN TỔ CHỨC"}</span>
           </div>
         </div>
 

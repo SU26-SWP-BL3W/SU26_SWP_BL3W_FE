@@ -149,15 +149,18 @@ export const AdminCreateEventView: React.FC = () => {
                 <CheckCircle2 className="w-12 h-12 text-[var(--color-success)]" />
               </div>
               <h3 className="font-mono font-bold text-lg text-[var(--color-success)] uppercase">
-                Khởi Tạo Sự Kiện Thành Công!
+                Đã Khởi Tạo Thành Công Phase 1 Sự Kiện & Gán EC!
               </h3>
-              <p className="font-mono text-xs text-[var(--text-primary)]">
-                Mã Sự Kiện vừa tạo: <span className="text-[var(--accent-primary)] font-bold">#{successEventId}</span>
+              <p className="font-mono text-xs text-[var(--text-primary)] leading-relaxed">
+                Mã Sự Kiện vừa khởi tạo: <span className="text-[var(--accent-primary)] font-bold">#{successEventId}</span>
                 {form.coordinatorEmail && (
-                  <span className="block text-[var(--accent-coordinator)] font-mono text-xs mt-1">
-                    Đã phân công Event Coordinator: {form.coordinatorEmail}
+                  <span className="block text-[var(--accent-coordinator)] font-mono text-xs mt-1 font-bold">
+                    Đã phân công Event Coordinator phụ trách: {form.coordinatorEmail}
                   </span>
                 )}
+                <span className="block text-[var(--text-muted)] text-[11px] mt-2 italic">
+                  Tài khoản EC được gán có thể đăng nhập để cấu hình tiếp Phase 2-6 (Vòng thi, Track, Tiêu chí, Nhân sự Giám khảo & Duyệt Đội).
+                </span>
               </p>
               <div className="pt-2 flex flex-wrap justify-center gap-4">
                 <Link href="/admin/dashboard">
@@ -165,9 +168,9 @@ export const AdminCreateEventView: React.FC = () => {
                     Về Bảng Điều Hành Admin Tổng &gt;
                   </Button>
                 </Link>
-                <Link href="/coordinator/dashboard">
+                <Link href={`/coordinator/events/${successEventId}`}>
                   <Button variant="secondary" className="font-mono text-xs border-[var(--accent-coordinator)] text-[var(--accent-coordinator)]">
-                    Sang Bảng EC Dashboard &gt;
+                    Sang Cấu Hình Chi Tiết Phase 2-6 &gt;
                   </Button>
                 </Link>
               </div>

@@ -1,10 +1,6 @@
-import { CreateEventWizardView } from "@/views/CreateEventWizardView";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+import { redirect } from "next/navigation";
 
 export default function CreateEventPage() {
-  return (
-    <RoleGuard allowedRoles={["Coordinator", "Admin"]}>
-      <CreateEventWizardView />
-    </RoleGuard>
-  );
+  // EC không có quyền khởi tạo Sự kiện Phase 1. Chuyển hướng EC về Dashboard để cấu hình sự kiện được phân công.
+  redirect("/coordinator/dashboard");
 }

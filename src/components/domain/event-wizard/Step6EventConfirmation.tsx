@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button, Card, Badge } from "@/components/ui";
 import { eventsRepository } from "@/repositories/eventsRepository";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -44,6 +44,8 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
   onPrev,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const isAdmin = pathname?.includes("/admin");
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
       setIsPublishing(false);
       setPublishSuccess(true);
       setTimeout(() => {
-        router.push("/coordinator/dashboard");
+        router.push(isAdmin ? "/admin/dashboard" : "/coordinator/dashboard");
       }, 1500);
     } catch (err: any) {
       setIsPublishing(false);
