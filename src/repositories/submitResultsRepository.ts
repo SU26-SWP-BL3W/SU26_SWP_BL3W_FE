@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import type { SubmissionItem } from "@/viewModels/teamTypes";
-import type { BaseResponse, PagedResult } from "@/models/types";
+import type { PagedResult } from "@/models/types";
 
 export interface SubmitResultListItem {
   id?: string;
@@ -22,22 +22,33 @@ export interface SubmitResultListItem {
   TeamName?: string;
   displayCode?: string;
   DisplayCode?: string;
+  description?: string;
+  Description?: string;
+  isActive?: boolean;
+  IsActive?: boolean;
   createdTime?: string;
   CreatedTime?: string;
 }
 
-/** Danh sách bài nộp lọc theo Hạng mục (GET /api/SubmitResults?TrackId=...) — dùng cho Mentor xem tiến độ Track mình phụ trách. */
-export function useGetSubmitResultsByTrack(trackId?: string) {
+export function readApiError(err: unknown): string {
+  const e = err as { response?: { data?: { message?: string; data?: unknown } }; message?: string };
+  const payload = e.response?.data;
+  if (typeof payload?.data === "string" && payload.data.trim()) return payload.data;
+  if (payload?.message) return payload.message;
+  return e.message || "Thao tác thất bại.";
+}
+
+/** Danh sách bài nộp theo hạng mục — giám khảo/mentor. Filter EventId bắt buộc với EventRoleAuthorize. */
+export function useGetSubmitResultsByTrack(trackId?: string, eventId?: string) {
   return useQuery({
-    queryKey: ["submit-results-by-track", trackId],
+    queryKey: ["submit-results-by-track", trackId, eventId],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<PagedResult<SubmitResultListItem>>>(
-        "/SubmitResults",
-        { params: { TrackId: trackId, PageSize: 200 } }
-      );
-      return res.data.data?.data ?? [];
+      const res = await apiClient.get<PagedResult<SubmitResultListItem>>("/SubmitResults", {
+        params: { TrackId: trackId, EventId: eventId, PageSize: 200 },
+      });
+      return res.data?.data ?? [];
     },
-    enabled: !!trackId,
+    enabled: !!trackId && !!eventId,
   });
 }
 
@@ -52,25 +63,19 @@ export interface SubmitResultRequest {
   Description?: string;
 }
 
-export function useMySubmissions(teamId?: string) {
+export function useMySubmissions() {
   return useQuery({
-    queryKey: ["my-submissions", teamId],
+    queryKey: ["my-submissions"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<BaseResponse<PagedResult<SubmitResultListItem>> | any>(
-          "/Teams/my-submissions",
-          { params: { PageSize: 100 } }
-        );
-        return res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
-      } catch (err: any) {
-        console.warn("[SEAL BE-DATA MISSING] GET /api/Teams/my-submissions error:", err?.message);
-        return [];
-      }
+      const res = await apiClient.get<PagedResult<SubmitResultListItem>>("/Teams/my-submissions", {
+        params: { PageSize: 100 },
+      });
+      return res.data?.data ?? [];
     },
   });
 }
 
-export const useGetJudgeSubmissions = useMySubmissions;
+export const useGetJudgeSubmissions = useGetSubmitResultsByTrack;
 
 export function useCreateSubmission() {
   const queryClient = useQueryClient();
@@ -79,8 +84,8 @@ export function useCreateSubmission() {
       const res = await apiClient.post<SubmissionItem>("/SubmitResults", data);
       return res.data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["my-submissions", variables.TeamId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-submissions"] });
     },
   });
 }

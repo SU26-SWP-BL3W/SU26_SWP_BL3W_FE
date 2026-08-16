@@ -23,6 +23,48 @@ const REDIRECT_BY_ROLE: Record<string, string> = {
   TeamMember: "/my-team",
 };
 
+const ROLE_RANK = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
+
+function pickPrimaryRole(rows: unknown[], userId: string): EventRole | null {
+  const norm = (Array.isArray(rows) ? rows : []).map((raw) => {
+    const r = raw as Record<string, unknown>;
+    const str = (...keys: string[]) => {
+      for (const k of keys) {
+        const v = r[k];
+        if (typeof v === "string" && v.trim()) return v;
+      }
+      return "";
+    };
+    return {
+      id: str("id", "Id"),
+      eventId: str("eventId", "EventId"),
+      roleName: str("roleName", "RoleName"),
+      trackId: str("trackId", "TrackId"),
+      teamId: str("teamId", "TeamId"),
+    };
+  });
+  const chosen = ROLE_RANK.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
+  if (!chosen) return null;
+  const assigned = norm.filter((r) => r.roleName === chosen.roleName).map((r) => r.eventId).filter(Boolean);
+  return {
+    id: chosen.id,
+    eventRoleId: chosen.id,
+    EventRoleId: chosen.id,
+    userId,
+    UserId: userId,
+    eventId: chosen.eventId,
+    EventId: chosen.eventId,
+    roleName: chosen.roleName,
+    RoleName: chosen.roleName,
+    trackId: chosen.trackId,
+    TrackId: chosen.trackId,
+    teamId: chosen.teamId,
+    TeamId: chosen.teamId,
+    assignedEventIds: assigned,
+    AssignedEventIds: assigned,
+  };
+}
+
 interface AuthContextType {
   user: User | null;
   activeRole: EventRole | null;
@@ -106,32 +148,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const rolesRes = await apiClient.get<any>("/EventRoles/user", {
         params: { UserId: userId, PageSize: 200 },
       });
-      const rows: any[] = rolesRes.data?.data ?? rolesRes.data ?? [];
-      const norm = rows.map((r) => ({
-        eventId: r.eventId ?? r.EventId,
-        roleName: r.roleName ?? r.RoleName,
-      }));
-      // Ưu tiên vai trò nghiệp vụ cao nhất
-      const rank = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
-      const chosen = rank.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
-      if (chosen) {
-        const assigned = norm
-          .filter((r) => r.roleName === chosen.roleName)
-          .map((r) => r.eventId)
-          .filter(Boolean);
-        primaryRole = {
-          eventRoleId: `real-${chosen.roleName}-${userId}`,
-          userId,
-          eventId: assigned[0],
-          EventId: assigned[0],
-          roleName: chosen.roleName,
-          EventRoleId: `real-${chosen.roleName}-${userId}`,
-          UserId: userId,
-          RoleName: chosen.roleName,
-          assignedEventIds: assigned,
-          AssignedEventIds: assigned,
-        } as EventRole;
-        targetPath = REDIRECT_BY_ROLE[chosen.roleName] ?? "/events";
+      const rows: unknown[] = rolesRes.data?.data ?? rolesRes.data ?? [];
+      primaryRole = pickPrimaryRole(rows, userId);
+      if (primaryRole) {
+        targetPath = REDIRECT_BY_ROLE[primaryRole.roleName || ""] ?? "/events";
       } else if (normalizedEmail.includes("ec_") || normalizedEmail.includes("ec.") || normalizedEmail.includes("coordinator")) {
         targetPath = "/coordinator/dashboard";
       } else if (normalizedEmail.includes("judge")) {
@@ -205,31 +225,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const rolesRes = await apiClient.get<any>("/EventRoles/user", {
         params: { UserId: userId, PageSize: 200 },
       });
-      const rows: any[] = rolesRes.data?.data ?? rolesRes.data ?? [];
-      const norm = rows.map((r) => ({
-        eventId: r.eventId ?? r.EventId,
-        roleName: r.roleName ?? r.RoleName,
-      }));
-      const rank = ["EventCoordinator", "Judge", "Mentor", "TeamLeader", "TeamMember"];
-      const chosen = rank.map((rn) => norm.find((r) => r.roleName === rn)).find(Boolean);
-      if (chosen) {
-        const assigned = norm
-          .filter((r) => r.roleName === chosen.roleName)
-          .map((r) => r.eventId)
-          .filter(Boolean);
-        primaryRole = {
-          eventRoleId: `real-${chosen.roleName}-${userId}`,
-          userId,
-          eventId: assigned[0],
-          EventId: assigned[0],
-          roleName: chosen.roleName,
-          EventRoleId: `real-${chosen.roleName}-${userId}`,
-          UserId: userId,
-          RoleName: chosen.roleName,
-          assignedEventIds: assigned,
-          AssignedEventIds: assigned,
-        } as EventRole;
-        targetPath = REDIRECT_BY_ROLE[chosen.roleName] ?? "/events";
+      const rows: unknown[] = rolesRes.data?.data ?? rolesRes.data ?? [];
+      primaryRole = pickPrimaryRole(rows, userId);
+      if (primaryRole) {
+        targetPath = REDIRECT_BY_ROLE[primaryRole.roleName || ""] ?? "/events";
       }
     } catch {
       // fallback targetPath

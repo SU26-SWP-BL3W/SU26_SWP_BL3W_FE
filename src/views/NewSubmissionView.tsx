@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Link } from "@/i18n/routing";
-import { useCreateSubmission } from "@/repositories/submitResultsRepository";
+import { useAuth } from "@/providers/AuthProvider";
+import { useCreateSubmission, readApiError, type SubmitResultRequest } from "@/repositories/submitResultsRepository";
 import { useMyTeam } from "@/repositories/teamsRepository";
 import { useGetTracksByEvent } from "@/repositories/tracksRepository";
 import { useEventRounds } from "@/repositories/eventsRepository";
@@ -63,6 +64,7 @@ function TrackSubmissionCard({
   const [notes, setNotes] = useState(parsedExisting.notes);
   const [isSaved, setIsSaved] = useState(!!existingSubmission);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
   // Check completion
   const { filledCount, requiredFilled, requiredTotal } = useMemo(() => {
@@ -117,26 +119,26 @@ function TrackSubmissionCard({
     };
 
     try {
-      await createSubmission.mutateAsync(payload as any);
+      const created = await createSubmission.mutateAsync(payload as SubmitResultRequest);
       const updatedItem: SubmissionItem = {
-        id: existingSubmission?.id || `sub-${Date.now()}`,
-        teamId: "team-001",
-        roundId: track.roundId,
+        id: (created as { id?: string })?.id || existingSubmission?.id || `sub-${Date.now()}`,
+        teamId,
+        roundId,
         roundName: "Vòng hiện tại",
         trackId: track.id,
         trackName: track.trackName,
         submissionUrl: primaryUrl,
         description: JSON.stringify({ links: allLinks, notes }),
-        teamName: "Cyber_Knights",
+        teamName: "",
         createdTime: new Date().toISOString(),
         isActive: true,
         isEliminated: false,
       };
       setIsSaved(true);
+      setFormError("");
       onSubmitSuccess(track.id, updatedItem);
     } catch (err) {
-      console.error(err);
-      alert("Có lỗi xảy ra khi lưu bài nộp.");
+      setFormError(readApiError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -297,7 +299,9 @@ function TrackSubmissionCard({
         {/* Card Footer Actions */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-[var(--border-muted)]/60">
           <div className="font-mono text-xs text-[var(--text-muted)]">
-            {isSaved ? (
+            {formError ? (
+              <span role="alert" className="text-[color:var(--color-danger)]">{formError}</span>
+            ) : isSaved ? (
               <span className="text-[var(--color-success)] font-semibold">
                 Đã lưu bài nộp cho hạng mục {track.trackName}
               </span>
@@ -331,9 +335,14 @@ function TrackSubmissionCard({
 
 // ─── Main NewSubmissionView Component ──────────────────────────────────────────
 export function NewSubmissionView() {
-  const { data: realTeam, isLoading } = useMyTeam();
+  const { activeRole } = useAuth();
+  const eventIdFromRole =
+    (activeRole as { eventId?: string; EventId?: string } | null)?.eventId ||
+    (activeRole as { EventId?: string } | null)?.EventId ||
+    "";
+  const { data: realTeam, isLoading } = useMyTeam(eventIdFromRole || undefined);
   const team = realTeam;
-  const eventId = (team as any)?.EventId || (team as any)?.eventId || "";
+  const eventId = (team as any)?.EventId || (team as any)?.eventId || eventIdFromRole;
   const teamId = (team as any)?.TeamId || (team as any)?.id || "";
   const teamTrackId = (team as any)?.TrackId || (team as any)?.trackId || "";
   const { data: tracks = [] } = useGetTracksByEvent(eventId);
@@ -361,8 +370,12 @@ export function NewSubmissionView() {
     }));
   };
 
-  // Guard for Non-registered teams
-  if (!team && !isLoading) {
+  const teamStatus = String((team as { status?: string; Status?: string } | undefined)?.status
+    || (team as { Status?: string } | undefined)?.Status || "");
+  const canSubmit = teamStatus === "Registered";
+
+  // Guard: chưa có đội hoặc đội chưa được duyệt
+  if (!isLoading && (!team || !canSubmit)) {
     return (
       <div className="hud-lattice min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 space-y-4">
         <ApiMissingDataBadge

@@ -5,7 +5,6 @@ import type {
   Score,
   ScoreBreakdownModel,
   CalibrationModel,
-  BaseResponse,
   FinalResult,
 } from "@/models/entities";
 
@@ -15,8 +14,8 @@ export function useSaveScore() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: SaveScoreRequest) => {
-      const res = await apiClient.post<BaseResponse<Score>>("/Scores/save", data);
-      return res.data?.data;
+      const res = await apiClient.post<Score>("/Scores/save", data);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["judge-submissions"] });
@@ -32,10 +31,8 @@ export function useGetTeamScoreBreakdown(teamId?: string) {
   return useQuery({
     queryKey: ["team-score-breakdown", teamId],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<ScoreBreakdownModel>>(
-        `/Scores/team/${teamId}/breakdown`
-      );
-      return res.data?.data;
+      const res = await apiClient.get<ScoreBreakdownModel>(`/Scores/team/${teamId}/breakdown`);
+      return res.data;
     },
     enabled: !!teamId,
   });
@@ -47,11 +44,8 @@ export function useGetTrackCalibration(trackId?: string) {
   return useQuery({
     queryKey: ["track-calibration", trackId],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<CalibrationModel>>(
-        `/Scores/track/${trackId}/calibration`
-      );
-      const raw = res.data as any;
-      return raw?.data ?? raw;
+      const res = await apiClient.get<CalibrationModel>(`/Scores/track/${trackId}/calibration`);
+      return res.data;
     },
     enabled: !!trackId,
   });
@@ -63,10 +57,8 @@ export function useCalculateRoundResults() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (roundId: string) => {
-      const res = await apiClient.post<BaseResponse<FinalResult[]>>(
-        `/FinalResults/calculate/${roundId}`
-      );
-      return res.data?.data;
+      const res = await apiClient.post<FinalResult[]>(`/FinalResults/calculate/${roundId}`);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["final-results"] });
