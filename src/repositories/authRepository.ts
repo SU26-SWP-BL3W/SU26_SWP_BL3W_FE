@@ -6,7 +6,6 @@ import type {
   RegisterRequest,
   UpdateStudentProfileRequest,
   FptStudentResponse,
-  BaseResponse,
 } from "@/models/entities";
 
 // ─── Login ───────────────────────────────────────────────────
@@ -15,8 +14,8 @@ export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { email: string; password?: string }) => {
-      const res = await apiClient.post<BaseResponse<LoginResponse>>("/Auth/login", data);
-      return res.data.data;
+      const res = await apiClient.post<LoginResponse>("/Auth/login", data);
+      return res.data;
     },
     onSuccess: (data) => {
       const token = (data as any)?.token || (data as any)?.accessToken;
@@ -34,8 +33,8 @@ export function useLogin() {
 export function useRegister() {
   return useMutation({
     mutationFn: async (data: RegisterRequest) => {
-      const res = await apiClient.post<BaseResponse<User>>("/Auth/register", data);
-      return res.data.data;
+      const res = await apiClient.post<User>("/Auth/register", data);
+      return res.data;
     },
   });
 }
@@ -46,8 +45,8 @@ export function useGoogleLogin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (idToken: string) => {
-      const res = await apiClient.post<BaseResponse<LoginResponse>>("/Auth/google-login", { idToken });
-      return res.data.data;
+      const res = await apiClient.post<LoginResponse>("/Auth/google-login", { idToken });
+      return res.data;
     },
     onSuccess: (data) => {
       const token = (data as any)?.token || (data as any)?.accessToken;
@@ -81,11 +80,11 @@ export function useLogout() {
 export function useRefreshToken() {
   return useMutation({
     mutationFn: async (refreshToken: string) => {
-      const res = await apiClient.post<BaseResponse<{ accessToken: string; refreshToken: string }>>(
+      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
         "/Auth/refresh-token",
         { refreshToken }
       );
-      return res.data.data;
+      return res.data;
     },
   });
 }
@@ -96,7 +95,7 @@ export function useVerifyEmail(token: string | null) {
   return useQuery({
     queryKey: ["verifyEmail", token],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<boolean>>("/Auth/verify-email", {
+      const res = await apiClient.get<boolean>("/Auth/verify-email", {
         params: { token },
       });
       return res.data;
@@ -110,7 +109,7 @@ export function useVerifyEmail(token: string | null) {
 export function useResendVerification() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const res = await apiClient.post<BaseResponse<boolean>>("/Auth/resend-verification", { email });
+      const res = await apiClient.post<boolean>("/Auth/resend-verification", { email });
       return res.data;
     },
   });
@@ -123,8 +122,8 @@ export function useSubmitStudentProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: UpdateStudentProfileRequest) => {
-      const res = await apiClient.post<BaseResponse<User>>("/Auth/student-profiles", data);
-      return res.data.data;
+      const res = await apiClient.post<User>("/Auth/student-profiles", data);
+      return res.data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["currentUser"], data);
@@ -137,8 +136,8 @@ export function useUpdateStudentProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: UpdateStudentProfileRequest) => {
-      const res = await apiClient.put<BaseResponse<User>>("/Auth/student-profiles", data);
-      return res.data.data;
+      const res = await apiClient.put<User>("/Auth/student-profiles", data);
+      return res.data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["currentUser"], data);
@@ -151,10 +150,8 @@ export function useUpdateStudentProfile() {
 export function useFptStudentVerification() {
   return useMutation({
     mutationFn: async (studentCode: string) => {
-      const res = await apiClient.get<BaseResponse<FptStudentResponse>>(
-        `/FptStudents/${studentCode}`
-      );
-      return res.data.data;
+      const res = await apiClient.get<FptStudentResponse>(`/FptStudents/${studentCode}`);
+      return res.data;
     },
   });
 }

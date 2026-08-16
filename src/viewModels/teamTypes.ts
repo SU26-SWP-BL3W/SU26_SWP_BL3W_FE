@@ -56,7 +56,10 @@ export interface MemberItem {
   fullName: string;
   email: string;
   roleName: "TeamLeader" | "TeamMember";
+  /** Tài khoản đã được điều phối viên duyệt thẻ sinh viên. */
   isApproved: boolean;
+  /** Đã nộp hồ sơ thí sinh — đây mới là điều kiện BE dùng để cho chốt đăng ký đội. */
+  hasStudentProfile: boolean;
   school: string;
 }
 

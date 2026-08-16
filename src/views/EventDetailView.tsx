@@ -16,7 +16,7 @@ import { useMyTeam } from "@/repositories/teamsRepository";
 export function EventDetailView({ eventId }: { eventId: string }) {
   const { user, activeRole } = useAuth();
   const { data: teamResponse } = useMyTeam();
-  const team = teamResponse?.team;
+  const team = (teamResponse as any)?.team ?? teamResponse;
 
   const rawRole = activeRole?.roleName || activeRole?.RoleName;
   const userEmail = (user?.email || user?.Email || "").toLowerCase();

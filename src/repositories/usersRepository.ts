@@ -204,8 +204,8 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<User>>("/Users/profile");
-      return res.data.data;
+      const res = await apiClient.get<User>("/Users/profile");
+      return res.data;
     },
     retry: false,
   });
@@ -217,8 +217,8 @@ export function useUpdateUserProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<User>) => {
-      const res = await apiClient.put<BaseResponse<User>>("/Auth/student-profiles", data);
-      return res.data.data;
+      const res = await apiClient.put<User>("/Auth/student-profiles", data);
+      return res.data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["currentUser"], data);
@@ -260,8 +260,9 @@ export function useMyInvitations() {
   return useQuery({
     queryKey: ["my-invitations"],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<MyInvitationsResponse>>("/Users/my-invitations");
-      return res.data.data ?? { totalPending: 0, invitations: [] };
+      // apiClient da boc vo BaseResponse trong interceptor nen res.data CHINH LA payload.
+      const res = await apiClient.get<MyInvitationsResponse>("/Users/my-invitations");
+      return res.data ?? { totalPending: 0, invitations: [] };
     },
   });
 }
@@ -274,10 +275,8 @@ export function useGetUserRejections(userId: string | undefined) {
     queryKey: ["userRejections", userId],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<UserRejection[]>>(
-          `/UserRejections/user/${userId}`
-        );
-        if (res.data?.data) return res.data.data;
+        const res = await apiClient.get<UserRejection[]>(`/UserRejections/user/${userId}`);
+        if (res.data) return res.data;
       } catch {
         // Fallback
       }
@@ -377,8 +376,8 @@ export const usersRepository = {
   async findUserByEmail(email: string): Promise<User | null> {
     if (!email) return null;
     try {
-      const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users");
-      const list = res.data?.data?.data ?? [];
+      const res = await apiClient.get<PagedResult<User>>("/Users");
+      const list = res.data?.data ?? [];
       const found = list.find(
         (u) => u.email?.toLowerCase() === email.toLowerCase() || (u as any).Email?.toLowerCase() === email.toLowerCase()
       );

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
-import type { BaseResponse, PagedResult } from "@/models/types";
+import type { PagedResult } from "@/models/types";
 
 export interface TeamListItem {
   id?: string;
@@ -20,10 +20,10 @@ export function useGetTeamsByEvent(eventId?: string, status?: string) {
   return useQuery({
     queryKey: ["teams-by-event", eventId, status],
     queryFn: async () => {
-      const res = await apiClient.get<BaseResponse<PagedResult<TeamListItem>>>("/Teams", {
+      const res = await apiClient.get<PagedResult<TeamListItem>>("/Teams", {
         params: { EventId: eventId, Status: status, PageSize: 200 },
       });
-      return res.data.data?.data ?? [];
+      return res.data?.data ?? [];
     },
     enabled: !!eventId,
   });
@@ -56,18 +56,68 @@ export interface TeamInvitation {
   ExpiresAt: string;
 }
 
-export function useMyTeam() {
+export interface MyTeamApiModel {
+  id?: string;
+  Id?: string;
+  name?: string;
+  Name?: string;
+  description?: string | null;
+  Description?: string | null;
+  status?: string;
+  Status?: string;
+  eventId?: string;
+  EventId?: string;
+  eventName?: string;
+  EventName?: string;
+  trackId?: string | null;
+  TrackId?: string | null;
+  createdTime?: string;
+  CreatedTime?: string;
+  lastRejectReason?: string | null;
+  LastRejectReason?: string | null;
+  members?: Array<{
+    userId?: string;
+    UserId?: string;
+    fullName?: string;
+    FullName?: string;
+    email?: string;
+    Email?: string;
+    roleName?: string;
+    RoleName?: string;
+    isApproved?: boolean;
+    IsApproved?: boolean;
+    studentCode?: string;
+    StudentCode?: string;
+  }>;
+  Members?: MyTeamApiModel["members"];
+}
+
+export function useMyTeam(eventId?: string) {
   return useQuery({
-    queryKey: ["my-team"],
+    queryKey: ["my-team", eventId || "any"],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<{ team: Team | null; members: TeamMember[]; invitations?: TeamInvitation[] }>("/Teams/my-team");
-        return res.data;
+        const res = await apiClient.get<MyTeamApiModel>("/Teams/my-team", {
+          params: eventId ? { EventId: eventId } : undefined,
+        });
+        return res.data ?? null;
       } catch (err: any) {
         console.warn("[SEAL BE-DATA MISSING] GET /api/Teams/my-team error:", err?.message);
         return null;
       }
     },
+  });
+}
+
+export function useTeamInvitations(teamId?: string) {
+  return useQuery({
+    queryKey: ["team-invitations", teamId],
+    queryFn: async () => {
+      const res = await apiClient.get<any>(`/Teams/${teamId}/invitations`);
+      const raw = res.data;
+      return Array.isArray(raw) ? raw : raw?.data ?? [];
+    },
+    enabled: !!teamId,
   });
 }
 
@@ -98,6 +148,7 @@ export function useInviteMember() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-team"] });
+      queryClient.invalidateQueries({ queryKey: ["team-invitations"] });
     },
   });
 }
@@ -110,6 +161,7 @@ export function useCancelInvitation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-team"] });
+      queryClient.invalidateQueries({ queryKey: ["team-invitations"] });
     },
   });
 }
@@ -120,7 +172,11 @@ export function useAcceptOrDeclineInvitation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ invitationId, isAccepted }: { invitationId: string; isAccepted: boolean }) => {
-      const res = await apiClient.post(`/Teams/invitations/${invitationId}/respond`, { isAccepted });
+      // BE nhan isAccepted qua query string; gui trong body thi luon doc ra false
+      // -> moi lan bam "Chap nhan" deu thanh tu choi.
+      const res = await apiClient.post(`/Teams/invitations/${invitationId}/respond`, null, {
+        params: { isAccepted },
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -148,10 +204,10 @@ export function useGetPendingTeams() {
     queryKey: ["pending-teams"],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<PagedResult<Team>>>("/Teams", {
+        const res = await apiClient.get<PagedResult<Team>>("/Teams", {
           params: { Status: "PendingApproval", PageSize: 100 },
         });
-        return res.data.data?.data ?? [];
+        return res.data?.data ?? [];
       } catch (err: any) {
         console.warn("[SEAL BE-DATA MISSING] GET /api/Teams (pending) error:", err?.message);
         return [];
@@ -204,7 +260,7 @@ export function useTransferLeadership() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ teamId, targetUserId }: { teamId: string; targetUserId: string }) => {
-      const res = await apiClient.post(`/Teams/${teamId}/transfer-leader`, { targetUserId });
+      const res = await apiClient.post(`/Teams/${teamId}/transfer-leader`, { newLeaderUserId: targetUserId });
       return res.data;
     },
     onSuccess: () => {

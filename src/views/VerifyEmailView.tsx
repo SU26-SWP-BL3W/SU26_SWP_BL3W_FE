@@ -15,7 +15,8 @@ export function VerifyEmailView() {
   const { mutateAsync: resendApi, isPending: isResending } = useResendVerification();
 
   const { data, isLoading, isError, error } = useVerifyEmail(token);
-  const isSuccessState = Boolean(data?.success || (data as any)?.isSuccess || (!isError && data !== undefined));
+  // apiClient da nem loi khi envelope bao that bai, nen query resolve nghia la xac thuc thanh cong.
+  const isSuccessState = !isError && data !== undefined && data !== false;
 
   // Tự động chuyển hướng sang Login sau 3 giây nếu thành công
   useEffect(() => {
