@@ -1,116 +1,65 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-import { useGetJudgeSubmissions } from "@/repositories/submitResultsRepository";
-import { useGetCriterias } from "@/repositories/templatesRepository";
+import { useGetSubmitResultsByTrack, readApiError } from "@/repositories/submitResultsRepository";
+import { useGetTracksByEvent } from "@/repositories/tracksRepository";
+import { useGetTemplate } from "@/repositories/templatesRepository";
 import { useSaveScore } from "@/repositories/scoresRepository";
-import { Button, Card, Badge, Input, ApiMissingDataBadge } from "@/components/ui";
-import {
-  Award,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  ExternalLink,
-  Shield,
-  Save,
-  Send,
-} from "lucide-react";
-import type { SubmitResult, TemplateCriteriaEntity, CriteriaEntity } from "@/models/entities";
-
+import { Button, Card, Badge, Input } from "@/components/ui";
+import { Award, AlertTriangle, RefreshCw, ExternalLink, Shield, Save, Send } from "lucide-react";
 import { hasEventPermission } from "@/lib/permissions";
 import { Link } from "@/i18n/routing";
 
-const INITIAL_JUDGE_SUBMISSIONS: SubmitResult[] = [
-  {
-    id: "sub-101",
-    teamId: "ANONYMOUS_101",
-    submissionUrl: "https://github.com/anonymous-team-101/rbl-platform",
-    description: "Nền tảng tự động hóa đánh giá độ tin cậy RBL và kiến trúc microservices.",
-    submittedAt: "12/08/2026",
-  },
-  {
-    id: "sub-102",
-    teamId: "ANONYMOUS_102",
-    submissionUrl: "https://github.com/anonymous-team-102/threat-scanner",
-    description: "Ứng dụng Quét lỗ hổng an ninh mạng tự động dựa trên AI Agent.",
-    submittedAt: "12/08/2026",
-  },
-  {
-    id: "sub-103",
-    teamId: "ANONYMOUS_103",
-    submissionUrl: "https://github.com/anonymous-team-103/smart-campus",
-    description: "Giải pháp IoT quản lý năng lượng thông minh cho khuôn viên tòa nhà.",
-    submittedAt: "12/08/2026",
-  },
-  {
-    id: "sub-104",
-    teamId: "ANONYMOUS_104",
-    submissionUrl: "https://github.com/anonymous-team-104/review-bot",
-    description: "Bot hỗ trợ Review Code tự động và đánh giá tiêu chí bảo mật CI/CD.",
-    submittedAt: "12/08/2026",
-  },
-];
-
 export function JudgeScoringView() {
   const { user, activeRole } = useAuth();
-  const [selectedTrackId, setSelectedTrackId] = useState("track-1");
+  const eventId = activeRole?.eventId || activeRole?.EventId || "";
+  const eventRoleId = activeRole?.id || activeRole?.eventRoleId || activeRole?.EventRoleId || "";
+  const assignedTrackId = activeRole?.trackId || activeRole?.TrackId || "";
+  const isAuthorizedJudge = hasEventPermission(user, activeRole, eventId);
 
-  const activeEventId = activeRole?.eventId || "event-seal-2026";
-  const isAuthorizedJudge = hasEventPermission(user, activeRole, activeEventId);
+  const { data: tracks = [] } = useGetTracksByEvent(eventId || undefined);
+  const trackOptions = useMemo(() => {
+    const list = tracks.map((t) => ({
+      id: t.id || t.Id || "",
+      name: t.trackName || t.TrackName || "Hạng mục",
+      templateId: t.templateId || t.TemplateId || "",
+    })).filter((t) => t.id);
+    if (assignedTrackId) return list.filter((t) => t.id === assignedTrackId);
+    return list;
+  }, [tracks, assignedTrackId]);
 
-  // Lấy danh sách bài nộp thuộc Track
+  const [selectedTrackId, setSelectedTrackId] = useState("");
+  const selectedTrack = trackOptions.find((t) => t.id === (selectedTrackId || trackOptions[0]?.id));
+  const activeTrackId = selectedTrack?.id || "";
+
   const { data: apiSubmissions = [], isLoading: loadingSubmissions, refetch } =
-    useGetJudgeSubmissions(selectedTrackId);
+    useGetSubmitResultsByTrack(activeTrackId, eventId);
+  const { data: template } = useGetTemplate(selectedTrack?.templateId);
+  const criteria = template?.criterias ?? [];
 
-  const displaySubmissions: any[] = apiSubmissions;
-  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
-
-  // Lấy danh sách Tiêu chí (Template Criteria)
-  const { data: criterias = [] } = useGetCriterias();
-  const defaultCriteria: TemplateCriteriaEntity[] = useMemo(() => {
-    if (criterias && criterias.length > 0) {
-      return criterias.map((c: CriteriaEntity) => ({
-        criteriaId: c.id || c.CriteriaId || "crit-1",
-        criteriaName: c.criterionName || c.criteriaName || c.CriterionName || "Tiêu chí",
-        description: c.description || c.Description || "",
-        maxScore: c.maxScore || c.MaxScore || 10,
-        weight: c.weight || c.Weight || 25,
-      }));
-    }
-    return [
-      { criteriaId: "cr-1", criteriaName: "Ý tưởng & Đổi mới sáng tạo", maxScore: 10, weight: 30 },
-      { criteriaId: "cr-2", criteriaName: "Kỹ thuật & Kiến trúc mã nguồn", maxScore: 10, weight: 40 },
-      { criteriaId: "cr-3", criteriaName: "Tính khả thi & Tiềm năng thương mại", maxScore: 10, weight: 20 },
-      { criteriaId: "cr-4", criteriaName: "Trình bày & Thuyết trình", maxScore: 10, weight: 10 },
-    ];
-  }, [criterias]);
-
-  // Scores state: Record<criteriaId, scoreValue>
+  const [selectedSubmission, setSelectedSubmission] = useState<(typeof apiSubmissions)[number] | null>(null);
   const [scores, setScores] = useState<Record<string, number>>({});
   const [comment, setComment] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saveOk, setSaveOk] = useState("");
 
   const { mutateAsync: saveScoreApi, isPending: isSaving } = useSaveScore();
 
-  // Tính TotalScore tự động theo công thức: SUM( (Value / MaxScore) * Weight ) * 10
   const calculatedTotalScore = useMemo(() => {
     let totalWeightedRatio = 0;
     let totalWeight = 0;
-
-    defaultCriteria.forEach((cr) => {
+    criteria.forEach((cr) => {
       const crId = cr.criteriaId || "";
       const val = scores[crId] ?? 0;
-      const max = cr.maxScore || 10;
-      const w = cr.weight || 10;
-
+      const max = Number(cr.maxScore) || 10;
+      const w = Number(cr.weight) || 0;
       totalWeightedRatio += (val / max) * w;
       totalWeight += w;
     });
-
     if (totalWeight === 0) return 0;
-    const finalScore = (totalWeightedRatio / totalWeight) * 10;
-    return Math.min(10, Math.max(0, Number(finalScore.toFixed(2))));
-  }, [scores, defaultCriteria]);
+    return Math.min(10, Math.max(0, Number(((totalWeightedRatio / totalWeight) * 10).toFixed(2))));
+  }, [scores, criteria]);
 
   const handleScoreChange = (criteriaId: string, val: number, maxScore: number) => {
     const clamped = Math.min(maxScore, Math.max(0, val));
@@ -118,80 +67,83 @@ export function JudgeScoringView() {
   };
 
   const handleSaveScore = async (isFinalSubmit: boolean) => {
-    if (!selectedSubmission) return;
-
-    // Conflict of interest check (Nếu Giám khảo thuộc đúng Đội thi)
-    if (selectedSubmission.teamId && activeRole?.teamId === selectedSubmission.teamId) {
-      alert("⚠️ Conflict of Interest: Bạn thuộc đội thi này nên không được phép chấm điểm!");
+    if (!selectedSubmission || !eventRoleId || !selectedTrack?.templateId) {
+      setSaveError("Thiếu vai trò giám khảo hoặc bộ tiêu chí của hạng mục.");
       return;
     }
-
-    const payloadDetails = defaultCriteria.map((cr) => ({
+    setSaveError("");
+    setSaveOk("");
+    const submitResultId = selectedSubmission.id || selectedSubmission.Id || "";
+    const payloadDetails = criteria.map((cr) => ({
+      templateId: selectedTrack.templateId,
       criteriaId: cr.criteriaId || "",
       value: scores[cr.criteriaId || ""] ?? 0,
     }));
-
     try {
       await saveScoreApi({
-        eventId: activeRole?.eventId || "seal-2026-mua-he",
-        eventRoleId: activeRole?.id || "er-judge-100",
-        submitResultId: selectedSubmission.id || selectedSubmission.teamId || "sub-1",
+        eventRoleId,
+        submitResultId,
         comment,
         isSubmitted: isFinalSubmit,
         details: payloadDetails,
       });
-
-      alert(
-        isFinalSubmit
-          ? "✓ Đã CHỐT BẢNG ĐIỂM thành công!"
-          : "✓ Đã LƯU NHÁP bảng điểm."
-      );
-    } catch {
-      alert("Đã ghi nhận điểm số.");
+      setSaveOk(isFinalSubmit ? "Đã chốt bảng điểm." : "Đã lưu nháp.");
+    } catch (err) {
+      setSaveError(readApiError(err));
     }
   };
 
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] font-mono text-xs text-[var(--text-muted)]">
-        Vui lòng đăng nhập với tài khoản Giám khảo (Judge)...
+        Vui lòng đăng nhập với tài khoản Giám khảo.
+      </div>
+    );
+  }
+
+  if (!isAuthorizedJudge) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] font-mono text-xs text-[var(--text-muted)]">
+        Trang này dành cho giám khảo của sự kiện đang chọn.
       </div>
     );
   }
 
   return (
     <div className="p-6 md:p-8 max-w-[var(--container-max)] mx-auto hud-lattice min-h-[calc(100vh-4rem)]">
-      {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 border-b border-[var(--border-muted)] pb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[rgba(251,191,36,0.1)] border border-[var(--accent-judge)]/30 flex items-center justify-center shrink-0">
             <Award className="w-6 h-6 text-[var(--accent-judge)]" />
           </div>
           <div>
-            <h1 className="font-display text-xl md:text-2xl font-bold text-[var(--accent-judge)] tracking-widest uppercase flex items-center gap-2">
-              <span>🔒 CHẤM ĐIỂM MÙ (BLIND JUDGING)</span>
+            <h1 className="font-display text-xl md:text-2xl font-bold text-[var(--accent-judge)] tracking-widest uppercase">
+              Chấm điểm bài thi
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)]">
-              // HẠNG MỤC THI ĐẤU: {selectedTrackId.toUpperCase()} · TÊN ĐỘI THI ĐƯỢC ẨN TỰ ĐỘNG THEO CHUẨN RBL
+              Hạng mục: {selectedTrack?.name || "—"} · Tên đội ẩn với giám khảo
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-          <Link href={`/events/${activeEventId}/leaderboard`}>
-            <Button variant="ghost" accent="judge" className="border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)] hover:text-black text-xs font-mono font-bold">
-              🏆 XEM BẢNG XẾP HẠNG
+          <Link href={`/events/${eventId}/leaderboard`}>
+            <Button variant="ghost" accent="judge" className="border border-[var(--accent-judge)]/40 text-[var(--accent-judge)] text-xs font-mono font-bold">
+              Bảng xếp hạng
             </Button>
           </Link>
-
           <select
-            value={selectedTrackId}
-            onChange={(e) => setSelectedTrackId(e.target.value)}
+            value={activeTrackId}
+            onChange={(e) => {
+              setSelectedTrackId(e.target.value);
+              setSelectedSubmission(null);
+            }}
             className="px-4 py-2 bg-[var(--bg-input)] border border-[var(--accent-judge)]/30 text-[var(--text-primary)] font-mono text-xs focus:outline-none hud-clipped cursor-pointer"
           >
-            <option value="track-1">Hạng mục 1: AI & Data Science</option>
-            <option value="track-2">Hạng mục 2: Cyber Security</option>
-            <option value="track-3">Hạng mục 3: Web3 & Blockchain</option>
+            {trackOptions.length === 0 && <option value="">Chưa có hạng mục</option>}
+            {trackOptions.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
           </select>
           <Button variant="ghost" onClick={() => refetch()} className="text-xs">
             <RefreshCw className="w-3.5 h-3.5" />
@@ -200,34 +152,31 @@ export function JudgeScoringView() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Submissions List */}
         <div className="flex flex-col gap-4">
-          <h2 className="font-display text-base font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2 flex items-center justify-between">
-            <span>DANH SÁCH BÀI NỘP ({displaySubmissions.length})</span>
+          <h2 className="font-display text-base font-bold text-white uppercase tracking-widest border-b border-[var(--border-muted)] pb-2">
+            Danh sách bài nộp ({apiSubmissions.length})
           </h2>
-
           {loadingSubmissions ? (
-            <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">
-              Đang tải danh sách bài nộp...
-            </div>
-          ) : displaySubmissions.length === 0 ? (
-            <ApiMissingDataBadge
-              endpoint={`GET /api/SubmitResults/track/${selectedTrackId}`}
-              title="CHƯA CÓ BÀI NỘP NÀO TRONG CSDL BACKEND"
-              message="Chưa có bài nộp nào thuộc Hạng mục thi đấu này trên Backend API."
-            />
+            <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)]">Đang tải...</div>
+          ) : apiSubmissions.length === 0 ? (
+            <p className="font-mono text-xs text-[var(--text-muted)]">
+              Chưa có bài nộp trong hạng mục này, hoặc bạn chưa được phân công.
+            </p>
           ) : (
             <div className="space-y-3">
-              {displaySubmissions.map((sub, idx) => {
-                const isSelected = selectedSubmission?.id === sub.id;
-                const anonymousCode = `BÀI NỘP #SUB-${101 + idx}`;
-
+              {apiSubmissions.map((sub, idx) => {
+                const id = sub.id || sub.Id;
+                const isSelected = selectedSubmission && (selectedSubmission.id || selectedSubmission.Id) === id;
+                const code = sub.displayCode || sub.DisplayCode || `T${idx + 1}`;
                 return (
                   <button
-                    key={sub.id || idx}
+                    key={id || idx}
+                    type="button"
                     onClick={() => {
                       setSelectedSubmission(sub);
                       setScores({});
+                      setSaveError("");
+                      setSaveOk("");
                     }}
                     className={`w-full p-4 text-left transition-all duration-200 hud-clipped border ${
                       isSelected
@@ -236,15 +185,11 @@ export function JudgeScoringView() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-xs font-bold text-[var(--accent-judge)]">
-                        🔒 {anonymousCode}
-                      </span>
-                      <Badge tone={sub.submittedAt ? "success" : "neutral"}>
-                        {sub.submittedAt ? "ĐÃ NỘP" : "DRAFT"}
-                      </Badge>
+                      <span className="font-mono text-xs font-bold text-[var(--accent-judge)]">{code}</span>
+                      <Badge tone="neutral">Đã nộp</Badge>
                     </div>
                     <p className="text-xs font-mono text-[var(--text-primary)] font-bold line-clamp-2">
-                      {sub.description || "Bài nộp dự án kỹ thuật"}
+                      {sub.repoUrl || sub.RepoUrl || sub.submissionUrl || sub.SubmissionUrl || "Bài nộp"}
                     </p>
                   </button>
                 );
@@ -253,72 +198,58 @@ export function JudgeScoringView() {
           )}
         </div>
 
-        {/* Right Column: Scoring Form Panel */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <h2 className="font-display text-lg font-bold text-[var(--accent-judge)] uppercase tracking-widest border-b border-[var(--border-muted)] pb-2">
-            BẢNG ĐIỂM ĐÁNH GIÁ (TEMPLATE CRITERIA)
+            Bảng điểm theo tiêu chí
           </h2>
-
           {!selectedSubmission ? (
             <Card className="p-12 text-center text-xs font-mono text-[var(--text-muted)] hud-clipped border-[var(--border-muted)] flex flex-col items-center justify-center min-h-[300px]">
               <Shield className="w-12 h-12 text-[var(--accent-judge)]/40 mb-3" />
-              Chọn một bài nộp ở danh sách bên trái để tiến hành chấm điểm.
+              Chọn một bài nộp bên trái để chấm.
             </Card>
           ) : (
             <Card className="p-6 bg-[var(--bg-panel)] border-[var(--border-muted)] hud-clipped space-y-6">
-              {/* Submission preview bar */}
               <div className="p-4 bg-[var(--bg-base)] border border-[var(--accent-judge)]/30 flex items-center justify-between hud-clipped">
                 <div>
                   <span className="text-[10px] font-mono text-[var(--accent-judge)] uppercase font-bold block mb-1">
-                    🔒 SẢN PHẨM ẨN DANH (BLIND SUBMISSION)
+                    Bài nộp ẩn danh
                   </span>
                   <a
-                    href={selectedSubmission.submissionUrl || "#"}
+                    href={selectedSubmission.repoUrl || selectedSubmission.RepoUrl || selectedSubmission.submissionUrl || "#"}
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs font-mono text-[var(--accent-primary)] hover:underline flex items-center gap-1 font-bold"
                   >
-                    {selectedSubmission.submissionUrl || "https://github.com/anonymous-team/repo"}{" "}
+                    {selectedSubmission.repoUrl || selectedSubmission.submissionUrl || "Mở repo"}
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-
                 <div className="text-right">
-                  <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">
-                    ĐIỂM TỔNG TÍNH TOÁN
-                  </span>
-                  <span className="font-mono text-2xl font-bold text-[var(--accent-judge)]">
-                    {calculatedTotalScore} / 10
-                  </span>
+                  <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block">Điểm tạm tính</span>
+                  <span className="font-mono text-2xl font-bold text-[var(--accent-judge)]">{calculatedTotalScore} / 10</span>
                 </div>
               </div>
 
-              {/* Criteria Sliders / Inputs */}
-              <div className="space-y-5">
-                {defaultCriteria.map((cr) => {
-                  const crId = cr.criteriaId || "";
-                  const crName = cr.criteriaName || "Tiêu chí";
-                  const max = cr.maxScore || 10;
-                  const weight = cr.weight || 10;
-                  const currentVal = scores[crId] ?? 0;
+              {criteria.length === 0 && (
+                <p className="font-mono text-xs text-[var(--color-warning)] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Hạng mục chưa gắn bộ tiêu chí.
+                </p>
+              )}
 
+              <div className="space-y-5">
+                {criteria.map((cr) => {
+                  const crId = cr.criteriaId || "";
+                  const max = Number(cr.maxScore) || 10;
+                  const currentVal = scores[crId] ?? 0;
                   return (
-                    <div
-                      key={crId}
-                      className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2"
-                    >
+                    <div key={crId} className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
-                          {crName}
-                        </span>
+                        <span className="font-mono text-xs font-bold text-[var(--text-primary)]">{cr.criteriaName}</span>
                         <div className="flex items-center gap-2 font-mono text-xs">
-                          <span className="text-[var(--text-muted)]">Trọng số: {weight}%</span>
-                          <span className="text-[var(--accent-judge)] font-bold">
-                            [{currentVal} / {max}]
-                          </span>
+                          <span className="text-[var(--text-muted)]">Trọng số: {cr.weight}%</span>
+                          <span className="text-[var(--accent-judge)] font-bold">[{currentVal} / {max}]</span>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-4">
                         <input
                           type="range"
@@ -326,9 +257,7 @@ export function JudgeScoringView() {
                           max={max}
                           step={0.5}
                           value={currentVal}
-                          onChange={(e) =>
-                            handleScoreChange(crId, Number(e.target.value), max)
-                          }
+                          onChange={(e) => handleScoreChange(crId, Number(e.target.value), max)}
                           className="flex-1 accent-[var(--accent-judge)] cursor-pointer"
                         />
                         <Input
@@ -337,9 +266,7 @@ export function JudgeScoringView() {
                           max={max}
                           step={0.5}
                           value={currentVal}
-                          onChange={(e) =>
-                            handleScoreChange(crId, Number(e.target.value), max)
-                          }
+                          onChange={(e) => handleScoreChange(crId, Number(e.target.value), max)}
                           className="w-20 text-center font-bold"
                         />
                       </div>
@@ -348,37 +275,26 @@ export function JudgeScoringView() {
                 })}
               </div>
 
-              {/* Comment Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                  Nhận xét của Giám khảo
-                </label>
+                <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">Nhận xét</label>
                 <textarea
                   rows={3}
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Ghi chú điểm mạnh, điểm yếu hoặc gợi ý cải thiện cho đội thi..."
                   className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped focus:outline-none focus:border-[var(--accent-judge)]"
                 />
               </div>
 
-              {/* Submit Buttons */}
+              {saveError && <p role="alert" className="font-mono text-xs text-[color:var(--color-danger)]">{saveError}</p>}
+              {saveOk && <p className="font-mono text-xs text-[color:var(--color-success)]">{saveOk}</p>}
+
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-muted)]">
-                <Button
-                  variant="ghost"
-                  disabled={isSaving}
-                  onClick={() => handleSaveScore(false)}
-                  className="flex items-center gap-1.5 text-xs font-mono"
-                >
-                  <Save className="w-4 h-4" /> LƯU NHÁP
+                <Button variant="ghost" disabled={isSaving || criteria.length === 0} onClick={() => handleSaveScore(false)} className="flex items-center gap-1.5 text-xs font-mono">
+                  <Save className="w-4 h-4" /> {isSaving ? "Đang gửi..." : "Lưu nháp"}
                 </Button>
-                <Button
-                  disabled={isSaving}
-                  onClick={() => handleSaveScore(true)}
-                  className="flex items-center gap-1.5 text-xs font-mono bg-[var(--accent-judge)] text-black font-bold hover:bg-yellow-400"
-                >
+                <Button disabled={isSaving || criteria.length === 0} onClick={() => handleSaveScore(true)} className="flex items-center gap-1.5 text-xs font-mono bg-[var(--accent-judge)] text-black font-bold">
                   {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  // CHỐT BẢNG ĐIỂM &gt;
+                  Chốt bảng điểm
                 </Button>
               </div>
             </Card>

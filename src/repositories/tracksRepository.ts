@@ -17,6 +17,10 @@ export interface TrackWithStaffModel {
   Id?: string;
   eventId?: string;
   EventId?: string;
+  roundId?: string;
+  RoundId?: string;
+  templateId?: string;
+  TemplateId?: string;
   trackName?: string;
   TrackName?: string;
   description?: string;
@@ -36,11 +40,11 @@ export function useGetTracksByEvent(eventId?: string) {
     queryKey: ["tracks-by-event", eventId],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<PagedResult<TrackWithStaffModel>>>(
+        const res = await apiClient.get<PagedResult<TrackWithStaffModel>>(
           "/Tracks/event",
           { params: { EventId: eventId, PageSize: 100 } }
         );
-        return res.data.data?.data ?? [];
+        return res.data?.data ?? [];
       } catch (err: any) {
         console.warn("[SEAL BE-DATA MISSING] GET /api/Tracks/event error:", err?.message);
         return [];

@@ -1,18 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/models/apiClient";
 import { CriteriaEntity, TemplateCriteriaEntity, TemplateEntity } from "@/models/entities";
-import { BaseResponse } from "@/models/types";
+import { BaseResponse, PagedResult } from "@/models/types";
+
+function asList<T>(payload: T[] | PagedResult<T> | undefined): T[] {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.data)) return payload.data;
+  return [];
+}
 
 export function useGetCriterias() {
   return useQuery({
     queryKey: ["criterias"],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<CriteriaEntity[]>>("/Criterias");
-        const list = res.data?.data;
-        if (Array.isArray(list) && list.length > 0) return list;
-      } catch (err: any) {
-        console.warn("[SEAL BE-DATA MISSING] GET /api/Criterias error:", err?.message);
+        const res = await apiClient.get<PagedResult<CriteriaEntity> | CriteriaEntity[]>("/Criterias");
+        const list = asList(res.data);
+        if (list.length > 0) return list;
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Criterias error:", message);
       }
       return [];
     },
@@ -24,14 +31,42 @@ export function useGetTemplates() {
     queryKey: ["templates"],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<BaseResponse<TemplateEntity[]>>("/Templates");
-        const list = res.data?.data;
-        if (Array.isArray(list) && list.length > 0) return list;
-      } catch (err: any) {
-        console.warn("[SEAL BE-DATA MISSING] GET /api/Templates error:", err?.message);
+        const res = await apiClient.get<PagedResult<TemplateEntity> | TemplateEntity[]>("/Templates");
+        const list = asList(res.data);
+        if (list.length > 0) return list;
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn("[SEAL BE-DATA MISSING] GET /api/Templates error:", message);
       }
       return [];
     },
+  });
+}
+
+export interface TemplateWithCriteria {
+  id?: string;
+  templateName?: string;
+  criterias?: Array<{
+    criteriaId?: string;
+    criteriaName?: string;
+    description?: string;
+    weight?: number;
+    maxScore?: number;
+  }>;
+}
+
+export function useGetTemplate(templateId?: string) {
+  return useQuery({
+    queryKey: ["template", templateId],
+    queryFn: async () => {
+      const res = await apiClient.get<TemplateWithCriteria>(`/Templates/${templateId}`);
+      const data = res.data as TemplateWithCriteria & { Criterias?: TemplateWithCriteria["criterias"] };
+      return {
+        ...data,
+        criterias: data?.criterias ?? data?.Criterias ?? [],
+      };
+    },
+    enabled: !!templateId,
   });
 }
 

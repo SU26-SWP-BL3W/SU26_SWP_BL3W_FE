@@ -239,36 +239,91 @@ function EditModal({
 }
 
 import { useMyTeam } from "@/repositories/teamsRepository";
-import { ApiMissingDataBadge } from "@/components/ui";
+import {
+  useMySubmissions,
+  useUpdateSubmission,
+  useDeleteSubmission,
+  readApiError,
+  type SubmitResultListItem,
+} from "@/repositories/submitResultsRepository";
+import { ApiMissingDataBadge, ConfirmDialog } from "@/components/ui";
 
+function pick(obj: unknown, ...keys: string[]): string {
+  const rec = obj as Record<string, unknown> | null;
+  if (!rec) return "";
+  for (const k of keys) {
+    const v = rec[k];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return "";
+}
 
+function mapSubmission(raw: SubmitResultListItem): SubmissionItem {
+  const repo = pick(raw, "repoUrl", "RepoUrl", "submissionUrl", "SubmissionUrl");
+  const demo = pick(raw, "demoUrl", "DemoUrl");
+  const slide = pick(raw, "slideUrl", "SlideUrl");
+  return {
+    id: pick(raw, "id", "Id"),
+    teamId: pick(raw, "teamId", "TeamId"),
+    teamName: pick(raw, "teamName", "TeamName"),
+    trackId: pick(raw, "trackId", "TrackId"),
+    trackName: pick(raw, "trackId", "TrackId"),
+    roundId: "",
+    roundName: "Vòng hiện tại",
+    submissionUrl: repo,
+    description: [repo && `Repo: ${repo}`, demo && `Demo: ${demo}`, slide && `Slide: ${slide}`]
+      .filter(Boolean)
+      .join("\n"),
+    isActive: raw.isActive !== false && raw.IsActive !== false,
+    isEliminated: false,
+    createdTime: pick(raw, "createdTime", "CreatedTime"),
+  };
+}
 
 // ─── Main View ────────────────────────────────────────────────────────────────
 export function MySubmissionsView() {
   const { user, activeRole } = useAuth();
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const roleName = activeRole?.roleName || activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
   const isLeader = roleName === "TeamLeader";
+  const eventIdFromRole = pick(activeRole, "eventId", "EventId");
 
-  const { data: realTeam } = useMyTeam();
+  const { data: realTeam } = useMyTeam(eventIdFromRole || undefined);
   const team = realTeam;
-  const isRegistered = true;
+  const teamStatus = pick(team, "status", "Status");
+  const isRegistered = teamStatus === "Registered";
 
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [editingSub, setEditingSub] = useState<any | null>(null);
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const { data: rawSubs = [], isLoading } = useMySubmissions();
+  const submissions = rawSubs.map(mapSubmission);
+  const updateSub = useUpdateSubmission();
+  const deleteSub = useDeleteSubmission();
 
-  const visibleSubs = submissions.filter(s => !deletedIds.has(s.id));
+  const [editingSub, setEditingSub] = useState<SubmissionItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SubmissionItem | null>(null);
+  const [actionError, setActionError] = useState("");
 
-  const handleSave = (id: string, url: string, desc: string) => {
-    setSubmissions(prev =>
-      prev.map(s => s.id === id ? { ...s, submissionUrl: url, description: desc } : s)
-    );
-    setEditingSub(null);
+  const visibleSubs = submissions;
+
+  const handleSave = async (id: string, url: string, desc: string) => {
+    setActionError("");
+    try {
+      await updateSub.mutateAsync({
+        id,
+        data: { RepoUrl: url, SubmissionUrl: url, Description: desc },
+      });
+      setEditingSub(null);
+    } catch (err) {
+      setActionError(readApiError(err));
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Xác nhận xóa bài nộp này? Hành động không thể hoàn tác.")) {
-      setDeletedIds(prev => new Set([...prev, id]));
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setActionError("");
+    try {
+      await deleteSub.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      setActionError(readApiError(err));
     }
   };
 
@@ -278,10 +333,21 @@ export function MySubmissionsView() {
       {editingSub && (
         <EditModal
           sub={editingSub}
-          onClose={() => setEditingSub(null)}
+          onClose={() => { setEditingSub(null); setActionError(""); }}
           onSave={handleSave}
         />
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa bài nộp?"
+        description="Hành động này gửi lệnh xóa lên máy chủ, không hoàn tác được."
+        confirmLabel="Xóa bài"
+        destructive
+        pending={deleteSub.isPending}
+        error={actionError}
+        onConfirm={handleDelete}
+        onCancel={() => { setDeleteTarget(null); setActionError(""); }}
+      />
 
       <div className="max-w-[var(--container-max)] mx-auto px-6 py-8">
 
@@ -296,14 +362,14 @@ export function MySubmissionsView() {
             </h1>
             {team && (
               <p className="font-mono text-xs text-[var(--text-muted)] mt-1 flex flex-wrap items-center gap-2">
-                <span>Đội: <span className="text-[var(--accent-team)] font-bold">{(team as any).teamName || (team as any).TeamName || "Đội Thi"}</span></span>
+                <span>Đội: <span className="text-[var(--accent-team)] font-bold">{pick(team, "name", "Name", "teamName", "TeamName") || "Đội thi"}</span></span>
                 <span>·</span>
                 <span>Sự kiện:</span>
                 <Link
-                  href={`/events/${(team as any).eventId || "event-seal-2026"}`}
+                  href={`/events/${pick(team, "eventId", "EventId")}`}
                   className="text-[var(--accent-primary)] hover:underline flex items-center gap-1 border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded-none font-bold"
                 >
-                  <span>{(team as any).eventName || "SEAL Hackathon 2026"}</span>
+                  <span>{pick(team, "eventName", "EventName") || "Sự kiện"}</span>
                   <span className="text-[10px]">↗ XEM CHI TIẾT</span>
                 </Link>
               </p>
@@ -311,7 +377,7 @@ export function MySubmissionsView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href={`/events/${(team as any)?.eventId || "event-seal-2026"}/leaderboard`}>
+            <Link href={`/events/${pick(team, "eventId", "EventId")}/leaderboard`}>
               <button className="hud-clipped px-4 py-3 border border-[var(--accent-judge)]/40 bg-[var(--accent-judge)]/10 text-[var(--accent-judge)] font-mono text-xs font-bold tracking-wider uppercase hover:bg-[var(--accent-judge)]/20 transition-all focus:outline-none whitespace-nowrap">
                 🏆 BẢNG XẾP HẠNG
               </button>
@@ -331,7 +397,7 @@ export function MySubmissionsView() {
                 className="hud-clipped px-6 py-3 bg-[var(--bg-panel)] border border-[var(--border-muted)] font-mono text-xs text-[var(--text-muted)] tracking-wider uppercase cursor-not-allowed"
                 title={!team ? "Bạn chưa có đội thi" : "Đội cần được BTC xác nhận trước khi nộp bài"}
               >
-                {!team ? "CHƯA CÓ ĐỘI" : `ĐĂNG KÝ: String((team as any).status || "Active").toUpperCase()`}
+                {!team ? "CHƯA CÓ ĐỘI" : `TRẠNG THÁI: ${teamStatus.toUpperCase()}`}
               </div>
             )}
           </div>
@@ -342,7 +408,7 @@ export function MySubmissionsView() {
           <div className="mb-6 p-4 bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 hud-clipped">
             <p className="font-mono text-xs text-[var(--color-warning)]">
               ⚠ Chỉ có thể nộp bài sau khi đội được BTC <strong>phê duyệt đăng ký</strong>.
-              Trạng thái hiện tại: <span className="font-bold uppercase">{(team as any).status || "Pending"}</span>
+              Trạng thái hiện tại: <span className="font-bold uppercase">{teamStatus || "Pending"}</span>
             </p>
           </div>
         )}
@@ -355,12 +421,20 @@ export function MySubmissionsView() {
           </div>
         )}
 
+        {actionError && (
+          <p role="alert" className="mb-4 font-mono text-xs text-[color:var(--color-danger)]">
+            {actionError}
+          </p>
+        )}
+
         {/* ── Table ── */}
-        {visibleSubs.length === 0 ? (
+        {isLoading ? (
+          <p className="font-mono text-xs text-[color:var(--text-muted)] py-10 text-center">Đang tải bài nộp...</p>
+        ) : visibleSubs.length === 0 ? (
           <ApiMissingDataBadge
-            endpoint="GET /api/SubmitResults"
-            title="CHƯA CÓ BÀI NỘP NÀO TRÊN BACKEND DATABASE"
-            message="Đội thi của bạn chưa thực hiện nộp bài thi cho các hạng mục. Bấm '+ NỘP BÀI MỚI' ở góc phải để nộp."
+            endpoint="GET /api/Teams/my-submissions"
+            title="CHƯA CÓ BÀI NỘP"
+            message="Đội chưa nộp bài cho hạng mục nào. Nút nộp bài chỉ mở khi đội đã được BTC duyệt."
           />
         ) : (
           <div className="bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped overflow-hidden">
@@ -452,52 +526,26 @@ export function MySubmissionsView() {
                         ✏ SỬA BÀI
                       </button>
                     )}
-                    <Link href={`/appeals?subId=${sub.id}`}>
                       <button
-                        className="font-mono text-[10px] px-2 py-1 border border-[var(--accent-coordinator)]/40 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 transition-colors uppercase flex items-center gap-1"
-                        title="Nộp đơn phúc khảo/khiếu nại kết quả cho bài nộp này"
+                        type="button"
+                        onClick={() => { setActionError(""); setDeleteTarget(sub); }}
+                        disabled={!isRegistered || !isLeader}
+                        className={`font-mono text-[10px] px-2 py-1 border uppercase ${
+                          isRegistered && isLeader
+                            ? "border-[var(--color-danger)]/40 text-[color:var(--color-danger)]"
+                            : "border-[var(--border-muted)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
+                        }`}
                       >
-                        ⚖ PHÚC KHẢO
+                        Xóa
                       </button>
-                    </Link>
-                  </div>
-                </div>
-
-                {/* ── Evaluation Transparency: Public Judge Scores & Comments ── */}
-                <div className="px-5 py-4 bg-[var(--bg-base)] border-t border-[var(--border-muted)] flex flex-col gap-3 font-mono">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[var(--accent-judge)] uppercase flex items-center gap-2">
-                      <span>⚖ BẢNG ĐIỂM &amp; NHẬN XÉT CỦA GIÁM KHẢO</span>
-                    </span>
-                    <span className="text-[10px] text-[var(--text-muted)]">
-                      // MINH BẠCH DÀNH CHO ĐỘI THI
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="p-3 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/30 hud-clipped space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[var(--text-primary)]">
-                          👨‍⚖️ TS. Nguyễn Văn A
-                        </span>
-                        <span className="font-bold text-[var(--accent-judge)]">9.2 / 10</span>
-                      </div>
-                      <p className="text-[11px] text-[var(--text-muted)] italic">
-                        &quot;Kiến trúc microservices xuất sắc, mã nguồn sạch sẽ và có tính ứng dụng thực tế cao.&quot;
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/30 hud-clipped space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[var(--text-primary)]">
-                          👨‍⚖️ ThS. Trần Thị B
-                        </span>
-                        <span className="font-bold text-[var(--accent-judge)]">9.5 / 10</span>
-                      </div>
-                      <p className="text-[11px] text-[var(--text-muted)] italic">
-                        "Giải pháp an ninh mạng ấn tượng, tiêu chí kỹ thuật đáp ứng đầy đủ yêu cầu RBL."
-                      </p>
-                    </div>
+                      <Link href={`/appeals?subId=${sub.id}`}>
+                        <button
+                          className="font-mono text-[10px] px-2 py-1 border border-[var(--accent-coordinator)]/40 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 transition-colors uppercase"
+                          title="Nộp đơn phúc khảo cho bài nộp này"
+                        >
+                          Phúc khảo
+                        </button>
+                      </Link>
                   </div>
                 </div>
               </div>

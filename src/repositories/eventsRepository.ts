@@ -200,7 +200,7 @@ export function useEventRounds(eventId: string) {
       const res = await apiClient.get<any>(`/Rounds/event`, {
         params: { EventId: eventId, PageSize: 100 },
       });
-      const data = res.data?.data?.data || res.data?.data?.items || res.data?.data || res.data;
+      const data = res.data?.data ?? res.data;
       return Array.isArray(data) ? data : [];
     },
     enabled: !!eventId,
