@@ -257,8 +257,8 @@ export function EventsDiscoveryView() {
   const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
 
   const { data: teamResponse } = useMyTeam();
-  const team = teamResponse?.team;
-  const myEventId = team?.EventId || (team as any)?.eventId || "event-seal-2026";
+  const team = (teamResponse as any)?.team ?? teamResponse;
+  const myEventId = team?.EventId || (team as any)?.eventId || "";
 
   const {
     events, totalCount, topTracks,
@@ -390,7 +390,7 @@ export function EventsDiscoveryView() {
                 </Link>
               )}
 
-              {(roleName === "TeamLeader" || roleName === "TeamMember") && (
+              {(roleName === "TeamLeader" || roleName === "TeamMember") && myEventId && (
                 <Link href={`/events/${myEventId}`}>
                   <button className="hud-clipped px-5 py-2.5 bg-[var(--accent-team)] text-[var(--bg-base)] font-mono font-bold text-xs tracking-wider uppercase hover:bg-white transition-all shadow-sm shrink-0 cursor-pointer">
                     ↗ XEM CHI TIẾT SỰ KIỆN CỦA TÔI ➔

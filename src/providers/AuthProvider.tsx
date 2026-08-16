@@ -122,6 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         primaryRole = {
           eventRoleId: `real-${chosen.roleName}-${userId}`,
           userId,
+          eventId: assigned[0],
+          EventId: assigned[0],
           roleName: chosen.roleName,
           EventRoleId: `real-${chosen.roleName}-${userId}`,
           UserId: userId,
@@ -218,6 +220,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         primaryRole = {
           eventRoleId: `real-${chosen.roleName}-${userId}`,
           userId,
+          eventId: assigned[0],
+          EventId: assigned[0],
           roleName: chosen.roleName,
           EventRoleId: `real-${chosen.roleName}-${userId}`,
           UserId: userId,

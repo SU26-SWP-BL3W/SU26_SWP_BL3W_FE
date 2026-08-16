@@ -332,7 +332,7 @@ function TrackSubmissionCard({
 // ─── Main NewSubmissionView Component ──────────────────────────────────────────
 export function NewSubmissionView() {
   const { data: realTeam, isLoading } = useMyTeam();
-  const team = realTeam?.team ?? realTeam;
+  const team = realTeam;
   const eventId = (team as any)?.EventId || (team as any)?.eventId || "";
   const teamId = (team as any)?.TeamId || (team as any)?.id || "";
   const teamTrackId = (team as any)?.TrackId || (team as any)?.trackId || "";
@@ -419,14 +419,14 @@ export function NewSubmissionView() {
               Nộp Bài Thi Hackathon
             </h1>
             <div className="flex flex-wrap items-center gap-3 mt-2 font-mono text-xs text-[var(--text-muted)]">
-              <span>Đội: <strong className="text-[var(--accent-team)]">{(team as any)?.teamName || (team as any)?.TeamName || "Đội Thi"}</strong></span>
+              <span>Đội: <strong className="text-[var(--accent-team)]">{(team as any)?.teamName || (team as any)?.TeamName || (team as any)?.name || (team as any)?.Name || "Đội Thi"}</strong></span>
               <span>·</span>
               <span>Sự kiện:</span>
               <Link
-                href={`/events/${(team as any)?.eventId || "event-seal-2026"}`}
+                href={`/events/${(team as any)?.eventId || (team as any)?.EventId || ""}`}
                 className="text-[var(--accent-primary)] hover:underline flex items-center gap-1 border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded-none font-bold"
               >
-                <span>{(team as any)?.eventName || "SEAL Hackathon 2026"}</span>
+                <span>{(team as any)?.eventName || (team as any)?.EventName || "Sự kiện"}</span>
                 <span className="text-[10px]">↗ XEM CHI TIẾT SỰ KIỆN</span>
               </Link>
             </div>
