@@ -49,23 +49,35 @@ export const DEFAULT_SCHOOLS_LIST: School[] = [
 
 /** GET /api/Schools — Lấy danh sách trường học */
 export function useGetSchools() {
-  return useQuery({
+  return useQuery<School[]>({
     queryKey: ["schools"],
-    queryFn: async () => {
+    queryFn: async (): Promise<School[]> => {
       try {
-        const res = await apiClient.get<BaseResponse<PagedResult<School>>>("/Schools", {
+        const res = await apiClient.get<any>("/Schools", {
           params: { PageNumber: 1, PageSize: 100 },
         });
-        if (res.data?.data?.data && res.data.data.data.length > 0) {
-          return res.data.data.data;
-        }
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          return res.data;
+        const raw = res.data;
+        const list = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.items)
+          ? raw.items
+          : [];
+
+        if (list.length > 0) {
+          return list.map((s: any) => ({
+            id: s.id || s.Id || s.schoolId || s.SchoolId,
+            schoolId: s.schoolId || s.SchoolId || s.id || s.Id,
+            schoolName: s.schoolName || s.SchoolName || s.name || s.Name,
+            code: s.code || s.Code || "",
+            address: s.address || s.Address || "",
+          }));
         }
       } catch (err: any) {
         console.warn("[SEAL BE-DATA MISSING] GET /api/Schools error:", err?.message);
       }
-      return [];
+      return DEFAULT_SCHOOLS_LIST;
     },
     staleTime: 1000 * 60 * 10,
   });

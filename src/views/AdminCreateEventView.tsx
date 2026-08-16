@@ -44,18 +44,35 @@ export const AdminCreateEventView: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        eventName: form.eventName,
-        season: form.season,
-        year: Number(form.year),
-        startDate: new Date(form.startDate).toISOString(),
-        endDate: new Date(form.endDate).toISOString(),
-        registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : new Date(form.startDate).toISOString(),
-        registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : new Date(form.endDate).toISOString(),
-        description: form.description,
-        maxTeams: Number(form.maxTeams),
+      const startDateIso = new Date(form.startDate).toISOString();
+      const endDateIso = new Date(form.endDate).toISOString();
+
+      const payload: Record<string, any> = {
+        eventName: form.eventName.trim(),
+        season: form.season.trim(),
+        year: Number(form.year) || new Date().getFullYear(),
+        startDate: startDateIso,
+        endDate: endDateIso,
+        registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : startDateIso,
+        registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : endDateIso,
+        description: form.description?.trim() || undefined,
+        maxTeams: Number(form.maxTeams) || 50,
         status: true,
-        rounds: [],
+        rounds: [
+          {
+            roundName: "Vòng 1 - Sơ Loại",
+            roundNumber: 1,
+            startDate: startDateIso,
+            endDate: endDateIso,
+            advancementRule: "top:10",
+            tracks: [
+              {
+                trackName: "Hạng Mục Chung",
+                description: "Hạng mục khởi tạo ban đầu cho sự kiện",
+              },
+            ],
+          },
+        ],
       };
 
       const res = await eventsRepository.createEvent(payload);
@@ -310,7 +327,7 @@ export const AdminCreateEventView: React.FC = () => {
                   <span>Chỉ System Admin mới có nút bấm khởi tạo này.</span>
                 </div>
                 <Button variant="primary" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Đang tạo event & gán EC..." : "// XÁC NHẬN TẠO SỰ KIỆN >"}
+                  {isSubmitting ? "⚡ Đang tạo event (Máy chủ Render có thể mất 15-30s nếu đang khôi phục kết nối)..." : "// XÁC NHẬN TẠO SỰ KIỆN >"}
                 </Button>
               </div>
             </form>

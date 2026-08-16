@@ -103,6 +103,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
     }
   }, [event]);
 
+  const serverRoundsStr = JSON.stringify(serverRounds);
   useEffect(() => {
     if (Array.isArray(serverRounds)) {
       setRounds(
@@ -120,8 +121,9 @@ export const CoordinatorEventDetailView: React.FC = () => {
         }))
       );
     }
-  }, [serverRounds]);
+  }, [serverRoundsStr]);
 
+  const serverTracksStr = JSON.stringify(serverTracks);
   useEffect(() => {
     if (Array.isArray(serverTracks)) {
       setTracks(
@@ -136,8 +138,9 @@ export const CoordinatorEventDetailView: React.FC = () => {
         }))
       );
     }
-  }, [serverTracks, eventId]);
+  }, [serverTracksStr, eventId]);
 
+  const serverStaffStr = JSON.stringify(serverStaff);
   useEffect(() => {
     if (Array.isArray(serverStaff)) {
       setStaffInvites(
@@ -150,7 +153,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
         }))
       );
     }
-  }, [serverStaff]);
+  }, [serverStaffStr]);
 
   // Step 1 Handlers
   const handleUpdateEventField = (field: keyof EventFormState, value: any) => {
@@ -386,6 +389,8 @@ export const CoordinatorEventDetailView: React.FC = () => {
         season: eventData.season,
         year: eventData.year,
         maxTeams: eventData.maxTeams,
+        minTeamSize: eventData.minTeamSize,
+        maxTeamSize: eventData.maxTeamSize,
         tagline: eventData.tagline,
         description: eventData.description,
         photoEventUrl,
@@ -433,16 +438,55 @@ export const CoordinatorEventDetailView: React.FC = () => {
       });
       for (const dr of deletedRounds) {
         const id = dr.id || dr.Id || dr.roundId || dr.RoundId;
-        if (id) await roundsRepository.deleteRound(id).catch((e) => console.warn("[SEAL] Delete round error:", e));
+        if (id) await roundsRepository.deleteRound(id);
       }
 
-      // 3. Persist Tracks (Create, Update, Delete)
+      // 3. Persist Tracks (Create, Update, Delete) & Track Criterias
       for (const t of tracks) {
         const isNewTrack = t.id.startsWith("new-trk-");
+        let targetTemplateId = t.templateId;
+
+        // Persist criteriasByTrack for each track
+        const trackCriterias = criteriasByTrack[t.id];
+        if (trackCriterias && trackCriterias.length > 0) {
+          if (!targetTemplateId || targetTemplateId.startsWith("tpl-")) {
+            const tplRes: any = await templatesRepository.createTemplate({
+              templateName: `Mẫu tiêu chí - ${t.trackName}`,
+              description: `Bộ tiêu chí chuẩn cho hạng mục ${t.trackName}`,
+            }).catch(() => null);
+            if (tplRes?.data?.templateId || tplRes?.data?.id || tplRes?.templateId || tplRes?.id) {
+              targetTemplateId = tplRes?.data?.templateId || tplRes?.data?.id || tplRes?.templateId || tplRes?.id;
+            }
+          }
+          if (targetTemplateId) {
+            for (const crit of trackCriterias) {
+              let cId = crit.criteriaId || (crit as any).id || "";
+              if (cId.startsWith("crit-") || !cId) {
+                const createdCrit: any = await templatesRepository.createCriteria({
+                  criterionName: crit.criterionName || (crit as any).name || "Tiêu chí mới",
+                  description: crit.description,
+                  maxScore: crit.maxScore,
+                }).catch(() => null);
+                if (createdCrit?.data?.criteriaId || createdCrit?.data?.id || createdCrit?.criteriaId || createdCrit?.id) {
+                  cId = createdCrit?.data?.criteriaId || createdCrit?.data?.id || createdCrit?.criteriaId || createdCrit?.id;
+                }
+              }
+              if (cId) {
+                await templatesRepository.addCriteriaToTemplate({
+                  templateId: targetTemplateId,
+                  criteriaId: cId,
+                  weight: crit.weight,
+                  maxScore: crit.maxScore,
+                }).catch(() => null);
+              }
+            }
+          }
+        }
+
         const trackPayload: any = {
           eventId,
           trackName: t.trackName,
-          templateId: t.templateId || undefined,
+          templateId: targetTemplateId || undefined,
           description: t.description || undefined,
         };
 
@@ -461,7 +505,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
       });
       for (const dt of deletedTracks) {
         const id = dt.id || dt.Id;
-        if (id) await tracksRepository.deleteTrack(id).catch((e) => console.warn("[SEAL] Delete track error:", e));
+        if (id) await tracksRepository.deleteTrack(id);
       }
 
       // 4. Persist Staff Invites (Invite new judges/mentors)
@@ -473,9 +517,9 @@ export const CoordinatorEventDetailView: React.FC = () => {
           trackId: invite.trackId,
         };
         if (invite.roleName === "Judge") {
-          await staffRepository.inviteJudge(invitePayload).catch((e: any) => console.warn("[SEAL] Invite judge error:", e));
+          await staffRepository.inviteJudge(invitePayload);
         } else {
-          await staffRepository.inviteMentor(invitePayload).catch((e: any) => console.warn("[SEAL] Invite mentor error:", e));
+          await staffRepository.inviteMentor(invitePayload);
         }
       }
 
@@ -492,7 +536,7 @@ export const CoordinatorEventDetailView: React.FC = () => {
           : "💾 ĐÃ LƯU THAY ĐỔI SỰ KIỆN, VÒNG THI & HẠNG MỤC THÀNH CÔNG! Sự kiện đang ở trạng thái Bản Nháp an toàn."
       );
     } catch (err: any) {
-      setErrorMessage(`Lưu thay đổi thất bại: ${err?.response?.data?.message || err?.message}`);
+      setErrorMessage(`Lưu thay đổi thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống khi lưu."}`);
     } finally {
       setIsSubmitting(false);
     }

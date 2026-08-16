@@ -85,11 +85,15 @@ export function CoordinatorCalibrationView() {
   };
 
   const handleCalculate = async () => {
+    if (calibration?.isCompleted === false) {
+      alert("⚠️ Không thể tính điểm & xếp hạng: Vẫn còn Giám khảo đang ở trạng thái DRAFT (chưa nộp chốt điểm).");
+      return;
+    }
     try {
       await calculateRound(roundId);
       alert("✓ Đã tính điểm tổng & xếp hạng Vòng thi thành công!");
-    } catch {
-      alert("Đã hoàn tất tính điểm & phân hạng Vòng thi.");
+    } catch (err: any) {
+      alert(`Tính điểm thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
     }
   };
 
@@ -128,9 +132,10 @@ export function CoordinatorCalibrationView() {
 
         <div className="flex items-center gap-3">
           <Button
-            disabled={isCalculating || !roundId}
+            disabled={isCalculating || !roundId || calibration?.isCompleted === false}
+            title={calibration?.isCompleted === false ? "Vẫn còn giám khảo chưa nộp chốt điểm" : ""}
             onClick={handleCalculate}
-            className="flex items-center gap-2 bg-[var(--accent-coordinator)] text-black font-bold hover:bg-purple-300 text-xs"
+            className="flex items-center gap-2 bg-[var(--accent-coordinator)] text-black font-bold hover:bg-purple-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isCalculating ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />

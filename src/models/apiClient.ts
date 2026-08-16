@@ -9,18 +9,15 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://seal-bl3w-backend.o
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  // 15s x retry lam moi trang treo ~30s khi backend chet. 6s du cho request
-  // that (backend khoe tra ve <1s) va cat ngan han cho khi backend sap.
-  timeout: 6_000,
+  // Backend deploy tren Render free-tier can 30-45s de khoi dong (cold start).
+  // Cho phep timeout 45s de backend kip phan hoi khi ngu.
+  timeout: 45_000,
   headers: { "Content-Type": "application/json" },
 });
 
 // ─── Circuit breaker: backend chet thi fail nhanh, khong bat nguoi dung cho ───
-// Backend deploy tren Render free-tier co the crash-loop (SIGSEGV/OOM). Khi do
-// MOI query deu cho het timeout roi moi fallback -> web "loading rat lau" o
-// tat ca cac trang. Sau 2 lan loi mang lien tiep, cho fail tuc thi trong 20s.
-const BREAKER_THRESHOLD = 2;
-const BREAKER_COOLDOWN_MS = 20_000;
+const BREAKER_THRESHOLD = 4;
+const BREAKER_COOLDOWN_MS = 10_000;
 let consecutiveNetworkFailures = 0;
 let breakerOpenUntil = 0;
 

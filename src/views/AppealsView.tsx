@@ -61,9 +61,8 @@ export function AppealsView() {
       alert("✓ Đã gửi Đơn Phúc Khảo thành công! Ban Tổ Chức sẽ phản hồi sớm.");
       setReason("");
       refetch();
-    } catch {
-      alert("Đã gửi đơn phúc khảo.");
-      setReason("");
+    } catch (err: any) {
+      alert(`Gửi đơn phúc khảo thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
     }
   };
 
@@ -83,11 +82,8 @@ export function AppealsView() {
       setDetailModal(null);
       setResponseText("");
       refetch();
-    } catch {
-      alert("Đã xử lý đơn.");
-      setRespondModal(null);
-      setDetailModal(null);
-      setResponseText("");
+    } catch (err: any) {
+      alert(`Xử lý đơn phúc khảo thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
     }
   };
 
@@ -291,21 +287,29 @@ export function AppealsView() {
               {/* Thông tin Bài Nộp đối chiếu */}
               <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2">
                 <span className="text-[10px] text-[var(--accent-primary)] font-bold uppercase block flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5" /> 2. Bài Nộp Dự Án Liên Quan (Submission Link):
+                  <FileText className="w-3.5 h-3.5" /> 2. Bài Nộp Dự Án Liên Quan (Submission):
                 </span>
-                <div>Mã bài nộp: <strong className="text-[var(--text-primary)]">#{detailModal.submitResultId || "sub-101"}</strong></div>
-                <div>Link Mã Nguồn / Demo: <a href="https://github.com/cybershield/seal-hackathon-2026" target="_blank" rel="noreferrer" className="text-[var(--accent-primary)] font-bold underline flex items-center gap-1 inline-flex">https://github.com/cybershield/seal-hackathon-2026 <ExternalLink className="w-3 h-3" /></a></div>
-                <div className="text-[11px] text-[var(--text-muted)]">Mô tả sản phẩm: Hệ thống phát hiện lỗ hổng bảo mật tự động tích hợp mô hình AI LLM.</div>
+                <div>Mã bài nộp: <strong className="text-[var(--text-primary)]">#{detailModal.submitResultId || detailModal.submissionId || "N/A"}</strong></div>
+                {detailModal.submissionUrl ? (
+                  <div>Link Bài Nộp / Project: <a href={detailModal.submissionUrl} target="_blank" rel="noreferrer" className="text-[var(--accent-primary)] font-bold underline flex items-center gap-1 inline-flex">{detailModal.submissionUrl} <ExternalLink className="w-3 h-3" /></a></div>
+                ) : (
+                  <div className="text-[11px] text-[var(--text-muted)] font-mono">Chưa có liên kết bài nộp đính kèm.</div>
+                )}
+                {detailModal.submissionDescription && (
+                  <div className="text-[11px] text-[var(--text-muted)]">Mô tả: {detailModal.submissionDescription}</div>
+                )}
               </div>
 
-              {/* Bảng Điểm Giám Khảo Hiện Tại */}
+              {/* Bảng Điểm Giám Khảo */}
               <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-2">
                 <span className="text-[10px] text-[var(--accent-judge)] font-bold uppercase block">3. Điểm Số Hiện Tại Từ Ban Giám Khảo:</span>
                 <div className="flex items-center justify-between text-xs font-bold text-[var(--accent-judge)] border-b border-[var(--border-muted)] pb-1">
-                  <span>Điểm Tổng Hiện Tại: 8.85 / 10.0</span>
-                  <span>Giám Khảo: TS. Nguyễn Văn A (AI Track)</span>
+                  <span>Điểm Tổng Hiện Tại: {detailModal.totalScore ?? detailModal.score ?? "Chưa tính"}</span>
+                  <span>Giám Khảo: {detailModal.judgeName || "Hội đồng Giám khảo"}</span>
                 </div>
-                <p className="text-[11px] text-[var(--text-muted)] italic">"Bài thi có tính hoàn thiện cao, cần bổ sung thêm tài liệu thử nghiệm thực tế."</p>
+                {detailModal.judgeComment && (
+                  <p className="text-[11px] text-[var(--text-muted)] italic">"{detailModal.judgeComment}"</p>
+                )}
               </div>
 
               {/* Form Giải Trình Phản Hồi Dành Cho EC */}

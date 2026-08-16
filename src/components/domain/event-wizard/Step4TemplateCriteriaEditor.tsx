@@ -296,7 +296,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                       <div className="flex items-center justify-between gap-4">
                         <Input
                           type="text"
-                          value={item.criterionName}
+                          value={item.criterionName ?? (item as any).CriterionName ?? (item as any).name ?? ""}
                           onChange={(e) => {
                             const updated = [...trackCriterias];
                             updated[index] = { ...updated[index], criterionName: e.target.value };
@@ -322,7 +322,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                           <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Mô Tả Tiêu Chí</label>
                           <Input
                             type="text"
-                            value={item.description}
+                            value={item.description ?? (item as any).Description ?? ""}
                             onChange={(e) => {
                               const updated = [...trackCriterias];
                               updated[index] = { ...updated[index], description: e.target.value };
@@ -339,7 +339,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                               type="number"
                               min={0}
                               max={100}
-                              value={item.weight}
+                              value={item.weight ?? (item as any).Weight ?? 0}
                               onChange={(e) => {
                                 const updated = [...trackCriterias];
                                 updated[index] = { ...updated[index], weight: Number(e.target.value) || 0 };
@@ -354,7 +354,7 @@ export const Step4TemplateCriteriaEditor: React.FC<Step4TemplateCriteriaEditorPr
                               type="number"
                               min={1}
                               max={100}
-                              value={item.maxScore}
+                              value={item.maxScore ?? (item as any).MaxScore ?? 10}
                               onChange={(e) => {
                                 const updated = [...trackCriterias];
                                 updated[index] = { ...updated[index], maxScore: Number(e.target.value) || 10 };

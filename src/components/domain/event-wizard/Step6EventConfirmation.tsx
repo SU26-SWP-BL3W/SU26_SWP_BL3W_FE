@@ -46,15 +46,20 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
   const router = useRouter();
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const handlePublish = async (isPublic: boolean) => {
     if (isPublic && !canPublishEvent) return;
     setIsPublishing(true);
+    setPublishError(null);
     try {
       if (eventId) {
-        await eventsRepository.updateEvent(eventId, {
+        const res = await eventsRepository.updateEvent(eventId, {
           status: isPublic,
         });
+        if (res && res.success === false) {
+          throw new Error(res.message || "Cập nhật trạng thái sự kiện thất bại.");
+        }
       }
       setIsPublishing(false);
       setPublishSuccess(true);
@@ -63,8 +68,7 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
       }, 1500);
     } catch (err: any) {
       setIsPublishing(false);
-      // Fallback redirection to dashboard even if status update has permission warn
-      router.push("/coordinator/dashboard");
+      setPublishError(err?.response?.data?.message || err?.message || "Công bố sự kiện thất bại. Vui lòng kiểm tra lại quyền hoặc kết nối.");
     }
   };
 
@@ -91,6 +95,16 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
             ? "Tất cả các bước cấu hình đã đạt chuẩn! Bạn có thể công bố sự kiện công khai ngay hoặc lưu lại bản nháp."
             : "Sự kiện hiện chưa hoàn tất đầy đủ các bước bắt buộc. Vui lòng kiểm tra danh sách bên dưới trước khi công bố."}
         </p>
+
+        {publishError && (
+          <div className="p-4 bg-[rgba(239,68,68,0.1)] border border-[var(--color-danger)] text-[var(--color-danger)] font-mono text-xs hud-clipped flex items-center justify-between gap-3 max-w-xl mx-auto">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-[var(--color-danger)]" />
+              <span>{publishError}</span>
+            </div>
+            <button type="button" onClick={() => setPublishError(null)} className="text-white hover:underline">✕</button>
+          </div>
+        )}
 
         {/* Current Draft Status Badge */}
         <div className="flex items-center justify-center gap-2 flex-wrap">

@@ -208,20 +208,57 @@ export function useEventRounds(eventId: string) {
 }
 
 export async function createEvent(data: Partial<Event>): Promise<any> {
-  const response = await apiClient.post<any>("/Events", data);
-  const createdResult = response.data;
+  try {
+    const response = await apiClient.post<any>("/Events", data);
+    const createdResult = response.data;
 
-  const innerData = createdResult?.data || createdResult;
-  if (innerData) {
-    const currentStored = getStoredEvents();
-    const targetId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId;
-    if (targetId) {
-      const updated = [innerData, ...currentStored.filter((e) => (e.id || e.Id || e.eventId || e.EventId) !== targetId)];
-      saveStoredEvents(updated);
+    const innerData = createdResult?.data || createdResult;
+    if (innerData) {
+      const currentStored = getStoredEvents();
+      const targetId = innerData.id || innerData.Id || innerData.eventId || innerData.EventId;
+      if (targetId) {
+        const updated = [innerData, ...currentStored.filter((e) => (e.id || e.Id || e.eventId || e.EventId) !== targetId)];
+        saveStoredEvents(updated);
+      }
     }
-  }
 
-  return createdResult;
+    return createdResult;
+  } catch (err: any) {
+    const responseData = err?.response?.data;
+    let msg = responseData?.message || err?.message;
+
+    const rawErrorDetail = responseData?.details || responseData?.data || responseData?.errors || responseData?.errorMessage;
+
+    if (rawErrorDetail) {
+      if (typeof rawErrorDetail === "string") {
+        msg = `${msg}: ${rawErrorDetail}`;
+      } else if (Array.isArray(rawErrorDetail)) {
+        const parsedMsgs = rawErrorDetail.map((item: any) => {
+          if (typeof item === "string") return item;
+          if (item?.Key || item?.key || item?.KeyName) {
+            const k = item.Key || item.key || item.KeyName;
+            const vRaw = item.Value ?? item.value;
+            const vals = Array.isArray(vRaw) ? vRaw.join(", ") : String(vRaw ?? "");
+            return `${k}: ${vals}`;
+          }
+          if (item?.ErrorMessage || item?.errorMessage) return item.ErrorMessage || item.errorMessage;
+          return JSON.stringify(item);
+        });
+        if (parsedMsgs.length > 0) msg = `${msg} (${parsedMsgs.join("; ")})`;
+      } else if (typeof rawErrorDetail === "object") {
+        const parsedMsgs = Object.entries(rawErrorDetail).map(([k, v]: [string, any]) => {
+          const vals = Array.isArray(v) ? v.join(", ") : typeof v === "object" ? JSON.stringify(v) : String(v);
+          return `${k}: ${vals}`;
+        });
+        if (parsedMsgs.length > 0) msg = `${msg} (${parsedMsgs.join("; ")})`;
+      }
+    }
+
+    return {
+      success: false,
+      message: msg || "Tạo sự kiện thất bại. Dữ liệu chưa đúng định dạng yêu cầu từ máy chủ.",
+    };
+  }
 }
 
 export async function deleteEvent(id: string): Promise<any> {

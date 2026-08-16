@@ -216,15 +216,18 @@ export function CoordinatorProfilesView() {
 
   const handleApprove = async (user: User) => {
     const id = user.id || (user as any).UserID || "";
-    setLocalUsersOverride((prev) => {
-      const next = new Map(prev);
-      next.set(id, { isApproved: true, rejectionCount: 0 });
-      return next;
-    });
-    setPreviewModal(null);
-    if (detailUserModal?.user.id === id) setDetailUserModal(null);
-
-    await approveUserMutation(id).catch((err) => console.warn("[SEAL] Approve fallback:", err?.message));
+    try {
+      await approveUserMutation(id);
+      setLocalUsersOverride((prev) => {
+        const next = new Map(prev);
+        next.set(id, { isApproved: true, rejectionCount: 0 });
+        return next;
+      });
+      setPreviewModal(null);
+      if (detailUserModal?.user.id === id) setDetailUserModal(null);
+    } catch (err: any) {
+      alert(`Duyệt hồ sơ thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
+    }
   };
 
   const handleRejectConfirm = async () => {
@@ -234,20 +237,20 @@ export function CoordinatorProfilesView() {
     const currentCount = user.rejectionCount || 0;
     const newCount = currentCount + 1;
 
-    setLocalUsersOverride((prev) => {
-      const next = new Map(prev);
-      next.set(id, { isApproved: false, rejectionCount: newCount, rejectionReason: rejectReason.trim() });
-      return next;
-    });
-
-    setRejectModal(null);
-    setPreviewModal(null);
-    if (detailUserModal?.user.id === id) setDetailUserModal(null);
-    setRejectReason("");
-
-    await rejectUserMutation({ userId: id, reason: rejectReason.trim() }).catch((err) =>
-      console.warn("[SEAL] Reject fallback:", err?.message)
-    );
+    try {
+      await rejectUserMutation({ userId: id, reason: rejectReason.trim() });
+      setLocalUsersOverride((prev) => {
+        const next = new Map(prev);
+        next.set(id, { isApproved: false, rejectionCount: newCount, rejectionReason: rejectReason.trim() });
+        return next;
+      });
+      setRejectModal(null);
+      setPreviewModal(null);
+      if (detailUserModal?.user.id === id) setDetailUserModal(null);
+      setRejectReason("");
+    } catch (err: any) {
+      alert(`Từ chối hồ sơ thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
+    }
   };
 
   const handleRevokeApproval = (user: User) => {
@@ -265,17 +268,18 @@ export function CoordinatorProfilesView() {
     if (selectedUserIds.size === 0) return;
     const ids = Array.from(selectedUserIds);
 
-    setLocalUsersOverride((prev) => {
-      const next = new Map(prev);
-      ids.forEach((id) => next.set(id, { isApproved: true, rejectionCount: 0 }));
-      return next;
-    });
-
-    setSelectedUserIds(new Set());
-
-    // Call approvals
-    for (const id of ids) {
-      await approveUserMutation(id).catch((err) => console.warn("[SEAL] Bulk approve err:", err?.message));
+    try {
+      for (const id of ids) {
+        await approveUserMutation(id);
+      }
+      setLocalUsersOverride((prev) => {
+        const next = new Map(prev);
+        ids.forEach((id) => next.set(id, { isApproved: true, rejectionCount: 0 }));
+        return next;
+      });
+      setSelectedUserIds(new Set());
+    } catch (err: any) {
+      alert(`Duyệt hàng loạt thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
     }
   };
 

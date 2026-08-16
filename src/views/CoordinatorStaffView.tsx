@@ -541,8 +541,20 @@ export const CoordinatorStaffView: React.FC = () => {
                           <div className="text-[10px] text-[var(--text-muted)]">{email}</div>
                         </td>
                         <td className="p-3">
-                          <Badge tone={roleName === "Judge" ? "warning" : "info"}>
-                            {roleName === "Judge" ? "Giám khảo (Judge)" : "Cố vấn (Mentor)"}
+                          <Badge
+                            tone={
+                              roleName === "Judge"
+                                ? "warning"
+                                : roleName === "EventCoordinator" || roleName === "Coordinator"
+                                ? "coordinator"
+                                : "info"
+                            }
+                          >
+                            {roleName === "Judge"
+                              ? "Giám khảo (Judge)"
+                              : roleName === "EventCoordinator" || roleName === "Coordinator"
+                              ? "Điều phối viên (EC)"
+                              : "Cố vấn (Mentor)"}
                           </Badge>
                         </td>
                         <td className="p-3 text-[var(--text-muted)]">{trackName}</td>

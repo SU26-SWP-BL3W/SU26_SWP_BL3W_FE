@@ -74,6 +74,16 @@ export function CoordinatorPublishResultsView() {
   const isAnyPublished = results.some((r) => r.isPublished);
 
   const handleTogglePublish = async (shouldPublish: boolean) => {
+    if (shouldPublish) {
+      if (!confirm(`Bạn có chắc chắn muốn CÔNG BỐ KẾT QUẢ Vòng thi này cho toàn bộ sinh viên xem trên Bảng Xếp Hạng công khai không?`)) {
+        return;
+      }
+    } else {
+      if (!confirm(`Bạn có chắc chắn muốn THU HỒI CÔNG BỐ kết quả về trạng thái Bản Nháp không?`)) {
+        return;
+      }
+    }
+
     try {
       await publishResults({ roundId, isPublished: shouldPublish });
       alert(
@@ -81,8 +91,8 @@ export function CoordinatorPublishResultsView() {
           ? "✓ CÔNG BỐ KẾT QUẢ THÀNH CÔNG! Sinh viên hiện đã có thể xem Bảng Xếp Hạng."
           : "✓ Đã THU HỒI CÔNG BỐ. Kết quả đã quay về bản nháp."
       );
-    } catch {
-      alert("Đã cập nhật trạng thái công bố kết quả.");
+    } catch (err: any) {
+      alert(`Cập nhật trạng thái công bố thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
     }
   };
 
@@ -99,21 +109,24 @@ export function CoordinatorPublishResultsView() {
       });
       alert("✓ Đã tạo Giải thưởng mới thành công cho Track!");
       setCreatePrizeModal(false);
-    } catch {
-      alert("Đã thêm Giải thưởng vào danh sách Track.");
-      setCreatePrizeModal(false);
+    } catch (err: any) {
+      alert(`Tạo Giải thưởng thất bại: ${err?.response?.data?.message || err?.message || "Lỗi kết nối."}`);
     }
   };
 
   const handleAssignPrizeConfirm = async (prizeId: string | null) => {
     if (!assignModal) return;
+    const targetResultId = assignModal.id || (assignModal as any).Id || (assignModal as any).resultId;
+    if (!targetResultId) {
+      alert("Lỗi: Không tìm thấy mã bản ghi kết quả để gán giải.");
+      return;
+    }
     try {
-      await assignPrize({ resultId: assignModal.id || "res-1", prizeId });
+      await assignPrize({ resultId: targetResultId, prizeId });
       alert("✓ Đã gán Giải thưởng cho Đội thi thành công!");
       setAssignModal(null);
-    } catch {
-      alert("Đã cập nhật giải thưởng.");
-      setAssignModal(null);
+    } catch (err: any) {
+      alert(`Gán giải thưởng thất bại: ${err?.response?.data?.message || err?.message || "Lỗi hệ thống."}`);
     }
   };
 
