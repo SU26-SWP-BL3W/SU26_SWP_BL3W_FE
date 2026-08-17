@@ -9,6 +9,12 @@ import { useGetTemplates, templatesRepository } from "@/repositories/templatesRe
 import { roundsRepository } from "@/repositories/roundsRepository";
 import { staffRepository, useGetEventRoles } from "@/repositories/staffRepository";
 import { usersRepository } from "@/repositories/usersRepository";
+import { useGetTeamsByEvent } from "@/repositories/teamsRepository";
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "@/models/apiClient";
+import { PagedResult } from "@/models/types";
+import { SubmitResultListItem } from "@/repositories/submitResultsRepository";
+import { ApiMissingDataBadge } from "@/components/ui";
 import { Step2RoundConfig } from "@/components/domain/event-wizard/Step2RoundConfig";
 import { Step3TrackConfig } from "@/components/domain/event-wizard/Step3TrackConfig";
 import { Step4TemplateCriteriaEditor } from "@/components/domain/event-wizard/Step4TemplateCriteriaEditor";
@@ -20,7 +26,22 @@ import {
   TemplateCriteriaFormState,
   StaffInviteFormState,
 } from "@/viewModels/useCreateEventWizardViewModel";
-import { RefreshCw, Save, ArrowLeft, CheckCircle2 } from "lucide-react";
+import {
+  RefreshCw,
+  Save,
+  ArrowLeft,
+  CheckCircle2,
+  Users,
+  FileCode,
+  ExternalLink,
+  ShieldCheck,
+  Globe,
+  FileSpreadsheet,
+  Layers,
+  Target,
+  FileText,
+  Code2,
+} from "lucide-react";
 import Link from "next/link";
 
 function toDateInputValue(isoString?: string): string {
@@ -39,8 +60,8 @@ export const AdminEditEventView: React.FC = () => {
   const router = useRouter();
   const eventId = (params?.id as string) || "";
 
-  // Main Tab Switcher
-  const [activeMainTab, setActiveMainTab] = useState<"info" | "config">("info");
+  // Main Tab Switcher (4 Tabs)
+  const [activeMainTab, setActiveMainTab] = useState<"info" | "config" | "teams" | "submissions">("info");
 
   // Config Sub-step Switcher
   const [configStep, setConfigStep] = useState<number>(2);
@@ -51,6 +72,17 @@ export const AdminEditEventView: React.FC = () => {
   const { data: serverTracks = [], refetch: refetchTracks } = useGetTracksByEvent(eventId);
   const { data: templates = [] } = useGetTemplates();
   const { data: serverStaff = [], refetch: refetchRoles } = useGetEventRoles(eventId);
+  const { data: serverTeams = [], isLoading: isLoadingTeams, refetch: refetchTeams } = useGetTeamsByEvent(eventId);
+  const { data: serverSubmissions = [], isLoading: isLoadingSubmissions } = useQuery({
+    queryKey: ["admin-event-submissions", eventId],
+    queryFn: async () => {
+      const res = await apiClient.get<PagedResult<SubmitResultListItem>>("/SubmitResults", {
+        params: { EventId: eventId, PageSize: 200 },
+      });
+      return res.data?.data ?? [];
+    },
+    enabled: !!eventId,
+  });
 
   const ev = (rawEvent as any) ?? {};
 
@@ -450,12 +482,12 @@ export const AdminEditEventView: React.FC = () => {
           </div>
         </div>
 
-        {/* 2 MAIN TABS SWITCHER */}
-        <div className="flex border-b border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped p-1 gap-1">
+        {/* 4 MAIN TABS SWITCHER */}
+        <div className="grid grid-cols-2 md:grid-cols-4 border-b border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped p-1 gap-1">
           <button
             type="button"
             onClick={() => setActiveMainTab("info")}
-            className={`flex-1 py-3 px-6 font-mono text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+            className={`py-3 px-3 font-mono text-xs font-bold tracking-wider uppercase transition-all cursor-pointer text-center ${
               activeMainTab === "info"
                 ? "bg-[var(--color-danger)] text-white shadow-md"
                 : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
@@ -466,13 +498,37 @@ export const AdminEditEventView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveMainTab("config")}
-            className={`flex-1 py-3 px-6 font-mono text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+            className={`py-3 px-3 font-mono text-xs font-bold tracking-wider uppercase transition-all cursor-pointer text-center ${
               activeMainTab === "config"
                 ? "bg-[var(--color-danger)] text-white shadow-md"
                 : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
             }`}
           >
-            CẤU HÌNH CHI TIẾT (VÒNG THI &amp; TIÊU CHÍ)
+            CẤU HÌNH CHI TIẾT
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMainTab("teams")}
+            className={`py-3 px-3 font-mono text-xs font-bold tracking-wider uppercase transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+              activeMainTab === "teams"
+                ? "bg-[var(--color-danger)] text-white shadow-md"
+                : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>ĐỘI THI &amp; THÍ SINH ({serverTeams.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMainTab("submissions")}
+            className={`py-3 px-3 font-mono text-xs font-bold tracking-wider uppercase transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+              activeMainTab === "submissions"
+                ? "bg-[var(--color-danger)] text-white shadow-md"
+                : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+            }`}
+          >
+            <FileCode className="w-3.5 h-3.5" />
+            <span>BÀI LÀM / SUBMISSIONS ({serverSubmissions.length})</span>
           </button>
         </div>
 
@@ -855,6 +911,236 @@ export const AdminEditEventView: React.FC = () => {
                 currentStatus={status}
               />
             )}
+          </div>
+        )}
+
+        {/* TAB 3: ĐỘI THI & THÍ SINH */}
+        {activeMainTab === "teams" && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-1">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase">Tổng Số Đội Thi Đăng Ký</span>
+                <div className="text-2xl font-bold text-[var(--text-primary)]">{serverTeams.length} Đội</div>
+              </div>
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--color-success)]/30 hud-clipped space-y-1">
+                <span className="text-[10px] text-[var(--color-success)] uppercase font-bold">Đã Duyệt Chính Thức</span>
+                <div className="text-2xl font-bold text-[var(--color-success)]">
+                  {serverTeams.filter((t: any) => t.status === "Registered" || t.status === "Approved" || t.Status === 1).length} Đội
+                </div>
+              </div>
+              <div className="p-4 bg-[var(--bg-panel)] border border-amber-500/30 hud-clipped space-y-1">
+                <span className="text-[10px] text-amber-300 uppercase font-bold">Chờ Duyệt / Đang Ghép</span>
+                <div className="text-2xl font-bold text-amber-400">
+                  {serverTeams.filter((t: any) => t.status !== "Registered" && t.status !== "Approved" && t.Status !== 1).length} Đội
+                </div>
+              </div>
+            </div>
+
+            {/* Teams Table */}
+            <Card className="p-6 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">
+              <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
+                <h3 className="font-display font-bold text-sm text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[var(--accent-team)]" />
+                  Danh Sách Đội Thi &amp; Thí Sinh Tham Gia ({serverTeams.length})
+                </h3>
+                <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                  Quản lý danh sách thí sinh và đội thi trực thuộc sự kiện
+                </span>
+              </div>
+
+              {isLoadingTeams ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2 font-mono text-xs text-[var(--color-danger)]">
+                  <RefreshCw className="w-6 h-6 animate-spin" />
+                  <span>Đang tải danh sách đội thi...</span>
+                </div>
+              ) : serverTeams.length === 0 ? (
+                <ApiMissingDataBadge
+                  endpoint="GET /api/Teams"
+                  title="CHƯA CÓ ĐỘI THI NÀO ĐĂNG KÝ"
+                  message="Chưa có đội thi nào đăng ký tham gia sự kiện này. Khi thí sinh thành lập đội trên trang chủ, danh sách sẽ hiển thị tại đây."
+                />
+              ) : (
+                <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-input)] hud-clipped">
+                  <table className="w-full table-fixed text-left border-collapse font-mono text-xs">
+                    <thead className="bg-[var(--bg-panel)] border-b border-[var(--border-muted)]">
+                      <tr>
+                        <th className="w-[30%] px-4 py-3 text-left text-[var(--text-muted)] uppercase">TÊN ĐỘI THI</th>
+                        <th className="w-[25%] px-4 py-3 text-left text-[var(--text-muted)] uppercase">HẠNG MỤC (TRACK)</th>
+                        <th className="w-[20%] px-4 py-3 text-left text-[var(--text-muted)] uppercase">TRẠNG THÁI</th>
+                        <th className="w-[25%] px-4 py-3 text-right text-[var(--text-muted)] uppercase">THAO TÁC</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {serverTeams.map((team: any, idx: number) => {
+                        const teamId = team.id || team.Id || team.teamId || `team-${idx}`;
+                        const teamName = team.name || team.Name || team.teamName || "Đội Thi Chưa Đặt Tên";
+                        const trackName = tracks.find((t) => t.id === (team.trackId || team.TrackId))?.trackName || "Chung";
+                        const isApproved = team.status === "Registered" || team.status === "Approved" || team.Status === 1;
+
+                        return (
+                          <tr key={teamId} className="hover:bg-[var(--color-danger)]/5 transition-colors border-t border-[var(--border-muted)]/50">
+                            <td className="px-4 py-3.5 align-middle font-bold text-[var(--text-primary)] truncate" title={teamName}>
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-[var(--accent-team)]" />
+                                <span>{teamName}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-[var(--accent-team)] truncate">
+                              {trackName}
+                            </td>
+                            <td className="px-4 py-3.5 align-middle">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
+                                  isApproved
+                                    ? "bg-[rgba(16,185,129,0.15)] text-[var(--color-success)] border border-[var(--color-success)]/30"
+                                    : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                }`}
+                              >
+                                {isApproved ? "CHÍNH THỨC" : "CHỜ DUYỆT / GHÉP"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-right">
+                              <Link href="/coordinator/teams">
+                                <Button variant="ghost" className="text-xs font-mono border border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white px-2.5 py-1 h-auto">
+                                  Xem Chi Tiết &gt;
+                                </Button>
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* TAB 4: BÀI LÀM & SUBMISSIONS */}
+        {activeMainTab === "submissions" && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono">
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-1">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase">Tổng Số Lượt Nộp Bài</span>
+                <div className="text-2xl font-bold text-[var(--text-primary)]">{serverSubmissions.length} Bài Nộp</div>
+              </div>
+              <div className="p-4 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/30 hud-clipped space-y-1">
+                <span className="text-[10px] text-[var(--accent-primary)] uppercase font-bold">Số Đội Đã Nộp Dự Án</span>
+                <div className="text-2xl font-bold text-[var(--accent-primary)]">
+                  {new Set(serverSubmissions.map((s: any) => s.teamId || s.TeamId)).size} Đội
+                </div>
+              </div>
+            </div>
+
+            {/* Submissions Table */}
+            <Card className="p-6 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped space-y-4">
+              <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-3">
+                <h3 className="font-display font-bold text-sm text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-[var(--accent-primary)]" />
+                  Tổng Hợp Bài Làm &amp; Liên Kết Nộp Bài ({serverSubmissions.length})
+                </h3>
+                <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                  Toàn bộ mã nguồn, live demo, slide thuyết trình của các đội thi
+                </span>
+              </div>
+
+              {isLoadingSubmissions ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2 font-mono text-xs text-[var(--color-danger)]">
+                  <RefreshCw className="w-6 h-6 animate-spin" />
+                  <span>Đang tải danh sách bài làm...</span>
+                </div>
+              ) : serverSubmissions.length === 0 ? (
+                <ApiMissingDataBadge
+                  endpoint="GET /api/SubmitResults"
+                  title="CHƯA CÓ BÀI NỘP NÀO ĐƯỢC GHI NHẬN"
+                  message="Chưa có đội thi nào nộp bài làm cho sự kiện này. Khi các đội hoàn thiện và nộp link GitHub/Demo/Slide, dữ liệu sẽ hiển thị đầy đủ tại đây."
+                />
+              ) : (
+                <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-input)] hud-clipped">
+                  <table className="w-full table-fixed text-left border-collapse font-mono text-xs">
+                    <thead className="bg-[var(--bg-panel)] border-b border-[var(--border-muted)]">
+                      <tr>
+                        <th className="w-[25%] px-4 py-3 text-left text-[var(--text-muted)] uppercase">ĐỘI THI</th>
+                        <th className="w-[20%] px-4 py-3 text-left text-[var(--text-muted)] uppercase">HẠNG MỤC</th>
+                        <th className="w-[35%] px-4 py-3 text-left text-[var(--text-muted)] uppercase">LIÊN KẾT BÀI NỘP</th>
+                        <th className="w-[20%] px-4 py-3 text-right text-[var(--text-muted)] uppercase">THỜI GIAN NỘP</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {serverSubmissions.map((sub: any, idx: number) => {
+                        const subId = sub.id || sub.Id || `sub-${idx}`;
+                        const teamName = sub.teamName || sub.TeamName || `Đội #${(sub.teamId || sub.TeamId)?.slice(-4) || idx + 1}`;
+                        const trackName = tracks.find((t) => t.id === (sub.trackId || sub.TrackId))?.trackName || "Chung";
+                        const repoUrl = sub.repoUrl || sub.RepoUrl || sub.submissionUrl || sub.SubmissionUrl;
+                        const demoUrl = sub.demoUrl || sub.DemoUrl;
+                        const slideUrl = sub.slideUrl || sub.SlideUrl;
+                        const createdTime = sub.createdTime || sub.CreatedTime;
+
+                        return (
+                          <tr key={subId} className="hover:bg-[var(--color-danger)]/5 transition-colors border-t border-[var(--border-muted)]/50">
+                            <td className="px-4 py-3.5 align-middle font-bold text-[var(--text-primary)] truncate" title={teamName}>
+                              {teamName}
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-[var(--accent-team)] truncate">
+                              {trackName}
+                            </td>
+                            <td className="px-4 py-3.5 align-middle">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {repoUrl && (
+                                  <a
+                                    href={repoUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2 py-0.5 bg-[var(--bg-base)] border border-[var(--border-muted)] text-[var(--text-primary)] hover:border-white hover:text-white rounded flex items-center gap-1 text-[10px]"
+                                    title={repoUrl}
+                                  >
+                                    <Code2 className="w-3 h-3" />
+                                    <span>GitHub</span>
+                                  </a>
+                                )}
+                                {demoUrl && (
+                                  <a
+                                    href={demoUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2 py-0.5 bg-[rgba(16,185,129,0.1)] border border-[var(--color-success)]/40 text-[var(--color-success)] hover:bg-[var(--color-success)]/20 rounded flex items-center gap-1 text-[10px]"
+                                    title={demoUrl}
+                                  >
+                                    <Globe className="w-3 h-3" />
+                                    <span>Demo</span>
+                                  </a>
+                                )}
+                                {slideUrl && (
+                                  <a
+                                    href={slideUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/40 text-purple-300 hover:bg-purple-500/20 rounded flex items-center gap-1 text-[10px]"
+                                    title={slideUrl}
+                                  >
+                                    <FileSpreadsheet className="w-3 h-3" />
+                                    <span>Slides</span>
+                                  </a>
+                                )}
+                                {!repoUrl && !demoUrl && !slideUrl && (
+                                  <span className="text-[10px] text-[var(--text-muted)] italic">Đang cập nhật link</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-right text-[11px] text-[var(--text-muted)]">
+                              {createdTime ? new Date(createdTime).toLocaleString("vi-VN") : "Gần đây"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
           </div>
         )}
       </main>
