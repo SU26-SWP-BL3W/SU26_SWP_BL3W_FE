@@ -147,7 +147,7 @@ function EventCard({ event }: { event: EventCardData }) {
 }
 
 // ─── Sidebar Filter ────────────────────────────────────────────────────────────
-const STATUS_OPTIONS: { value: EventStatusFilter | "my_event"; label: string; dot: string }[] = [
+const ALL_STATUS_OPTIONS: { value: EventStatusFilter | "my_event"; label: string; dot: string }[] = [
   { value: "all",               label: "Tất cả sự kiện",   dot: "bg-[var(--text-muted)]" },
   { value: "my_event",          label: "⭐ Sự kiện của tôi",dot: "bg-[var(--accent-team)] animate-pulse" },
   { value: "registration_open", label: "Đang mở đăng ký",  dot: "bg-[var(--color-success)]" },
@@ -160,6 +160,7 @@ function SidebarFilter({
   statusFilter, setStatusFilter,
   trackFilter,  setTrackFilter,
   topTracks,
+  isAdmin,
   onClear,
 }: {
   statusFilter: EventStatusFilter;
@@ -167,9 +168,13 @@ function SidebarFilter({
   trackFilter: string | null;
   setTrackFilter: (v: string | null) => void;
   topTracks: { track: string; eventCount: number }[];
+  isAdmin?: boolean;
   onClear: () => void;
 }) {
   const activeCount = (statusFilter !== "all" ? 1 : 0) + (trackFilter ? 1 : 0);
+  const statusOptions = isAdmin
+    ? ALL_STATUS_OPTIONS.filter((opt) => opt.value !== "my_event")
+    : ALL_STATUS_OPTIONS;
 
   return (
     <aside className="w-full md:w-56 shrink-0 flex flex-col gap-5">
@@ -181,64 +186,73 @@ function SidebarFilter({
         {activeCount > 0 && (
           <button
             onClick={onClear}
-            className="font-mono text-[9px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors tracking-widest uppercase underline"
+            className="font-mono text-[10px] text-[var(--color-danger)] hover:underline"
           >
             Xóa ({activeCount})
           </button>
         )}
       </div>
 
-      {/* Status */}
-      <div>
-        <div className="font-mono text-[9px] text-[var(--text-muted)] tracking-widest uppercase mb-2 border-b border-[var(--border-muted)] pb-1.5">
-          TRẠNG THÁI
-        </div>
-        <div className="flex flex-col gap-1.5">
-          {STATUS_OPTIONS.map(({ value, label, dot }) => (
-            <label
-              key={value}
-              className="flex items-center gap-2.5 cursor-pointer group"
+      {/* Status section */}
+      <div className="flex flex-col gap-1.5">
+        <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-0.5">
+          Trạng thái
+        </span>
+        {statusOptions.map((opt) => {
+          const isSelected = statusFilter === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setStatusFilter(opt.value)}
+              className={`group flex items-center justify-between px-3 py-2 text-left font-mono text-xs transition-colors hud-clipped ${
+                isSelected
+                  ? "bg-[var(--accent-primary)] text-[var(--bg-base)] font-bold"
+                  : "text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)]"
+              }`}
             >
-              <input
-                type="radio"
-                name="status-filter"
-                checked={statusFilter === value}
-                onChange={() => setStatusFilter(value)}
-                className="accent-[var(--accent-primary)] w-3.5 h-3.5"
-              />
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-              <span className={`font-mono text-xs transition-colors ${statusFilter === value ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"}`}>
-                {label}
-              </span>
-            </label>
-          ))}
-        </div>
+              <div className="flex items-center gap-2">
+                <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`} />
+                <span>{opt.label}</span>
+              </div>
+              {isSelected && <span className="text-[10px]">✓</span>}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Track */}
+      {/* Track section */}
       {topTracks.length > 0 && (
-        <div>
-          <div className="font-mono text-[9px] text-[var(--text-muted)] tracking-widest uppercase mb-2 border-b border-[var(--border-muted)] pb-1.5">
-            HẠNG MỤC
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {topTracks.map(({ track, eventCount }) => (
-              <label key={track} className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={trackFilter === track}
-                  onChange={() => setTrackFilter(trackFilter === track ? null : track)}
-                  className="accent-[var(--accent-primary)] w-3.5 h-3.5"
-                />
-                <span className={`font-mono text-xs flex-1 transition-colors ${trackFilter === track ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"}`}>
-                  {track}
-                </span>
-                <span className="font-mono text-[9px] text-[var(--text-muted)] border border-[var(--border-muted)] px-1">
-                  {eventCount}
-                </span>
-              </label>
-            ))}
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-0.5">
+            Hạng mục ({topTracks.length})
+          </span>
+          <button
+            onClick={() => setTrackFilter(null)}
+            className={`flex items-center justify-between px-3 py-1.5 text-left font-mono text-xs transition-colors hud-clipped ${
+              !trackFilter
+                ? "bg-[var(--accent-primary)] text-[var(--bg-base)] font-bold"
+                : "text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            <span>Tất cả</span>
+          </button>
+          {topTracks.map(({ track, eventCount }) => {
+            const isSelected = trackFilter === track;
+            return (
+              <button
+                key={track}
+                onClick={() => setTrackFilter(isSelected ? null : track)}
+                className={`flex items-center justify-between px-3 py-1.5 text-left font-mono text-xs transition-colors hud-clipped ${
+                  isSelected
+                    ? "bg-[var(--accent-primary)] text-[var(--bg-base)] font-bold"
+                    : "text-[var(--text-muted)] hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <span className="truncate pr-1">{track}</span>
+                <span className="text-[10px] opacity-60 shrink-0">({eventCount})</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </aside>
@@ -256,7 +270,13 @@ const SORT_OPTIONS: { value: EventSortOption; label: string }[] = [
 // ─── Main View ─────────────────────────────────────────────────────────────────
 export function EventsDiscoveryView() {
   const { user, activeRole } = useAuth();
-  const roleName = activeRole?.roleName || activeRole?.RoleName || (user?.isAdmin || user?.IsAdmin ? "Admin" : "Guest");
+  let roleName = "";
+  if (user?.isAdmin || user?.IsAdmin) {
+    roleName = "Admin";
+  } else {
+    roleName = activeRole?.roleName || activeRole?.RoleName || "Guest";
+    if (roleName === "EventCoordinator") roleName = "Coordinator";
+  }
 
   const { data: teamResponse } = useMyTeam();
   const team = (teamResponse as any)?.team ?? teamResponse;
@@ -377,6 +397,7 @@ export function EventsDiscoveryView() {
             trackFilter={trackFilter}
             setTrackFilter={setTrackFilter}
             topTracks={topTracks}
+            isAdmin={roleName === "Admin"}
             onClear={handleClear}
           />
         </div>
@@ -384,8 +405,32 @@ export function EventsDiscoveryView() {
         {/* Right: results + list */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
 
-          {/* ── My Joined Event Banner (CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP & CÓ VAI TRÒ) ── */}
-          {user && roleName !== "Guest" && (
+          {/* ── Admin Executive Banner ── */}
+          {user && roleName === "Admin" && (
+            <div className="p-5 bg-[var(--bg-panel)] border border-[var(--color-danger)]/40 hud-clipped flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_20px_rgba(239,68,68,0.08)]">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-[var(--color-danger)] uppercase tracking-widest">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-danger)] animate-pulse" />
+                  👑 TRUNG TÂM CHỈ HUY QUẢN TRỊ VIÊN (SYSTEM ADMIN)
+                </div>
+                <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">
+                  Quản Trị Toàn Bộ {totalCount} Sự Kiện Hệ Thống
+                </h2>
+                <p className="font-mono text-xs text-[var(--text-muted)] mt-0.5">
+                  Dành riêng cho System Admin: Khởi tạo sự kiện mới, phân công Event Coordinator và quản lý trường học &amp; tài khoản.
+                </p>
+              </div>
+
+              <Link href="/admin/dashboard">
+                <button className="hud-clipped px-5 py-2.5 bg-[var(--color-danger)] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-sm shrink-0 cursor-pointer">
+                  👑 BẢNG ĐIỀU HÀNH ADMIN ➔
+                </button>
+              </Link>
+            </div>
+          )}
+
+          {/* ── My Joined Event Banner (DÀNH RIÊNG CHO CÁC VAI TRÒ KHÁC ADMIN) ── */}
+          {user && roleName !== "Guest" && roleName !== "Admin" && (
             <div className="p-5 bg-[var(--bg-panel)] border border-[var(--accent-primary)]/40 hud-clipped flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_20px_rgba(0,217,255,0.08)]">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest">
@@ -437,13 +482,6 @@ export function EventsDiscoveryView() {
                 </Link>
               )}
 
-              {roleName === "Admin" && (
-                <Link href="/admin/dashboard">
-                  <button className="hud-clipped px-5 py-2.5 bg-[var(--color-danger)] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all shadow-sm shrink-0 cursor-pointer">
-                    👑 BẢNG ĐIỀU HÀNH ADMIN ➔
-                  </button>
-                </Link>
-              )}
 
               {(roleName === "TeamLeader" || roleName === "TeamMember") && myEventId && (
                 <Link href={`/events/${myEventId}`}>

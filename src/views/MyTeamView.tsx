@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Link } from "@/i18n/routing";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useCancelInvitation,
@@ -41,7 +42,8 @@ function pick(obj: unknown, ...keys: string[]): string {
 
 export function MyTeamView() {
   const { user, activeRole } = useAuth();
-  const roleName = pick(activeRole, "RoleName", "roleName");
+  const isAdmin = Boolean(user?.isAdmin || user?.IsAdmin);
+  const roleName = isAdmin ? "Admin" : pick(activeRole, "RoleName", "roleName");
   const isLeader = roleName === "TeamLeader";
   const currentUserId = pick(user, "id", "userId", "UserID");
   const eventIdFromRole =
@@ -49,6 +51,31 @@ export function MyTeamView() {
     ((activeRole?.assignedEventIds?.[0] as string | undefined) ?? "");
 
   const { data: rawTeam, isLoading } = useMyTeam(eventIdFromRole || undefined);
+
+  if (isAdmin) {
+    return (
+      <main className="hud-lattice flex flex-1 flex-col items-center justify-center p-8 min-h-[60vh]">
+        <div className="max-w-md w-full bg-[var(--bg-panel)] border border-[var(--color-danger)]/40 p-8 hud-clipped text-center space-y-4 shadow-xl">
+          <div className="w-12 h-12 rounded-full bg-[var(--color-danger)]/10 text-[var(--color-danger)] flex items-center justify-center mx-auto border border-[var(--color-danger)]/30 font-bold font-mono text-xl">
+            🛡️
+          </div>
+          <h2 className="font-display text-xl font-bold uppercase text-[var(--text-primary)]">
+            Tài Khoản System Admin
+          </h2>
+          <p className="font-mono text-xs text-[var(--text-muted)] leading-relaxed">
+            Tài khoản Quản Trị Viên (System Admin) quản trị toàn bộ hệ thống và không tham gia thi đấu với tư cách Đội thi.
+          </p>
+          <div className="pt-2">
+            <Link href="/admin/dashboard">
+              <button className="w-full px-5 py-2.5 bg-[var(--color-danger)] text-white font-mono font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-md">
+                👑 VỀ BẢNG ĐIỀU HÀNH ADMIN ➔
+              </button>
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const team: TeamView | null = rawTeam
     ? {

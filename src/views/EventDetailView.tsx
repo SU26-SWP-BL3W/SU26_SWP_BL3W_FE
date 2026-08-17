@@ -20,19 +20,22 @@ export function EventDetailView({ eventId }: { eventId: string }) {
 
   const rawRole = activeRole?.roleName || activeRole?.RoleName;
   const userEmail = (user?.email || user?.Email || "").toLowerCase();
-  let roleName = rawRole || "";
-  if (roleName === "EventCoordinator") roleName = "Coordinator";
-  if (!roleName) {
-    if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
-      roleName = "Coordinator";
-    } else if (userEmail.includes("judge")) {
-      roleName = "Judge";
-    } else if (userEmail.includes("mentor")) {
-      roleName = "Mentor";
-    } else if (user?.isAdmin || user?.IsAdmin) {
-      roleName = "Admin";
-    } else {
-      roleName = "Guest";
+  let roleName = "";
+  if (user?.isAdmin || user?.IsAdmin) {
+    roleName = "Admin";
+  } else {
+    roleName = rawRole || "";
+    if (roleName === "EventCoordinator") roleName = "Coordinator";
+    if (!roleName) {
+      if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
+        roleName = "Coordinator";
+      } else if (userEmail.includes("judge")) {
+        roleName = "Judge";
+      } else if (userEmail.includes("mentor")) {
+        roleName = "Mentor";
+      } else {
+        roleName = "Guest";
+      }
     }
   }
 
@@ -102,11 +105,15 @@ export function EventDetailView({ eventId }: { eventId: string }) {
               {eventName}
             </h1>
             
-            <p className="font-mono text-sm text-[var(--accent-primary)]">{tagline}</p>
-            <p className="font-sans text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">{description}</p>
+            {tagline && tagline.trim() !== description.trim() && (
+              <p className="font-mono text-sm text-[var(--accent-primary)]">{tagline}</p>
+            )}
+            <p className="font-sans text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+              {description || "Sự kiện cuộc thi RBL Nghiên cứu & Sáng tạo công nghệ trên hệ thống SEAL."}
+            </p>
 
             <div className="flex flex-wrap items-center gap-6 pt-3 border-t border-[var(--border-muted)] mt-2 font-mono text-xs">
-              <span>Tổng giải thưởng: <strong className="text-[var(--accent-judge)] font-bold text-base">{formatVnd(totalPrizeVnd)}</strong></span>
+              <span>Tổng giải thưởng: <strong className="text-[var(--accent-judge)] font-bold text-base">{totalPrizeVnd > 0 ? formatVnd(totalPrizeVnd) : "Đang cập nhật cơ cấu giải thưởng"}</strong></span>
               <span>·</span>
               <span>Số hạng mục: <strong className="text-[var(--text-primary)] font-bold">{tracks.length} Tracks</strong></span>
             </div>
@@ -114,13 +121,29 @@ export function EventDetailView({ eventId }: { eventId: string }) {
             {/* ── Sub-Navbar Ngang Chức Năng Role ── */}
             <div className="mt-6 pt-4 border-t border-[var(--border-muted)]">
               <div className="font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest mb-2 flex items-center gap-2">
-                <span>⚡ CHỨC NĂNG THAM GIA ({roleName === "TeamLeader" || roleName === "TeamMember" ? (isJoinedParticipant ? roleName : "THÍ SINH TỰ DO") : roleName}):</span>
+                <span>⚡ VAI TRÒ {roleName === "Admin" ? "HỆ THỐNG (SYSTEM ADMIN)" : roleName === "Coordinator" ? "BAN TỔ CHỨC (COORDINATOR)" : roleName === "TeamLeader" || roleName === "TeamMember" ? (isJoinedParticipant ? roleName : "THÍ SINH TỰ DO") : roleName}:</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
                 {/* Active tab hiện tại */}
                 <span className="px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-base)] font-bold hud-clipped flex items-center gap-1.5 shadow-sm">
                   <span>📍</span> 1. THỂ LỆ & CHI TIẾT
                 </span>
+
+                {/* SYSTEM ADMIN: TÁCH RIÊNG VỚI NÚT VỀ BẢNG ĐIỀU HÀNH */}
+                {roleName === "Admin" && (
+                  <>
+                    <Link href="/admin/dashboard">
+                      <button className="px-4 py-2 bg-[var(--color-danger)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
+                        <span>🛡️</span> 2. BẢNG ĐIỀU HÀNH ADMIN
+                      </button>
+                    </Link>
+                    <Link href={`/events/${eventId}/leaderboard`}>
+                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
+                        <span>🏆</span> 3. XEM BẢNG XẾP HẠNG
+                      </button>
+                    </Link>
+                  </>
+                )}
 
                 {/* THI ĐẤU: CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG KÝ SỰ KIỆN NÀY */}
                 {(roleName === "TeamLeader" || roleName === "TeamMember") && isJoinedParticipant && (
@@ -167,7 +190,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
                   </>
                 )}
 
-                {(roleName === "Coordinator" || roleName === "Admin") && (
+                {roleName === "Coordinator" && (
                   <>
                     <Link href={`/coordinator/events/${eventId}`}>
                       <button className="px-4 py-2 bg-[#a855f7] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">

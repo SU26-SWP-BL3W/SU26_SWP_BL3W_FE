@@ -14,12 +14,15 @@ import {
   type EventCardData,
 } from "@/viewModels/eventsMetadata";
 import { useLandingPreviewViewModel } from "@/viewModels/useLandingPreviewViewModel";
+import { useAuth } from "@/providers/AuthProvider";
 import { LandingMetricsStrip } from "@/components/domain/LandingMetricsStrip";
 import { LandingWorkflowSteps } from "@/components/domain/LandingWorkflowSteps";
 import { LandingLeaderboardPodium } from "@/components/domain/LandingLeaderboardPodium";
 
 export function LandingPortalView() {
+  const { user } = useAuth();
   const { latestEvent, featuredEvents } = useLandingPreviewViewModel();
+  const isAdmin = Boolean(user?.isAdmin || user?.IsAdmin);
 
   return (
     <main className="hud-lattice flex flex-1 flex-col overflow-hidden">
@@ -93,6 +96,11 @@ export function LandingPortalView() {
           {/* Symmetrical Quick Access Protocol */}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs border-t border-[var(--border-muted)]/60 pt-4 w-full max-w-xl">
             <span className="text-[var(--text-muted)]">TRUY CẬP NHANH:</span>
+            {isAdmin && (
+              <Link href="/admin/dashboard" className="border border-[var(--color-danger)]/50 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/20 transition-colors hud-clipped font-bold">
+                👑 [ QUẢN TRỊ ADMIN ]
+              </Link>
+            )}
             <Link href="/my-team" className="border border-[var(--accent-team)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/20 transition-colors hud-clipped">
               [ ĐỘI THI ]
             </Link>

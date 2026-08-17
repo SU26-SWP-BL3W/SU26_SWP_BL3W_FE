@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { ApiMissingDataBadge } from "@/components/ui";
-import { useEvents } from "@/repositories/eventsRepository";
+import { useEvents, useEventDetail } from "@/repositories/eventsRepository";
 import { LandingLeaderboardPodium } from "@/components/domain/LandingLeaderboardPodium";
 import { Trophy, Target } from "lucide-react";
 
@@ -35,10 +35,14 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
   const isEventScoped = Boolean(eventId && eventId !== "all");
   const [selectedEventId, setSelectedEventId] = useState<string>(eventId || "all");
   
+  const targetId = isEventScoped ? eventId : selectedEventId !== "all" ? selectedEventId : "";
+  const { data: realEventDetail } = useEventDetail(targetId || undefined);
+  
+  const evObj = (realEventDetail as any) ?? {};
   const event = {
-    id: eventId || "event-seal-2026",
-    eventName: "SEAL Hackathon 2026",
-    totalPrizeVnd: 200000000,
+    id: eventId || evObj.id || evObj.Id || "event-seal-2026",
+    eventName: evObj.eventName || evObj.EventName || evObj.name || (isEventScoped ? "Sự kiện SEAL" : "SEAL Hackathon 2026"),
+    totalPrizeVnd: Number(evObj.totalPrizeVnd || evObj.TotalPrizeVnd || 0),
   };
 
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
