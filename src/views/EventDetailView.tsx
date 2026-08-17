@@ -129,17 +129,22 @@ export function EventDetailView({ eventId }: { eventId: string }) {
                   <span>📍</span> 1. THỂ LỆ & CHI TIẾT
                 </span>
 
-                {/* SYSTEM ADMIN: TÁCH RIÊNG VỚI NÚT VỀ BẢNG ĐIỀU HÀNH */}
+                {/* SYSTEM ADMIN: TÁCH RIÊNG VỚI NÚT VỀ BẢNG ĐIỀU HÀNH & SỬA SỰ KIỆN */}
                 {roleName === "Admin" && (
                   <>
-                    <Link href="/admin/dashboard">
+                    <Link href={`/coordinator/events/${eventId}`}>
                       <button className="px-4 py-2 bg-[var(--color-danger)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
-                        <span>🛡️</span> 2. BẢNG ĐIỀU HÀNH ADMIN
+                        <span>✏️</span> 2. CHỈNH SỬA SỰ KIỆN (ADMIN)
+                      </button>
+                    </Link>
+                    <Link href="/admin/dashboard">
+                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-bold hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
+                        <span>🛡️</span> 3. BẢNG ĐIỀU HÀNH ADMIN
                       </button>
                     </Link>
                     <Link href={`/events/${eventId}/leaderboard`}>
                       <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 3. XEM BẢNG XẾP HẠNG
+                        <span>🏆</span> 4. XEM BẢNG XẾP HẠNG
                       </button>
                     </Link>
                   </>
@@ -312,43 +317,76 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
 
   if (!currentRound) return null;
 
-  const milestones = [
-    {
-      id: "reg",
-      title: "Mở Form Đăng Ký",
-      date: formatShortDate(currentRound.registrationDate || currentRound.startDate),
-      color: "var(--accent-primary)",
-      desc: "Bắt đầu mở cổng nhận hồ sơ tạo đội thi",
-    },
-    {
-      id: "start",
-      title: "Thời Gian Thi",
-      date: `${formatShortDate(currentRound.startDate)} – ${formatShortDate(currentRound.endDate)}`,
-      color: "var(--accent-team)",
-      desc: "Các đội thực hiện sản phẩm & làm bài",
-    },
-    {
-      id: "sub",
-      title: "Hạn Nộp Bài Thi",
-      date: formatShortDate(currentRound.submissionDeadline || currentRound.endDate),
-      color: "var(--color-danger)",
-      desc: "Đóng cổng nhận bài thi vòng này",
-    },
-    {
-      id: "res",
-      title: "Công Bố Kết Quả",
-      date: formatShortDate(currentRound.resultAnnouncementDate || currentRound.endDate),
-      color: "var(--accent-judge)",
-      desc: "Giám khảo công bố danh sách đi tiếp",
-    },
-    {
-      id: "app",
-      title: "Hạn Phúc Khảo",
-      date: formatShortDate(currentRound.appealDeadline || currentRound.endDate),
-      color: "var(--accent-coordinator)",
-      desc: "Hạn cuối tiếp nhận khiếu nại điểm số",
-    },
-  ];
+  const isRegistrationPhase = currentRound.roundNumber === 0 || currentRound.id === "reg-phase";
+
+  const milestones = isRegistrationPhase
+    ? [
+        {
+          id: "reg-start",
+          title: "Mở Cổng Nhận Hồ Sơ",
+          date: formatShortDate(currentRound.startDate),
+          color: "var(--accent-primary)",
+          desc: "Bắt đầu mở cổng tạo đội thi & mời các thành viên",
+        },
+        {
+          id: "reg-team",
+          title: "Hoàn Thiện Đội Hình",
+          date: `${formatShortDate(currentRound.startDate)} – ${formatShortDate(currentRound.endDate)}`,
+          color: "var(--accent-team)",
+          desc: "Xác nhận thành viên, tải ảnh thẻ SV & chốt danh sách đội",
+        },
+        {
+          id: "reg-end",
+          title: "Đóng Cổng Đăng Ký",
+          date: formatShortDate(currentRound.endDate),
+          color: "var(--color-danger)",
+          desc: "Hạn chót tiếp nhận hồ sơ đăng ký dự thi",
+        },
+        {
+          id: "reg-verify",
+          title: "Duyệt Hồ Sơ & Cấp Quyền",
+          date: formatShortDate(currentRound.endDate),
+          color: "var(--color-success)",
+          desc: "Ban Tổ Chức phê duyệt đội thi hợp lệ vào Vòng 1",
+        },
+      ]
+    : [
+        {
+          id: "round-start",
+          title: "Khai Mạc & Nhận Đề",
+          date: formatShortDate(currentRound.startDate),
+          color: "var(--accent-primary)",
+          desc: "Bắt đầu vòng thi & công bố đề bài chính thức",
+        },
+        {
+          id: "round-work",
+          title: "Thời Gian Làm Bài",
+          date: `${formatShortDate(currentRound.startDate)} – ${formatShortDate(currentRound.endDate)}`,
+          color: "var(--accent-team)",
+          desc: "Các đội thực hiện sản phẩm & nhận tư vấn từ Mentor",
+        },
+        {
+          id: "round-sub",
+          title: "Hạn Nộp Bài Thi",
+          date: formatShortDate(currentRound.submissionDeadline || currentRound.endDate),
+          color: "var(--color-danger)",
+          desc: "Hạn chót nộp Link Repo, Slide & Video Demo",
+        },
+        {
+          id: "round-score",
+          title: "Giám Khảo Chấm & Công Bố",
+          date: formatShortDate(currentRound.resultAnnouncementDate || currentRound.endDate),
+          color: "var(--accent-judge)",
+          desc: "Hội đồng Giám khảo chấm điểm & công bố xếp hạng",
+        },
+        {
+          id: "round-appeal",
+          title: "Hạn Phúc Khảo Điểm",
+          date: formatShortDate(currentRound.appealDeadline || currentRound.endDate),
+          color: "var(--accent-coordinator)",
+          desc: "Hạn cuối tiếp nhận và giải quyết khiếu nại điểm",
+        },
+      ];
 
   return (
     <section className="p-8 bg-[var(--bg-panel)] border border-[var(--border-muted)] hud-clipped flex flex-col gap-8 shadow-sm">
@@ -387,10 +425,10 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-mono text-[11px] text-[var(--accent-primary)] font-bold uppercase tracking-wider">
-              VÒNG {currentRound.roundNumber}: {currentRound.roundName.toUpperCase()}
+              {isRegistrationPhase ? "GIAI ĐOẠN ĐĂNG KÝ" : `VÒNG ${currentRound.roundNumber}`}: {currentRound.roundName.toUpperCase()}
             </span>
             <span className="font-mono text-xs font-bold text-[var(--accent-team)] bg-[var(--accent-team)]/10 border border-[var(--accent-team)]/30 px-2.5 py-0.5">
-              🗓 THỜI GIAN VÒNG: {formatDateTime(currentRound.startDate)} — {formatDateTime(currentRound.endDate)}
+              🗓 {isRegistrationPhase ? "THỜI GIAN ĐĂNG KÝ" : "THỜI GIAN VÒNG"}: {formatDateTime(currentRound.startDate)} — {formatDateTime(currentRound.endDate)}
             </span>
           </div>
           <p className="font-sans text-xs text-[var(--text-muted)] leading-relaxed">
@@ -403,14 +441,14 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          HORIZONTAL STEPPER TIMELINE (TRỤC TIẾN TRÌNH NGANG 5 MỐC)
+          HORIZONTAL STEPPER TIMELINE
          ───────────────────────────────────────────────────────────── */}
       <div className="relative py-6">
         {/* Connecting Background Line */}
         <div className="hidden md:block absolute top-[2.25rem] left-[10%] right-[10%] h-0.5 bg-[var(--border-muted)]" />
 
-        {/* 5 Milestone Nodes Stepper */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+        {/* Milestone Nodes Stepper */}
+        <div className={`grid grid-cols-1 ${isRegistrationPhase ? "md:grid-cols-4" : "md:grid-cols-5"} gap-6 relative z-10`}>
           {milestones.map((m, idx) => (
             <div key={m.id} className="flex flex-col items-center text-center group">
               {/* Stepper Node Icon / Number */}
@@ -437,7 +475,7 @@ function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailV
                 {m.date}
               </strong>
 
-              <p className="font-sans text-[11px] text-[var(--text-muted)] mt-1.5 leading-tight max-w-[160px]">
+              <p className="font-sans text-[11px] text-[var(--text-muted)] mt-1.5 leading-tight max-w-[170px]">
                 {m.desc}
               </p>
             </div>

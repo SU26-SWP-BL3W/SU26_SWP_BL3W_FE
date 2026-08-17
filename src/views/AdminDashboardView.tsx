@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import type { EventItem } from "@/viewModels/eventsMetadata";
 import { staffRepository } from "@/repositories/staffRepository";
-import { ShieldAlert, Plus, Users, School, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, Plus, Users, School, Activity, ArrowRight, Shield, UserCheck, X, CheckCircle2, Edit, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 import { useEvents } from "@/repositories/eventsRepository";
@@ -261,13 +261,34 @@ export const AdminDashboardView: React.FC = () => {
                           </span>
                         </td>
                         <td className="text-center">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleOpenAssignModal(ev)}
-                            className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" /> Gán EC
-                          </Button>
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <Link href={`/coordinator/events/${id}`}>
+                              <Button
+                                variant="ghost"
+                                className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-1 h-auto font-bold"
+                                title="Chỉnh sửa chi tiết sự kiện, cấu hình vòng thi & tiêu chí"
+                              >
+                                <Edit className="w-3.5 h-3.5 mr-1" /> Sửa
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleOpenAssignModal(ev)}
+                              className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 px-2.5 py-1 h-auto"
+                              title="Phân công Event Coordinator"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 mr-1" /> Gán EC
+                            </Button>
+                            <Link href={`/events/${id}`}>
+                              <Button
+                                variant="ghost"
+                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white hover:border-[var(--accent-primary)] px-2 py-1 h-auto"
+                                title="Xem trang thể lệ công khai"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </Button>
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
