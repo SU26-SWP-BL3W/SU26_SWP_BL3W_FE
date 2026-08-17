@@ -262,11 +262,11 @@ export const AdminDashboardView: React.FC = () => {
                         </td>
                         <td className="text-center">
                           <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                            <Link href={`/coordinator/events/${id}`}>
+                            <Link href={`/admin/events/${id}`}>
                               <Button
                                 variant="ghost"
                                 className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-1 h-auto font-bold"
-                                title="Chỉnh sửa chi tiết sự kiện, cấu hình vòng thi & tiêu chí"
+                                title="Chỉnh sửa thông tin sự kiện (Admin)"
                               >
                                 <Edit className="w-3.5 h-3.5 mr-1" /> Sửa
                               </Button>

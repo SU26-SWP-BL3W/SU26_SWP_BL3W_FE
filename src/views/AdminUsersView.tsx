@@ -46,7 +46,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function isCoordinatorEmail(email?: string): boolean {
   const l = (email || "").toLowerCase();
-  return l.includes("ec_") || l.includes("ec.") || l.includes("coordinator") || l.includes("ec@");
+  return l.includes("ec_") || l.includes("ec.") || l.includes("coordinator") || l.includes("coodinator") || l.includes("ec@");
 }
 
 export const AdminUsersView: React.FC = () => {
@@ -75,26 +75,40 @@ export const AdminUsersView: React.FC = () => {
       (u.studentCode || "").toLowerCase().includes(searchLower) ||
       (u.schoolName || "").toLowerCase().includes(searchLower);
 
-    // Role filter
-    let matchesRole = true;
+    // Role detection
     const emailLower = (u.email || "").toLowerCase();
     const roleLower = (u.roleName || u.RoleName || "").toLowerCase();
-    const isEc = isCoordinatorEmail(u.email) || roleLower.includes("coordinator");
+    const isEc = isCoordinatorEmail(u.email) || roleLower.includes("coordinator") || roleLower.includes("coodinator");
     const isJg = roleLower.includes("judge") || emailLower.includes("judge");
     const isMt = roleLower.includes("mentor") || emailLower.includes("mentor");
     const isAdm = !!u.isAdmin || !!u.IsAdmin || emailLower.includes("admin") || roleLower.includes("admin");
+    const isStaffOrAdmin = isAdm || isEc || isJg || isMt;
 
+    // FPT User: Chỉ những ai có email chính thức @fpt.edu.vn / @fe.edu.vn
+    const isFptUser = !isStaffOrAdmin && (emailLower.includes("@fpt.edu.vn") || emailLower.includes("@fe.edu.vn"));
+    const isNonFptCandidate = !isStaffOrAdmin && !isFptUser;
+
+    // Role filter
+    let matchesRole = true;
     if (roleFilter === "admin") matchesRole = isAdm;
     else if (roleFilter === "coordinator") matchesRole = isEc;
     else if (roleFilter === "judge") matchesRole = isJg;
     else if (roleFilter === "mentor") matchesRole = isMt;
-    else if (roleFilter === "student") matchesRole = !isAdm && !isEc && !isJg && !isMt;
+    else if (roleFilter === "student") matchesRole = !isStaffOrAdmin;
 
     // Status filter
     let matchesStatus = true;
-    if (statusFilter === "approved") matchesStatus = !!u.isApproved;
-    else if (statusFilter === "pending") matchesStatus = !u.isApproved && (u.rejectionCount ?? 0) < 2;
-    else if (statusFilter === "locked") matchesStatus = (u.rejectionCount ?? 0) >= 2;
+    const isLocked = (u.rejectionCount ?? 0) >= 2;
+    if (statusFilter === "approved") {
+      // Đã duyệt: Cán bộ/Chuyên gia (luôn active), SV FPT (tự động xác thực), và SV Non-FPT đã được duyệt
+      matchesStatus = isStaffOrAdmin || isFptUser || (isNonFptCandidate && !!u.isApproved && !isLocked);
+    } else if (statusFilter === "pending") {
+      // Đang chờ duyệt: CHỈ DUY NHẤT Sinh viên trường ngoài chưa duyệt và chưa bị khóa
+      matchesStatus = isNonFptCandidate && !u.isApproved && !isLocked;
+    } else if (statusFilter === "locked") {
+      // Bị khóa: Sinh viên trường ngoài bị từ chối >= 2 lần
+      matchesStatus = isNonFptCandidate && isLocked;
+    }
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -253,12 +267,12 @@ export const AdminUsersView: React.FC = () => {
                     const userId = u.id || u.userId || "";
                     const userEmailLower = (u.email || "").toLowerCase();
                     const role = (u.roleName || u.RoleName || "").toLowerCase();
-                    const isEcUser = isCoordinatorEmail(u.email) || role.includes("coordinator");
+                    const isEcUser = isCoordinatorEmail(u.email) || role.includes("coordinator") || role.includes("coodinator");
                     const isJudgeUser = role.includes("judge") || userEmailLower.includes("judge");
                     const isMentorUser = role.includes("mentor") || userEmailLower.includes("mentor");
                     const isAdminUser = Boolean(u.isAdmin || u.IsAdmin || userEmailLower.includes("admin") || role.includes("admin"));
                     const isStaffOrAdmin = isAdminUser || isEcUser || isJudgeUser || isMentorUser;
-                    const isFptUser = !isStaffOrAdmin && (u.isFpt || userEmailLower.includes("@fpt.edu.vn"));
+                    const isFptUser = !isStaffOrAdmin && (userEmailLower.includes("@fpt.edu.vn") || userEmailLower.includes("@fe.edu.vn"));
                     const isNonFptCandidate = !isStaffOrAdmin && !isFptUser;
 
                     return (
@@ -358,12 +372,12 @@ export const AdminUsersView: React.FC = () => {
         {detailUserModal && (() => {
           const userEmailLower = (detailUserModal.email || "").toLowerCase();
           const role = (detailUserModal.roleName || detailUserModal.RoleName || "").toLowerCase();
-          const isDetailEc = isCoordinatorEmail(detailUserModal.email) || role.includes("coordinator");
+          const isDetailEc = isCoordinatorEmail(detailUserModal.email) || role.includes("coordinator") || role.includes("coodinator");
           const isDetailJudge = role.includes("judge") || userEmailLower.includes("judge");
           const isDetailMentor = role.includes("mentor") || userEmailLower.includes("mentor");
           const isDetailAdmin = Boolean(detailUserModal.isAdmin || detailUserModal.IsAdmin || userEmailLower.includes("admin") || role.includes("admin"));
           const isStaff = isDetailAdmin || isDetailEc || isDetailJudge || isDetailMentor;
-          const isFpt = !isStaff && (detailUserModal.isFpt || userEmailLower.includes("@fpt.edu.vn"));
+          const isFpt = !isStaff && (userEmailLower.includes("@fpt.edu.vn") || userEmailLower.includes("@fe.edu.vn"));
           const isNonFpt = !isStaff && !isFpt;
 
           return (

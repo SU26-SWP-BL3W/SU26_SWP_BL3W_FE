@@ -135,10 +135,17 @@ export function EventDetailView({ eventId }: { eventId: string }) {
 
               {/* Contextual Action Button */}
               <div className="flex items-center gap-2 font-mono text-xs">
-                {(roleName === "Admin" || roleName === "Coordinator") && (
+                {roleName === "Admin" && (
+                  <Link href={`/admin/events/${eventId}`}>
+                    <button className="px-4 py-2 bg-[var(--color-danger)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-sm">
+                      CHỈNH SỬA SỰ KIỆN (ADMIN)
+                    </button>
+                  </Link>
+                )}
+                {roleName === "Coordinator" && (
                   <Link href={`/coordinator/events/${eventId}`}>
                     <button className="px-4 py-2 bg-[var(--accent-coordinator)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-sm">
-                      CHỈNH SỬA / CẤU HÌNH SỰ KIỆN
+                      CẤU HÌNH SỰ KIỆN (BTC)
                     </button>
                   </Link>
                 )}
@@ -230,7 +237,8 @@ function CountdownClock({
 }
 
 function ScheduleSection({ rounds }: { rounds: ReturnType<typeof useEventDetailViewModel>["rounds"] }) {
-  const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
+  const currentActiveIdx = rounds.findIndex((r) => r.status === "current");
+  const [selectedRoundIndex, setSelectedRoundIndex] = useState(() => (currentActiveIdx >= 0 ? currentActiveIdx : 0));
   const currentRound = rounds[selectedRoundIndex] || rounds[0];
 
   if (!currentRound) return null;

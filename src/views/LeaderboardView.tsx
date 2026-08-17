@@ -18,17 +18,6 @@ interface TableTeam {
   status: string;
 }
 
-const OFFICIAL_TABLE_RESULTS: TableTeam[] = [
-  { rank: 1, teamCode: "#TM-001", teamName: "CyberShield_FPT", projectName: "RBL Inter-Rater Reliability Platform", school: "Đại học FPT", track: "AI & Machine Learning", roundName: "Vòng 3: Chung Kết", score: 9.85, status: "QUÁN QUÂN" },
-  { rank: 2, teamCode: "#TM-002", teamName: "ByteKnights", projectName: "Autonomous Threat Scanner", school: "Đại học Bách Khoa", track: "Bảo mật & An ninh mạng", roundName: "Vòng 3: Chung Kết", score: 9.42, status: "Á QUÂN 1" },
-  { rank: 3, teamCode: "#TM-003", teamName: "NexusCore", projectName: "Smart Campus IoT Grid", school: "Đại học Công nghệ - ĐHQGHN", track: "IoT & Phần cứng thông minh", roundName: "Vòng 3: Chung Kết", score: 9.15, status: "Á QUÂN 2" },
-  { rank: 4, teamCode: "#TM-004", teamName: "DevPulse_HQ", projectName: "Automated Code Review Bot", school: "Đại học FPT", track: "Phát triển Web", roundName: "Vòng 3: Chung Kết", score: 8.90, status: "TOP 5" },
-  { rank: 5, teamCode: "#TM-005", teamName: "GreenPulse", projectName: "Eco Tracker App", school: "Đại học KHTN HCM", track: "Phát triển Web", roundName: "Vòng 3: Chung Kết", score: 8.75, status: "TOP 5" },
-  { rank: 6, teamCode: "#TM-006", teamName: "DeepVision", projectName: "Medical Imaging Diagnostic", school: "Đại học Y Dược HCM", track: "AI & Machine Learning", roundName: "Vòng 2: Bán Kết", score: 8.50, status: "BÁN KẾT" },
-  { rank: 7, teamCode: "#TM-007", teamName: "SecureCloud", projectName: "Zero Trust Mesh Sentinel", school: "Học viện Bưu chính Viễn thông", track: "Bảo mật & An ninh mạng", roundName: "Vòng 2: Bán Kết", score: 8.35, status: "BÁN KẾT" },
-  { rank: 8, teamCode: "#TM-008", teamName: "SmartAgri", projectName: "IoT Crop Sensor Array", school: "Đại học Nông Lâm", track: "IoT & Phần cứng thông minh", roundName: "Vòng 2: Bán Kết", score: 8.10, status: "BÁN KẾT" },
-];
-
 export function LeaderboardView({ eventId }: { eventId?: string }) {
   const { data: eventsList = [] } = useEvents();
   const isEventScoped = Boolean(eventId && eventId !== "all");
@@ -204,7 +193,7 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
               <span>📥</span> XUẤT EXCEL BẢNG XẾP HẠNG
             </button>
             <span className="font-mono text-xs text-[var(--text-muted)]">
-              Hiển thị: <strong className="text-[var(--accent-judge)]">{filteredResults.length}</strong> / {OFFICIAL_TABLE_RESULTS.length} đội
+              Hiển thị: <strong className="text-[var(--accent-judge)]">{filteredResults.length}</strong> đội thi
             </span>
           </div>
         </div>
