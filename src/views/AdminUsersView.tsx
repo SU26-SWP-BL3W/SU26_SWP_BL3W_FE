@@ -250,15 +250,25 @@ export const AdminUsersView: React.FC = () => {
               Không tìm thấy tài khoản phù hợp với điều kiện tìm kiếm.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <thead>
+            <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-input)] hud-clipped">
+              <table className="w-full table-fixed min-w-[950px] text-left border-collapse font-mono text-xs">
+                <thead className="bg-[var(--bg-base)] border-b border-[var(--border-muted)]">
                   <tr>
-                    <th>HỌ VÀ TÊN / EMAIL</th>
-                    <th>MÃ SV & TRƯỜNG HỌC</th>
-                    <th>VAI TRÒ (SYSTEM ROLE)</th>
-                    <th>TRẠNG THÁI HỒ SƠ</th>
-                    <th className="text-center">THAO TÁC XEM & DUYỆT</th>
+                    <th className="w-[28%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider font-bold">
+                      HỌ VÀ TÊN / EMAIL
+                    </th>
+                    <th className="w-[22%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider font-bold">
+                      MÃ SV &amp; TRƯỜNG HỌC
+                    </th>
+                    <th className="w-[18%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider font-bold">
+                      VAI TRÒ (SYSTEM ROLE)
+                    </th>
+                    <th className="w-[16%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider font-bold">
+                      TRẠNG THÁI HỒ SƠ
+                    </th>
+                    <th className="w-[16%] px-4 py-3.5 text-right text-[var(--text-muted)] uppercase tracking-wider font-bold">
+                      THAO TÁC XEM &amp; DUYỆT
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -276,15 +286,15 @@ export const AdminUsersView: React.FC = () => {
                     const isNonFptCandidate = !isStaffOrAdmin && !isFptUser;
 
                     return (
-                      <tr key={userId}>
-                        <td>
-                          <div className="font-mono font-bold text-sm text-[var(--text-primary)]">
+                      <tr key={userId} className="hover:bg-[var(--color-danger)]/5 transition-colors border-t border-[var(--border-muted)]/50">
+                        <td className="px-4 py-3.5 align-middle truncate">
+                          <div className="font-mono font-bold text-sm text-[var(--text-primary)] truncate">
                             {u.fullName || "User SEAL"}
                           </div>
-                          <div className="font-mono text-xs text-[var(--color-danger)] font-bold">{u.email}</div>
+                          <div className="font-mono text-xs text-[var(--color-danger)] font-bold truncate">{u.email}</div>
                         </td>
-                        <td>
-                          <div className="font-mono text-xs text-[var(--text-primary)] font-bold">
+                        <td className="px-4 py-3.5 align-middle truncate">
+                          <div className="font-mono text-xs text-[var(--text-primary)] font-bold truncate">
                             {isStaffOrAdmin ? (
                               <span className="text-[var(--accent-primary)]">Cán bộ / Chuyên gia</span>
                             ) : u.studentCode ? (
@@ -293,16 +303,18 @@ export const AdminUsersView: React.FC = () => {
                               "Chưa cập nhật"
                             )}
                           </div>
-                          <div className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
-                            <Building2 className="w-3 h-3 text-[var(--text-muted)]" />
-                            {isStaffOrAdmin
-                              ? (u.schoolName || "Hội Đồng Ban Tổ Chức")
-                              : isFptUser
-                              ? "Đại học FPT"
-                              : (u.schoolName || "Trường Ngoài FPT")}
+                          <div className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-0.5 truncate">
+                            <Building2 className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                            <span className="truncate">
+                              {isStaffOrAdmin
+                                ? (u.schoolName || "Hội Đồng Ban Tổ Chức")
+                                : isFptUser
+                                ? "Đại học FPT"
+                                : (u.schoolName || "Trường Ngoài FPT")}
+                            </span>
                           </div>
                         </td>
-                        <td>
+                        <td className="px-4 py-3.5 align-middle">
                           {isAdminUser ? (
                             <Badge tone="danger">SYSTEM ADMIN</Badge>
                           ) : isEcUser ? (
@@ -315,36 +327,36 @@ export const AdminUsersView: React.FC = () => {
                             <Badge tone="team">THÍ SINH</Badge>
                           )}
                         </td>
-                        <td>
+                        <td className="px-4 py-3.5 align-middle">
                           {isStaffOrAdmin ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(59,130,246,0.1)] text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(59,130,246,0.1)] text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 rounded">
                               ✓ CÁN BỘ / CHUYÊN GIA
                             </span>
                           ) : isFptUser ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30 rounded">
                               ✓ TỰ ĐỘNG XÁC THỰC FPT
                             </span>
                           ) : isLocked ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30 rounded">
                               <Lock className="w-3 h-3" /> KHÓA 2 GẬY
                             </span>
                           ) : u.isApproved ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30 rounded">
                               ✓ ĐÃ DUYỆT THẺ SV
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(245,158,11,0.1)] text-[var(--color-warning)] border border-[var(--color-warning)]/30 animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(245,158,11,0.1)] text-[var(--color-warning)] border border-[var(--color-warning)]/30 animate-pulse rounded">
                               ⏳ CHỜ DUYỆT THẺ SV
                             </span>
                           )}
                         </td>
-                        <td className="text-center">
-                          <div className="flex items-center justify-center gap-2">
+                        <td className="px-4 py-3.5 align-middle text-right">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                             {isNonFptCandidate && !u.isApproved && !isLocked ? (
                               <Button
                                 variant="ghost"
                                 onClick={() => setDetailUserModal(u)}
-                                className="text-xs font-mono border-[var(--color-warning)] text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10 font-bold"
+                                className="text-xs font-mono border-[var(--color-warning)] text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10 font-bold px-2.5 py-1 h-auto cursor-pointer"
                               >
                                 <Eye className="w-3.5 h-3.5 mr-1" /> DUYỆT THẺ SV
                               </Button>
@@ -352,9 +364,9 @@ export const AdminUsersView: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 onClick={() => setDetailUserModal(u)}
-                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-primary)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]"
+                                className="text-xs font-mono border-[var(--border-muted)] hover:border-white px-2.5 py-1 h-auto cursor-pointer flex items-center gap-1 text-[var(--text-muted)] hover:text-white"
                               >
-                                <Eye className="w-3.5 h-3.5 mr-1" /> XEM HỒ SƠ
+                                <Eye className="w-3.5 h-3.5" /> Xem Hồ Sơ
                               </Button>
                             )}
                           </div>
@@ -363,7 +375,7 @@ export const AdminUsersView: React.FC = () => {
                     );
                   })}
                 </tbody>
-              </Table>
+              </table>
             </div>
           )}
         </Card>

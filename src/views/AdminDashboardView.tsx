@@ -45,15 +45,22 @@ export const AdminDashboardView: React.FC = () => {
   const totalSchoolsCount = schoolsList.length;
 
   const availableCoordinators = usersList.filter((u: any) => {
-    if (u.isAdmin || u.IsAdmin) return false;
     const em = (u.email || u.Email || "").toLowerCase();
     const role = (u.roleName || u.RoleName || "").toLowerCase();
-    return role.includes("coordinator") || em.includes("ec_") || em.includes("ec.") || em.includes("coordinator") || em.includes("ec@");
+    const isAdmin = Boolean(u.isAdmin || u.IsAdmin || em.includes("admin") || role.includes("admin"));
+    if (isAdmin) return false;
+    return (
+      role.includes("coordinator") ||
+      role.includes("coodinator") ||
+      em.includes("coordinator") ||
+      em.includes("ec.") ||
+      em.includes("ec_") ||
+      em.includes("ec@") ||
+      em.startsWith("ec")
+    );
   });
 
-  const ecCount =
-    availableCoordinators.length ||
-    displayEvents.filter((e: any) => e.coordinatorEmail || e.CoordinatorEmail).length;
+  const ecCount = availableCoordinators.length;
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [ecEmail, setEcEmail] = useState("");
