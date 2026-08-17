@@ -2,8 +2,6 @@
 
 import React, { useState } from "react";
 import { useGetUsers, useApproveUser, useRejectUser } from "@/repositories/usersRepository";
-import { staffRepository } from "@/repositories/staffRepository";
-import { useEvents } from "@/repositories/eventsRepository";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import {
   Users,
@@ -56,12 +54,6 @@ export const AdminUsersView: React.FC = () => {
   const [rejectUserModal, setRejectUserModal] = useState<{ userId: string; fullName: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  const { data: eventsList = [] } = useEvents();
-  const [selectedUserForEc, setSelectedUserForEc] = useState<User | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const { data: rawUsersData, isLoading, refetch } = useGetUsers();
   const usersList: User[] = rawUsersData?.data ?? [];
 
@@ -81,10 +73,11 @@ export const AdminUsersView: React.FC = () => {
     // Role filter
     let matchesRole = true;
     const emailLower = (u.email || "").toLowerCase();
-    const isEc = emailLower.includes("ec_") || emailLower.includes("ec.") || emailLower.includes("coordinator") || emailLower.includes("ec@");
-    const isJg = emailLower.includes("judge");
-    const isMt = emailLower.includes("mentor");
-    const isAdm = !!u.isAdmin || emailLower.includes("admin");
+    const roleLower = (u.roleName || u.RoleName || "").toLowerCase();
+    const isEc = isCoordinatorEmail(u.email) || roleLower.includes("coordinator");
+    const isJg = roleLower.includes("judge") || emailLower.includes("judge");
+    const isMt = roleLower.includes("mentor") || emailLower.includes("mentor");
+    const isAdm = !!u.isAdmin || !!u.IsAdmin || emailLower.includes("admin") || roleLower.includes("admin");
 
     if (roleFilter === "admin") matchesRole = isAdm;
     else if (roleFilter === "coordinator") matchesRole = isEc;
@@ -133,47 +126,6 @@ export const AdminUsersView: React.FC = () => {
   const isCoordinatorEmail = (email?: string) => {
     const l = (email || "").toLowerCase();
     return l.includes("ec_") || l.includes("ec.") || l.includes("coordinator") || l.includes("ec@");
-  };
-
-  const handleOpenAssignEcModal = (u: User) => {
-    setSelectedUserForEc(u);
-    const defaultEvtId = eventsList[0]?.id || (eventsList[0] as any)?.Id || (eventsList[0] as any)?.eventId || (eventsList[0] as any)?.EventId || "";
-    setSelectedEventId(defaultEvtId);
-  };
-
-  const handleAssignEc = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUserForEc) return;
-
-    const eventId = selectedEventId || eventsList[0]?.id || (eventsList[0] as any)?.Id || (eventsList[0] as any)?.eventId || (eventsList[0] as any)?.EventId || "";
-    if (!eventId) {
-      alert("Hệ thống chưa có sự kiện nào để phân công. Vui lòng tạo sự kiện trước.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const res = await staffRepository.assignRoleDirectly({
-        userId: selectedUserForEc.id || selectedUserForEc.userId || "",
-        eventId: eventId,
-        roleName: "EventCoordinator",
-      });
-      setIsSubmitting(false);
-
-      if (res && res.success !== false) {
-        setSuccessMessage(
-          `Đã phân công ${selectedUserForEc.fullName} (${selectedUserForEc.email}) làm Event Coordinator thành công!`
-        );
-        setTimeout(() => {
-          setSelectedUserForEc(null);
-          setSuccessMessage(null);
-        }, 2000);
-      }
-    } catch (err: any) {
-      setIsSubmitting(false);
-      const msg = err?.response?.data?.message || err?.message || "Phân công vai trò thất bại. Vui lòng kiểm tra quyền Admin.";
-      alert(`Lỗi phân công EC: ${msg}`);
-    }
   };
 
   return (
@@ -300,8 +252,14 @@ export const AdminUsersView: React.FC = () => {
                     const isLocked = (u.rejectionCount ?? 0) >= 2;
                     const userId = u.id || u.userId || "";
                     const userEmailLower = (u.email || "").toLowerCase();
-                    const isEcUser = isCoordinatorEmail(u.email);
-                    const isStaffOrAdmin = u.isAdmin || userEmailLower.includes("admin") || isEcUser || userEmailLower.includes("judge") || userEmailLower.includes("mentor");
+                    const role = (u.roleName || u.RoleName || "").toLowerCase();
+                    const isEcUser = isCoordinatorEmail(u.email) || role.includes("coordinator");
+                    const isJudgeUser = role.includes("judge") || userEmailLower.includes("judge");
+                    const isMentorUser = role.includes("mentor") || userEmailLower.includes("mentor");
+                    const isAdminUser = Boolean(u.isAdmin || u.IsAdmin || userEmailLower.includes("admin") || role.includes("admin"));
+                    const isStaffOrAdmin = isAdminUser || isEcUser || isJudgeUser || isMentorUser;
+                    const isFptUser = !isStaffOrAdmin && (u.isFpt || userEmailLower.includes("@fpt.edu.vn"));
+                    const isNonFptCandidate = !isStaffOrAdmin && !isFptUser;
 
                     return (
                       <tr key={userId}>
@@ -312,58 +270,77 @@ export const AdminUsersView: React.FC = () => {
                           <div className="font-mono text-xs text-[var(--color-danger)] font-bold">{u.email}</div>
                         </td>
                         <td>
-                          <div className="font-mono text-xs text-[var(--text-primary)]">
-                            {u.studentCode ? `MSSV: ${u.studentCode}` : (isStaffOrAdmin ? "Cán bộ Ban Tổ Chức" : "Chưa cập nhật")}
+                          <div className="font-mono text-xs text-[var(--text-primary)] font-bold">
+                            {isStaffOrAdmin ? (
+                              <span className="text-[var(--accent-primary)]">Cán bộ / Chuyên gia</span>
+                            ) : u.studentCode ? (
+                              `MSSV: ${u.studentCode}`
+                            ) : (
+                              "Chưa cập nhật"
+                            )}
                           </div>
-                          <div className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+                          <div className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
                             <Building2 className="w-3 h-3 text-[var(--text-muted)]" />
-                            {u.schoolName || (u.isFpt ? "Đại học FPT" : "Trường Đối Tác")}
+                            {isStaffOrAdmin
+                              ? (u.schoolName || "Hội Đồng Ban Tổ Chức")
+                              : isFptUser
+                              ? "Đại học FPT"
+                              : (u.schoolName || "Trường Ngoài FPT")}
                           </div>
                         </td>
                         <td>
-                          {u.isAdmin || userEmailLower.includes("admin") ? (
+                          {isAdminUser ? (
                             <Badge tone="danger">SYSTEM ADMIN</Badge>
                           ) : isEcUser ? (
                             <Badge tone="coordinator">EVENT COORDINATOR</Badge>
-                          ) : userEmailLower.includes("judge") ? (
+                          ) : isJudgeUser ? (
                             <Badge tone="judge">GIÁM KHẢO</Badge>
-                          ) : userEmailLower.includes("mentor") ? (
+                          ) : isMentorUser ? (
                             <Badge tone="warning">MENTOR</Badge>
                           ) : (
                             <Badge tone="team">THÍ SINH</Badge>
                           )}
                         </td>
                         <td>
-                          {isLocked ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30">
+                          {isStaffOrAdmin ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(59,130,246,0.1)] text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                              ✓ CÁN BỘ / CHUYÊN GIA
+                            </span>
+                          ) : isFptUser ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30">
+                              ✓ TỰ ĐỘNG XÁC THỰC FPT
+                            </span>
+                          ) : isLocked ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30">
                               <Lock className="w-3 h-3" /> KHÓA 2 GẬY
                             </span>
                           ) : u.isApproved ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30">
-                              ✓ ĐÃ PHÊ DUYỆT
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/30">
+                              ✓ ĐÃ DUYỆT THẺ SV
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(245,158,11,0.1)] text-[var(--color-warning)] border border-[var(--color-warning)]/30">
-                              ⏳ CHỜ DUYỆT THẺ
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-mono font-bold bg-[rgba(245,158,11,0.1)] text-[var(--color-warning)] border border-[var(--color-warning)]/30 animate-pulse">
+                              ⏳ CHỜ DUYỆT THẺ SV
                             </span>
                           )}
                         </td>
                         <td className="text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <Button
-                              variant="ghost"
-                              onClick={() => setDetailUserModal(u)}
-                              className="text-xs font-mono border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10"
-                            >
-                              <Eye className="w-3.5 h-3.5" /> SOI CHI TIẾT
-                            </Button>
-                            {!isStaffOrAdmin && (
+                            {isNonFptCandidate && !u.isApproved && !isLocked ? (
                               <Button
                                 variant="ghost"
-                                onClick={() => handleOpenAssignEcModal(u)}
-                                className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
+                                onClick={() => setDetailUserModal(u)}
+                                className="text-xs font-mono border-[var(--color-warning)] text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10 font-bold"
                               >
-                                <UserCheck className="w-3.5 h-3.5" /> Gán EC
+                                <Eye className="w-3.5 h-3.5 mr-1" /> DUYỆT THẺ SV
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                onClick={() => setDetailUserModal(u)}
+                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-primary)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]"
+                              >
+                                <Eye className="w-3.5 h-3.5 mr-1" /> XEM HỒ SƠ
                               </Button>
                             )}
                           </div>
@@ -380,8 +357,14 @@ export const AdminUsersView: React.FC = () => {
         {/* Modal 1: Xem Chi Tiết Đầy Đủ Hồ Sơ User */}
         {detailUserModal && (() => {
           const userEmailLower = (detailUserModal.email || "").toLowerCase();
-          const isDetailEc = isCoordinatorEmail(detailUserModal.email);
-          const isStaffOrAdmin = detailUserModal.isAdmin || userEmailLower.includes("admin") || isDetailEc || userEmailLower.includes("judge") || userEmailLower.includes("mentor");
+          const role = (detailUserModal.roleName || detailUserModal.RoleName || "").toLowerCase();
+          const isDetailEc = isCoordinatorEmail(detailUserModal.email) || role.includes("coordinator");
+          const isDetailJudge = role.includes("judge") || userEmailLower.includes("judge");
+          const isDetailMentor = role.includes("mentor") || userEmailLower.includes("mentor");
+          const isDetailAdmin = Boolean(detailUserModal.isAdmin || detailUserModal.IsAdmin || userEmailLower.includes("admin") || role.includes("admin"));
+          const isStaff = isDetailAdmin || isDetailEc || isDetailJudge || isDetailMentor;
+          const isFpt = !isStaff && (detailUserModal.isFpt || userEmailLower.includes("@fpt.edu.vn"));
+          const isNonFpt = !isStaff && !isFpt;
 
           return (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
@@ -396,58 +379,92 @@ export const AdminUsersView: React.FC = () => {
 
                 <div className="border-b border-[var(--border-muted)] pb-4">
                   <HudLabel>
-                    {isStaffOrAdmin ? "// SYSTEM ADMIN - STAFF & EXPERT PROFILE INSPECTION" : "// SYSTEM ADMIN - STUDENT CANDIDATE CARD INSPECTION"}
+                    {isStaff
+                      ? "// SYSTEM ADMIN - STAFF & EXPERT PROFILE INSPECTION"
+                      : isFpt
+                      ? "// SYSTEM ADMIN - FPT STUDENT PROFILE INSPECTION"
+                      : "// SYSTEM ADMIN - NON-FPT STUDENT CARD INSPECTION"}
                   </HudLabel>
                   <h3 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase tracking-wider mt-1">
-                    {detailUserModal.fullName}
+                    {detailUserModal.fullName || "User SEAL"}
                   </h3>
                   <p className="font-mono text-xs text-[var(--accent-primary)]">Email: {detailUserModal.email}</p>
                 </div>
 
-                {isStaffOrAdmin ? (
-                  /* ── STAFF / EXPERT / ADMIN PROFILE ── */
+                {isStaff ? (
+                  /* ── 1. STAFF / EXPERT / ADMIN PROFILE ── */
                   <div className="space-y-6 font-mono text-xs">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2.5 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
-                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin cá nhân & Vai trò:</span>
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin cá nhân & Chuyên môn:</span>
                         <div className="flex items-center gap-2">
                           <span className="text-[var(--text-muted)]">Vai trò hệ thống:</span>
-                          {detailUserModal.isAdmin || userEmailLower.includes("admin") ? (
+                          {isDetailAdmin ? (
                             <Badge tone="danger">SYSTEM ADMIN</Badge>
                           ) : isDetailEc ? (
                             <Badge tone="coordinator">EVENT COORDINATOR</Badge>
-                          ) : userEmailLower.includes("judge") ? (
+                          ) : isDetailJudge ? (
                             <Badge tone="judge">GIÁM KHẢO</Badge>
                           ) : (
                             <Badge tone="warning">MENTOR</Badge>
                           )}
                         </div>
-                        <div>Đơn vị công tác: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || "Ban Tổ Chức System"}</strong></div>
-                        <div>Mã số quản trị: <strong className="text-[var(--accent-primary)]">{detailUserModal.id || detailUserModal.userId || "STAFF-01"}</strong></div>
+                        <div>Đơn vị công tác: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || "Hội Đồng Ban Tổ Chức"}</strong></div>
+                        <div>Mã định danh cán bộ: <strong className="text-[var(--accent-primary)]">{detailUserModal.id || detailUserModal.userId || "STAFF-01"}</strong></div>
                       </div>
 
                       <div className="space-y-2.5 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
-                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">2. Trạng thái phân quyền:</span>
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">2. Trạng thái phân quyền hệ thống:</span>
                         <div>Trạng thái hoạt động: <span className="text-[var(--color-success)] font-bold">✓ TÀI KHOẢN KÍCH HOẠT HỢP LỆ</span></div>
-                        <div>Quyền truy cập: <span className="text-[var(--accent-team)] font-semibold">Bảng điều hành & Control Center</span></div>
+                        <div>Loại tài khoản: <span className="text-[var(--accent-primary)] font-bold">Cán bộ & Hội Đồng Chuyên Môn</span></div>
+                        <div className="text-[11px] text-[var(--text-muted)] leading-relaxed mt-1">
+                          Tài khoản chuyên môn được cấp quyền trực tiếp bởi Ban Quản Trị Hệ Thống.
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex justify-end pt-4 border-t border-[var(--border-muted)]">
-                      <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs border border-[var(--border-muted)] px-4">
+                      <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs border border-[var(--border-muted)] px-6">
+                        ĐÓNG
+                      </Button>
+                    </div>
+                  </div>
+                ) : isFpt ? (
+                  /* ── 2. FPT STUDENT PROFILE ── */
+                  <div className="space-y-6 font-mono text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2.5 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin Sinh viên FPT:</span>
+                        <div>MSSV: <strong className="text-[var(--accent-team)] font-bold">{detailUserModal.studentCode || "Chưa cập nhật"}</strong></div>
+                        <div>Trường đào tạo: <strong className="text-[var(--text-primary)]">Đại học FPT</strong></div>
+                        <div>Vai trò thi đấu: <strong className="text-[var(--text-primary)]">Thí Sinh</strong></div>
+                        <div>Ngày đăng ký: <strong className="text-[var(--text-muted)]">{detailUserModal.createdTime ? new Date(detailUserModal.createdTime).toLocaleDateString("vi-VN") : "Hôm nay"}</strong></div>
+                      </div>
+
+                      <div className="space-y-2.5 p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">2. Trạng thái xác thực danh tính:</span>
+                        <div>Trạng thái: <span className="text-[var(--color-success)] font-bold">✓ TỰ ĐỘNG XÁC THỰC FPT EDU</span></div>
+                        <div className="text-[11px] text-[var(--text-muted)] leading-relaxed mt-1">
+                          Tài khoản sinh viên FPT được hệ thống tự động xác thực danh tính qua cổng giáo dục FPT Education. Sinh viên đủ điều kiện tham gia thi đấu hợp lệ mà không cần đối soát thẻ thủ công.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-[var(--border-muted)]">
+                      <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs border border-[var(--border-muted)] px-6">
                         ĐÓNG
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  /* ── STUDENT CANDIDATE CARD INSPECTION ── */
+                  /* ── 3. NON-FPT STUDENT CARD INSPECTION ── */
                   <div className="space-y-6 font-mono text-xs">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2 p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
                         <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">1. Thông tin sinh viên & Trường:</span>
                         <div>Mã SV: <strong className="text-[var(--text-primary)]">{detailUserModal.studentCode || "Chưa cập nhật"}</strong></div>
-                        <div>Trường học: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || (detailUserModal.isFpt ? "Đại học FPT" : "Chưa chọn trường")}</strong></div>
-                        <div>Xác minh FPT: <strong className="text-[var(--accent-team)]">{detailUserModal.isFpt ? "SV FPT (Tự động)" : "SV Non-FPT (Cần duyệt thẻ)"}</strong></div>
+                        <div>Trường học: <strong className="text-[var(--text-primary)]">{detailUserModal.schoolName || "Chưa chọn trường"}</strong></div>
+                        <div>Loại thí sinh: <strong className="text-[var(--accent-primary)] font-bold">Sinh viên Trường Ngoài (Cần duyệt thẻ)</strong></div>
                         <div>Ngày đăng ký: <strong className="text-[var(--text-muted)]">{detailUserModal.createdTime ? new Date(detailUserModal.createdTime).toLocaleDateString("vi-VN") : "Hôm nay"}</strong></div>
                       </div>
 
@@ -462,7 +479,7 @@ export const AdminUsersView: React.FC = () => {
                         <div>Trạng thái hiện tại: {detailUserModal.isApproved ? (
                           <span className="text-[var(--color-success)] font-bold">✓ ĐÃ PHÊ DUYỆT HỒ SƠ</span>
                         ) : (
-                          <span className="text-[var(--color-warning)] font-bold">⏳ ĐANG CHỜ PHÊ DUYỆT</span>
+                          <span className="text-[var(--color-warning)] font-bold animate-pulse">⏳ ĐANG CHỜ PHÊ DUYỆT</span>
                         )}</div>
                       </div>
                     </div>
@@ -509,7 +526,7 @@ export const AdminUsersView: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons for Non-FPT Student */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--border-muted)]">
                       <Button variant="ghost" onClick={() => setDetailUserModal(null)} className="font-mono text-xs">
                         Đóng
@@ -526,14 +543,14 @@ export const AdminUsersView: React.FC = () => {
                           }}
                           className="font-mono text-xs text-[var(--color-danger)] border-[var(--color-danger)]/40 hover:bg-[var(--color-danger)]/10"
                         >
-                          <UserX className="w-3.5 h-3.5" /> Từ Chối Hồ Sơ
+                          <UserX className="w-3.5 h-3.5 mr-1" /> Từ Chối Hồ Sơ
                         </Button>
                         <Button
                           variant="primary"
                           onClick={() => handleApprove(detailUserModal.id || detailUserModal.userId || "")}
                           className="font-mono text-xs bg-[var(--color-success)] text-white hover:bg-white hover:text-black font-bold"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" /> // PHÊ DUYỆT HỒ SƠ &gt;
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> // PHÊ DUYỆT HỒ SƠ &gt;
                         </Button>
                       </div>
                     </div>
@@ -589,83 +606,6 @@ export const AdminUsersView: React.FC = () => {
                   </Button>
                 </div>
               </form>
-            </Card>
-          </div>
-        )}
-
-        {/* Modal 3: Gán Event Coordinator */}
-        {selectedUserForEc && (
-          <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fade-in">
-            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)] space-y-4 relative hud-clipped">
-              <button
-                type="button"
-                onClick={() => setSelectedUserForEc(null)}
-                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                  <UserCheck className="w-5 h-5 text-[var(--accent-coordinator)]" />
-                  Gán Quyền Event Coordinator (EC)
-                </h3>
-                <p className="font-mono text-xs text-[var(--text-muted)]">
-                  Chỉ định tài khoản{" "}
-                  <span className="text-[var(--accent-primary)] font-bold">{selectedUserForEc.fullName}</span> (
-                  {selectedUserForEc.email}) phụ trách điều phối sự kiện.
-                </p>
-              </div>
-
-              {successMessage ? (
-                <div className="p-4 bg-[rgba(16,185,129,0.1)] border border-[var(--color-success)] text-[var(--color-success)] font-mono text-xs hud-clipped flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-[var(--color-success)]" />
-                  <span>{successMessage}</span>
-                </div>
-              ) : (
-                <form onSubmit={handleAssignEc} className="space-y-4 pt-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                      1. Chọn Sự Kiện Điều Phối *
-                    </label>
-                    <select
-                      value={selectedEventId}
-                      onChange={(e) => setSelectedEventId(e.target.value)}
-                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs focus:outline-none focus:border-[var(--accent-coordinator)] cursor-pointer"
-                    >
-                      {eventsList.map((ev: any) => {
-                        const id = ev.id || ev.Id || ev.eventId || ev.EventId;
-                        const name = ev.eventName || ev.EventName || "Sự kiện";
-                        const season = ev.season || ev.Season || "SWP";
-                        const year = ev.year || ev.Year || 2026;
-                        return (
-                          <option key={id} value={id}>
-                            {name} ({season} {year})
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-
-                  <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1">
-                    <span className="font-mono text-[10px] text-[var(--accent-coordinator)] uppercase block font-bold">
-                      Quyền hạn Event Coordinator được cấp:
-                    </span>
-                    <p className="font-mono text-[10px] text-[var(--text-muted)]">
-                      Tài khoản sau khi gán sẽ có toàn quyền cấu hình Vòng thi (Rounds), Hạng mục (Tracks), duyệt Đội thi, hiệu chuẩn điểm số và công bố kết quả sự kiện này.
-                    </p>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="ghost" type="button" onClick={() => setSelectedUserForEc(null)}>
-                      Hủy Bỏ
-                    </Button>
-                    <Button variant="primary" accent="coordinator" type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Đang xử lý..." : "// XÁC NHẬN GÁN EC >"}
-                    </Button>
-                  </div>
-                </form>
-              )}
             </Card>
           </div>
         )}
