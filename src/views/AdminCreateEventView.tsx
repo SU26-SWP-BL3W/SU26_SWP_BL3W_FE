@@ -8,6 +8,14 @@ import { usersRepository } from "@/repositories/usersRepository";
 import { Shield, Calendar, Info, ArrowLeft, CheckCircle2, UserCheck } from "lucide-react";
 import Link from "next/link";
 
+function HudLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-mono text-[10px] tracking-[0.2em] text-[var(--color-danger)] uppercase">
+      {children}
+    </span>
+  );
+}
+
 export const AdminCreateEventView: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

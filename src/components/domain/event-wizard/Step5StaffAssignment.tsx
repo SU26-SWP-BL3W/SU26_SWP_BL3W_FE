@@ -46,7 +46,7 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
         <div>
           <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
             <Users className="w-5 h-5 text-[var(--accent-mentor)]" />
-            Bước 5: Phân Công Giám Khảo & Cố Vấn (Staffing)
+            Bước 5: Phân Công Giám Khảo & Cố Vấn
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
             Gửi email mời Giám khảo &amp; Cố vấn tham gia Hội đồng chuyên môn của Sự kiện.

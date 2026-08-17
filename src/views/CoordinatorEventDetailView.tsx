@@ -531,9 +531,9 @@ export const CoordinatorEventDetailView: React.FC = () => {
 
   const stepDoneMap: Record<number, boolean> = {
     1: Boolean(eventData.eventName && eventData.startDate && eventData.endDate),
-    2: rounds.length > 0,
-    3: tracks.length > 0,
-    4: isValidWeight100,
+    2: isStep2Done,
+    3: isStep3Done,
+    4: isStep4Done,
     5: judgeCount > 0,
     6: canPublishEvent,
   };

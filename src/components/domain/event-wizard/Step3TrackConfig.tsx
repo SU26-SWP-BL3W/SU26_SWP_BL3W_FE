@@ -39,7 +39,7 @@ export const Step3TrackConfig: React.FC<Step3TrackConfigProps> = ({
         <div>
           <h3 className="font-display font-bold text-lg text-[var(--text-primary)] tracking-wider flex items-center gap-2">
             <Target className="w-5 h-5 text-[var(--accent-team)]" />
-            Bước 3: Tạo Hạng Mục Thi (Tracks)
+            Bước 3: Tạo Hạng Mục Thi
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
             Cấu hình các Hạng mục chuyên môn thuộc Sự kiện (ví dụ: AI & Machine Learning, Web & Product, Game Dev...).

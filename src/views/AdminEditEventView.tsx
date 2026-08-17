@@ -314,10 +314,35 @@ export const AdminEditEventView: React.FC = () => {
     );
   }
 
-  const totalCriteriaWeight = criterias.reduce((s, c) => s + (Number(c.weight) || 0), 0);
-  const isValidWeight100 = criterias.length === 0 || totalCriteriaWeight === 100;
+  const isStep2Done = Boolean(
+    rounds.length > 0 &&
+    rounds.every((r) => {
+      const scoringEnd = r.scoringEndDate || (r as any).ScoringEndDate;
+      return (
+        r.roundName?.trim() &&
+        r.startDate &&
+        r.endDate &&
+        scoringEnd &&
+        new Date(r.startDate) <= new Date(r.endDate)
+      );
+    })
+  );
+
+  const isStep3Done = Boolean(tracks.length > 0 && tracks.every((t) => t.trackName?.trim()));
+
+  const isStep4Done = Boolean(
+    tracks.length > 0 &&
+    tracks.every((trk) => {
+      if (trk.templateId && trk.templateId !== "__custom__") return true;
+      const list = criteriasByTrack[trk.id] ?? criterias;
+      if (!list || list.length === 0) return true;
+      const weight = list.reduce((acc, c) => acc + (Number(c.weight) || 0), 0);
+      return Math.abs(weight - 100) < 0.01;
+    })
+  );
+
   const judgeCount = staffInvites.filter((s) => s.roleName === "Judge").length;
-  const canPublish = rounds.length > 0 && tracks.length > 0 && isValidWeight100 && judgeCount > 0;
+  const canPublish = isStep2Done && isStep3Done && isStep4Done && judgeCount > 0;
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
@@ -557,11 +582,11 @@ export const AdminEditEventView: React.FC = () => {
             {/* Sub-steps Selector */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {[
-                { step: 2, label: "Vòng Thi", count: rounds.length },
-                { step: 3, label: "Hạng Mục", count: tracks.length },
-                { step: 4, label: "Tiêu Chí", count: criterias.length },
-                { step: 5, label: "Giám Khảo", count: staffInvites.length },
-                { step: 6, label: "Công Bố", count: status ? "Public" : "Draft" },
+                { step: 2, label: "Vòng Thi", isDone: isStep2Done },
+                { step: 3, label: "Hạng Mục", isDone: isStep3Done },
+                { step: 4, label: "Tiêu Chí", isDone: isStep4Done },
+                { step: 5, label: "Giám Khảo", isDone: judgeCount > 0 },
+                { step: 6, label: "Công Bố", isDone: status === true },
               ].map((s) => (
                 <button
                   key={s.step}
@@ -573,8 +598,21 @@ export const AdminEditEventView: React.FC = () => {
                       : "bg-[var(--bg-panel)] border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white"
                   }`}
                 >
-                  <div className="font-mono text-[10px] uppercase opacity-75">Bước {s.step}</div>
-                  <div className="font-mono text-xs font-bold">{s.label} ({s.count})</div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] uppercase opacity-75">Bước {s.step}</span>
+                    <span
+                      className={`font-mono text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        s.isDone
+                          ? "bg-[rgba(16,185,129,0.15)] text-[var(--color-success)] border border-[var(--color-success)]/30"
+                          : "bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30"
+                      }`}
+                    >
+                      {s.step === 6
+                        ? s.isDone ? "CÔNG KHAI" : "BẢN NHÁP"
+                        : s.isDone ? "ĐÃ XONG" : "CHƯA XONG"}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs font-bold mt-1">{s.label}</div>
                 </button>
               ))}
             </div>
