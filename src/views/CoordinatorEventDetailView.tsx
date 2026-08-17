@@ -500,24 +500,34 @@ export const CoordinatorEventDetailView: React.FC = () => {
 
   // Quick Toggle Status Banner
   const handleQuickToggleStatus = async () => {
-    if (!status) {
-      if (!canPublishEvent) {
-        setErrorMessage(`Chưa đủ điều kiện công bố. Vui lòng hoàn tất: ${validationMissingItems.join(", ")}`);
-        setCurrentStep(6);
-        return;
-      }
-      if (!confirm(`Bạn có chắc chắn muốn CÔNG BỐ sự kiện "${eventData.eventName}" lên trang chủ công khai cho thí sinh đăng ký không?`)) {
-        return;
-      }
-    } else {
-      if (!confirm(`Bạn có chắc chắn muốn TẠM ẨN sự kiện "${eventData.eventName}" về Bản Nháp (Draft) để chỉnh sửa không?`)) {
-        return;
-      }
-    }
-
     setIsTogglingPublish(true);
-    await handleSaveChanges(!status);
-    setIsTogglingPublish(false);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const nextStatus = !status;
+    try {
+      await eventsRepository.updateEvent(eventId, {
+        eventName: eventData.eventName,
+        season: eventData.season,
+        year: eventData.year,
+        maxTeams: eventData.maxTeams,
+        tagline: eventData.tagline,
+        description: eventData.description,
+        status: nextStatus,
+      } as any);
+
+      setStatus(nextStatus);
+      await refetchEvent();
+      setSuccessMessage(
+        nextStatus
+          ? "Đã CÔNG BỐ sự kiện thành công! Thí sinh đã có thể nhìn thấy và đăng ký trên trang chủ."
+          : "Đã CHUYỂN SỰ KIỆN VỀ BẢN NHÁP an toàn!"
+      );
+    } catch (err: any) {
+      setErrorMessage(`Lỗi đổi trạng thái: ${err?.response?.data?.message || err?.message}`);
+    } finally {
+      setIsTogglingPublish(false);
+    }
   };
 
   const steps = [

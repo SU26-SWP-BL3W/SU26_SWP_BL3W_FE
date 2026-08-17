@@ -344,6 +344,42 @@ export const AdminEditEventView: React.FC = () => {
   const judgeCount = staffInvites.filter((s) => s.roleName === "Judge").length;
   const canPublish = isStep2Done && isStep3Done && isStep4Done && judgeCount > 0;
 
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+
+  const handleQuickToggleStatus = async () => {
+    setIsTogglingStatus(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const nextStatus = !status;
+    try {
+      await eventsRepository.updateEvent(eventId, {
+        eventName: form.eventName,
+        season: form.season,
+        year: Number(form.year),
+        startDate: form.startDate ? new Date(form.startDate).toISOString() : new Date().toISOString(),
+        endDate: form.endDate ? new Date(form.endDate).toISOString() : new Date().toISOString(),
+        registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : new Date().toISOString(),
+        registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : new Date().toISOString(),
+        description: form.description,
+        maxTeams: Number(form.maxTeams),
+        status: nextStatus,
+      } as any);
+
+      setStatus(nextStatus);
+      setSuccessMessage(
+        nextStatus
+          ? "Đã CÔNG BỐ sự kiện thành công! Thí sinh đã có thể đăng ký trên trang chủ."
+          : "Đã CHUYỂN SỰ KIỆN VỀ BẢN NHÁP an toàn!"
+      );
+      refetchEvent();
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || err?.message || "Không thể cập nhật trạng thái sự kiện.");
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
       <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-4 py-8 space-y-6">
@@ -358,12 +394,42 @@ export const AdminEditEventView: React.FC = () => {
               <span>/</span>
               <span>Sự Kiện: {form.eventName || "..."}</span>
             </div>
-            <h1 className="font-display font-bold text-2xl text-[var(--text-primary)] uppercase tracking-wider">
-              {form.eventName || "Quản Lý Sự Kiện"}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-display font-bold text-2xl text-[var(--text-primary)] uppercase tracking-wider">
+                {form.eventName || "Quản Lý Sự Kiện"}
+              </h1>
+              <span
+                className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded ${
+                  status
+                    ? "bg-[rgba(16,185,129,0.15)] text-[var(--color-success)] border border-[var(--color-success)]/30"
+                    : "bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                }`}
+              >
+                {status ? "ĐANG CÔNG KHAI" : "BẢN NHÁP"}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              disabled={isTogglingStatus}
+              onClick={handleQuickToggleStatus}
+              className={`font-mono text-xs font-bold py-2 px-4 shrink-0 flex items-center gap-2 border cursor-pointer ${
+                status
+                  ? "border-amber-500/60 text-amber-300 hover:bg-amber-500/20 bg-amber-500/10"
+                  : "border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/20 bg-emerald-500/10"
+              }`}
+            >
+              {isTogglingStatus ? (
+                "Đang xử lý..."
+              ) : status ? (
+                "CHUYỂN VỀ BẢN NHÁP"
+              ) : (
+                "CÔNG BỐ SỰ KIỆN"
+              )}
+            </Button>
+
             <Link href={`/events/${eventId}`}>
               <Button variant="ghost" className="font-mono text-xs border border-[var(--border-muted)]">
                 Xem Trang Public &gt;
