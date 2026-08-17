@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useGetSchools, useCreateSchool } from "@/repositories/schoolsRepository";
+import { useGetSchools, useCreateSchool, useDeleteSchool } from "@/repositories/schoolsRepository";
 import { Button, Card, Badge, Table, Input } from "@/components/ui";
 import {
   School as SchoolIcon,
@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   X,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import type { School } from "@/models/entities";
@@ -46,6 +47,24 @@ export const AdminSchoolsView: React.FC = () => {
 
   const { data: schoolsList = [], isLoading, refetch } = useGetSchools();
   const { mutateAsync: createSchool, isPending: isCreating } = useCreateSchool();
+  const { mutateAsync: deleteSchool } = useDeleteSchool();
+
+  const handleDeleteSchool = async (sch: School) => {
+    const sId = sch.id || sch.schoolId || (sch as any).Id;
+    const sName = sch.schoolName || sch.name || "Trường";
+    if (!sId) return;
+
+    if (!confirm(`Bạn có chắc chắn muốn xóa trường "${sName}" khỏi hệ thống?`)) return;
+
+    try {
+      await deleteSchool(sId);
+      refetch();
+      alert(`Đã xóa trường "${sName}" thành công.`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Không thể xóa trường. Vui lòng kiểm tra quyền Admin.";
+      alert(`Lỗi xóa trường học: ${msg}`);
+    }
+  };
 
   const filteredSchools = schoolsList.filter((sch) => {
     const sName = sch.schoolName || sch.name || "";
@@ -142,6 +161,7 @@ export const AdminSchoolsView: React.FC = () => {
                     <th>TÊN TRƯỜNG ĐẠI HỌC</th>
                     <th>ĐỊA CHỈ TRỤ SỞ</th>
                     <th>PHÂN LOẠI</th>
+                    <th className="text-center">THAO TÁC</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -172,6 +192,16 @@ export const AdminSchoolsView: React.FC = () => {
                           }`}>
                             {isFpt ? "TRƯỜNG CHỦ TRÌ (FPTU)" : "TRƯỜNG ĐỐI TÁC (NON-FPT)"}
                           </span>
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleDeleteSchool(sch)}
+                            className="text-xs font-mono text-[var(--color-danger)] border-[var(--color-danger)]/30 hover:bg-[var(--color-danger)]/10 px-2.5 py-1"
+                            title="Xóa trường học"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </td>
                       </tr>
                     );

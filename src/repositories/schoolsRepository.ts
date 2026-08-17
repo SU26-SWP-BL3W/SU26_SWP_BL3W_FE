@@ -84,3 +84,17 @@ export function useCreateSchool() {
     },
   });
 }
+
+/** DELETE /api/Schools/{id} — Xóa trường học (Admin) */
+export function useDeleteSchool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (schoolId: string) => {
+      const res = await apiClient.delete(`/Schools/${schoolId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["schools"] });
+    },
+  });
+}

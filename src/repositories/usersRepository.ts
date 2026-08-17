@@ -375,11 +375,15 @@ export function useFptStudentLookup(studentCode: string | null) {
 export const usersRepository = {
   async findUserByEmail(email: string): Promise<User | null> {
     if (!email) return null;
+    const targetEmail = email.trim().toLowerCase();
     try {
-      const res = await apiClient.get<PagedResult<User>>("/Users");
-      const list = res.data?.data ?? [];
+      const res = await apiClient.get<BaseResponse<PagedResult<User>> | PagedResult<User>>("/Users", {
+        params: { PageSize: 500, PageNumber: 1 },
+      });
+      const dataPayload = (res.data as any)?.data ?? res.data;
+      const list: User[] = Array.isArray(dataPayload) ? dataPayload : Array.isArray(dataPayload?.data) ? dataPayload.data : [];
       const found = list.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase() || (u as any).Email?.toLowerCase() === email.toLowerCase()
+        (u) => (u.email || "").toLowerCase() === targetEmail || ((u as any).Email || "").toLowerCase() === targetEmail
       );
       if (found) return found;
     } catch (err: any) {

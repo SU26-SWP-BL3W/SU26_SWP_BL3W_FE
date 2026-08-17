@@ -66,7 +66,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
     return <>{children}</>;
   }
 
-  const isUserAdmin = user.isAdmin;
+  const isUserAdmin = Boolean(user.isAdmin || (user as any).IsAdmin);
+  const isUserStudent = Boolean(user.isStudent || (user as any).IsStudent);
   const userRoleName = getRoleName(activeRole);
 
   // Map API roleName to display role
@@ -76,7 +77,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
     (allowedRoles.includes("Admin") && isUserAdmin) ||
     (userRoleDisplay && allowedRoles.includes(userRoleDisplay as AllowedRole)) ||
     // Student = user logged in but isStudent
-    (allowedRoles.includes("Student") && user.isStudent);
+    (allowedRoles.includes("Student") && isUserStudent);
 
   if (!hasAccess) {
     return (

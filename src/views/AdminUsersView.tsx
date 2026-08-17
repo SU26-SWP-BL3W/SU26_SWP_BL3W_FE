@@ -130,15 +130,32 @@ export const AdminUsersView: React.FC = () => {
     }
   };
 
+  const isCoordinatorEmail = (email?: string) => {
+    const l = (email || "").toLowerCase();
+    return l.includes("ec_") || l.includes("ec.") || l.includes("coordinator") || l.includes("ec@");
+  };
+
+  const handleOpenAssignEcModal = (u: User) => {
+    setSelectedUserForEc(u);
+    const defaultEvtId = eventsList[0]?.id || (eventsList[0] as any)?.Id || (eventsList[0] as any)?.eventId || (eventsList[0] as any)?.EventId || "";
+    setSelectedEventId(defaultEvtId);
+  };
+
   const handleAssignEc = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForEc) return;
+
+    const eventId = selectedEventId || eventsList[0]?.id || (eventsList[0] as any)?.Id || (eventsList[0] as any)?.eventId || (eventsList[0] as any)?.EventId || "";
+    if (!eventId) {
+      alert("Hệ thống chưa có sự kiện nào để phân công. Vui lòng tạo sự kiện trước.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const res = await staffRepository.assignRoleDirectly({
         userId: selectedUserForEc.id || selectedUserForEc.userId || "",
-        eventId: selectedEventId,
+        eventId: eventId,
         roleName: "EventCoordinator",
       });
       setIsSubmitting(false);
@@ -273,7 +290,8 @@ export const AdminUsersView: React.FC = () => {
                     const isLocked = (u.rejectionCount ?? 0) >= 2;
                     const userId = u.id || u.userId || "";
                     const userEmailLower = (u.email || "").toLowerCase();
-                    const isStaffOrAdmin = u.isAdmin || userEmailLower.includes("admin") || userEmailLower.includes("ec.coordinator");
+                    const isEcUser = isCoordinatorEmail(u.email);
+                    const isStaffOrAdmin = u.isAdmin || userEmailLower.includes("admin") || isEcUser || userEmailLower.includes("judge") || userEmailLower.includes("mentor");
 
                     return (
                       <tr key={userId}>
@@ -295,7 +313,7 @@ export const AdminUsersView: React.FC = () => {
                         <td>
                           {u.isAdmin || userEmailLower.includes("admin") ? (
                             <Badge tone="danger">SYSTEM ADMIN</Badge>
-                          ) : userEmailLower.includes("ec.coordinator") ? (
+                          ) : isEcUser ? (
                             <Badge tone="coordinator">EVENT COORDINATOR</Badge>
                           ) : userEmailLower.includes("judge") ? (
                             <Badge tone="judge">GIÁM KHẢO</Badge>
@@ -332,7 +350,7 @@ export const AdminUsersView: React.FC = () => {
                             {!isStaffOrAdmin && (
                               <Button
                                 variant="ghost"
-                                onClick={() => setSelectedUserForEc(u)}
+                                onClick={() => handleOpenAssignEcModal(u)}
                                 className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10"
                               >
                                 <UserCheck className="w-3.5 h-3.5" /> Gán EC
@@ -352,7 +370,8 @@ export const AdminUsersView: React.FC = () => {
         {/* Modal 1: Xem Chi Tiết Đầy Đủ Hồ Sơ User */}
         {detailUserModal && (() => {
           const userEmailLower = (detailUserModal.email || "").toLowerCase();
-          const isStaffOrAdmin = detailUserModal.isAdmin || userEmailLower.includes("admin") || userEmailLower.includes("ec.coordinator") || userEmailLower.includes("judge") || userEmailLower.includes("mentor");
+          const isDetailEc = isCoordinatorEmail(detailUserModal.email);
+          const isStaffOrAdmin = detailUserModal.isAdmin || userEmailLower.includes("admin") || isDetailEc || userEmailLower.includes("judge") || userEmailLower.includes("mentor");
 
           return (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
@@ -385,7 +404,7 @@ export const AdminUsersView: React.FC = () => {
                           <span className="text-[var(--text-muted)]">Vai trò hệ thống:</span>
                           {detailUserModal.isAdmin || userEmailLower.includes("admin") ? (
                             <Badge tone="danger">SYSTEM ADMIN</Badge>
-                          ) : userEmailLower.includes("ec.coordinator") ? (
+                          ) : isDetailEc ? (
                             <Badge tone="coordinator">EVENT COORDINATOR</Badge>
                           ) : userEmailLower.includes("judge") ? (
                             <Badge tone="judge">GIÁM KHẢO</Badge>
