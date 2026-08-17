@@ -78,7 +78,21 @@ export const staffRepository = {
    * Gán vai trò trực tiếp không qua email mời (POST /api/EventRoles/assign)
    */
   async assignRoleDirectly(payload: AssignRolePayload): Promise<BaseResponse<EventRole>> {
-    const res = await apiClient.post<BaseResponse<EventRole>>("/EventRoles/assign", payload);
+    const ROLE_MAP: Record<string, number> = {
+      EventCoordinator: 0,
+      Judge: 1,
+      Mentor: 2,
+      TeamLeader: 3,
+      TeamMember: 4,
+    };
+    const roleValue = typeof payload.roleName === "string" && ROLE_MAP[payload.roleName] !== undefined
+      ? ROLE_MAP[payload.roleName]
+      : payload.roleName;
+
+    const res = await apiClient.post<BaseResponse<EventRole>>("/EventRoles/assign", {
+      ...payload,
+      roleName: roleValue,
+    });
     return res.data;
   },
 
