@@ -301,7 +301,12 @@ export function useGetUsers(params?: {
     // Trước đây nhánh thành công trả thẳng mảng, các nhánh khác trả PagedResult -> lệch kiểu,
     // màn nào đọc .data mà quên phòng thủ Array.isArray sẽ ra rỗng dù API có dữ liệu.
     queryFn: async (): Promise<PagedResult<User>> => {
-      const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users", { params });
+      const queryParams = {
+        PageNumber: params?.pageNumber ?? (params as any)?.PageNumber ?? 1,
+        PageSize: params?.pageSize ?? (params as any)?.PageSize ?? 100,
+        ...params,
+      };
+      const res = await apiClient.get<BaseResponse<PagedResult<User>>>("/Users", { params: queryParams });
       const payload = res.data as unknown; // sau interceptor bóc BaseResponse = PagedResult
       const emptyPage: PagedResult<User> = {
         data: [],

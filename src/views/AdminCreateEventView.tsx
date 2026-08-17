@@ -122,27 +122,29 @@ export const AdminCreateEventView: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
       <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-2 font-mono text-xs text-[var(--text-muted)] border-b border-[var(--border-muted)] pb-4">
-          <Link href="/admin/dashboard" className="hover:text-[var(--color-danger)] flex items-center gap-1">
-            <ArrowLeft className="w-3.5 h-3.5" /> Bảng Điều Hành Admin
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--text-muted)] tracking-widest uppercase">
+          <Link href="/admin/dashboard" className="text-[var(--color-danger)] font-bold hover:underline">
+            ADMIN // EXECUTIVE CONTROL
           </Link>
-          <span>/</span>
-          <span className="text-[var(--color-danger)] font-bold">STT #1: Khởi Tạo Sự Kiện (Admin Only)</span>
+          <span>&gt;</span>
+          <span className="text-[var(--text-primary)] font-bold">KHỞI TẠO SỰ KIỆN TOÀN HỆ THỐNG</span>
         </div>
 
-        <Card className="hud-glow-cyan p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
+        <Card className="p-6 space-y-6 bg-[var(--bg-panel)] border border-[var(--color-danger)]/40 shadow-xl shadow-[var(--color-danger)]/5 hud-clipped">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-4">
             <div>
-              <h2 className="font-display font-bold text-xl text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+              <HudLabel>// SYSTEM EVENT CREATION WIZARD</HudLabel>
+              <h2 className="font-display font-bold text-2xl text-[var(--color-danger)] uppercase tracking-wider flex items-center gap-2 mt-1">
                 <Shield className="w-6 h-6 text-[var(--color-danger)]" />
-                Admin Khởi Tạo Sự Kiện Mới (POST /api/Events)
+                Khởi Tạo Sự Kiện Thi Đấu Mới
               </h2>
               <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-                Tạo Khung Sự Kiện Chính và chỉ định Event Coordinator (Trưởng Ban Tổ Chức) phụ trách điều phối sự kiện.
+                Thiết lập khung sự kiện chính thức, cấu hình thời gian thi đấu & phân công Event Coordinator phụ trách.
               </p>
             </div>
-            <span className="px-3 py-1 font-mono text-xs bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30 hud-clipped font-bold">
-              [ADM-ACTION ONLY]
+            <span className="px-3 py-1 font-mono text-xs bg-[rgba(239,68,68,0.1)] text-[var(--color-danger)] border border-[var(--color-danger)]/30 hud-clipped font-bold self-start md:self-auto">
+              [ SYSTEM ADMIN PRIVILEGE ]
             </span>
           </div>
 

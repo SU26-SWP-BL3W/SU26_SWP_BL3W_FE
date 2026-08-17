@@ -105,20 +105,28 @@ export const AdminDashboardView: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
       <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-6 py-8 space-y-6">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--text-muted)] tracking-widest uppercase">
+          <span className="text-[var(--color-danger)] font-bold">ADMIN // EXECUTIVE CONTROL</span>
+          <span>&gt;</span>
+          <span className="text-[var(--text-primary)] font-bold">BẢNG ĐIỀU HÀNH TỔNG QUAN</span>
+        </div>
+
         {/* Admin Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
           <div>
             <HudLabel>// SYSTEM ADMIN OPERATIONS HUB</HudLabel>
-            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1">
+            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1 flex items-center gap-2.5">
+              <Shield className="w-7 h-7 text-[var(--color-danger)]" />
               Bảng Điều Hành Admin Tổng
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-              Dành riêng cho System Admin: Khởi tạo sự kiện toàn hệ thống & phân công Event Coordinator quản lý.
+              Trung tâm chỉ huy tối cao: Giám sát toàn hệ thống, khởi tạo sự kiện & chỉ định Event Coordinator.
             </p>
           </div>
 
           <Link href="/admin/events/new">
-            <Button variant="primary" className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold">
+            <Button variant="primary" className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold shadow-lg shadow-[var(--color-danger)]/20 transition-all duration-200">
               <Plus className="w-4 h-4" /> Tạo Sự Kiện Mới
             </Button>
           </Link>
@@ -126,62 +134,70 @@ export const AdminDashboardView: React.FC = () => {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--color-danger)] bg-[var(--bg-panel)] hud-clipped">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--color-danger)] bg-[var(--bg-panel)] hud-clipped hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[var(--color-danger)]/10 transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--color-danger)]/5 rounded-full blur-xl pointer-events-none group-hover:bg-[var(--color-danger)]/10 transition-colors" />
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Tổng Sự Kiện Hệ Thống
             </span>
             <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--color-danger)]">
+              <span className="font-mono font-bold text-3xl text-[var(--color-danger)]">
                 {displayEvents.length}
               </span>
-              <Shield className="w-5 h-5 text-[var(--color-danger)] opacity-60" />
+              <Shield className="w-5 h-5 text-[var(--color-danger)] opacity-70 group-hover:scale-110 transition-transform" />
             </div>
-            <span className="font-mono text-[10px] text-[var(--color-success)] block">
-              ● {displayEvents.length} Sự kiện active trên hệ thống
+            <span className="font-mono text-[10px] text-[var(--color-success)] flex items-center gap-1.5 pt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
+              {displayEvents.length} Sự kiện đang vận hành
             </span>
           </Card>
 
-          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--accent-coordinator)] bg-[var(--bg-panel)] hud-clipped">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--accent-coordinator)] bg-[var(--bg-panel)] hud-clipped hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[var(--accent-coordinator)]/10 transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--accent-coordinator)]/5 rounded-full blur-xl pointer-events-none group-hover:bg-[var(--accent-coordinator)]/10 transition-colors" />
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Event Coordinators (EC)
             </span>
             <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--accent-coordinator)]">
+              <span className="font-mono font-bold text-3xl text-[var(--accent-coordinator)]">
                 {ecCount}
               </span>
-              <Users className="w-5 h-5 text-[var(--accent-coordinator)] opacity-60" />
+              <Users className="w-5 h-5 text-[var(--accent-coordinator)] opacity-70 group-hover:scale-110 transition-transform" />
             </div>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1.5 pt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-coordinator)]" />
               Tài khoản điều phối sự kiện
             </span>
           </Card>
 
-          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--accent-judge)] bg-[var(--bg-panel)] hud-clipped">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[var(--accent-judge)] bg-[var(--bg-panel)] hud-clipped hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[var(--accent-judge)]/10 transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--accent-judge)]/5 rounded-full blur-xl pointer-events-none group-hover:bg-[var(--accent-judge)]/10 transition-colors" />
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Tổng Người Dùng Hệ Thống
             </span>
             <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[var(--accent-judge)]">
+              <span className="font-mono font-bold text-3xl text-[var(--accent-judge)]">
                 {totalUsersCount}
               </span>
-              <Activity className="w-5 h-5 text-[var(--accent-judge)] opacity-60" />
+              <Activity className="w-5 h-5 text-[var(--accent-judge)] opacity-70 group-hover:scale-110 transition-transform" />
             </div>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1.5 pt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-judge)]" />
               Sinh viên, Giám khảo & Cố vấn
             </span>
           </Card>
 
-          <Card className="p-5 space-y-2 border-l-4 border-l-[#2dd4bf] bg-[var(--bg-panel)] hud-clipped">
+          <Card className="p-5 space-y-2 border-l-4 border-l-[#2dd4bf] bg-[var(--bg-panel)] hud-clipped hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#2dd4bf]/10 transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#2dd4bf]/5 rounded-full blur-xl pointer-events-none group-hover:bg-[#2dd4bf]/10 transition-colors" />
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
               Trường Đại Học Đối Tác
             </span>
             <div className="flex items-baseline justify-between">
-              <span className="font-mono font-bold text-2xl text-[#2dd4bf]">
+              <span className="font-mono font-bold text-3xl text-[#2dd4bf]">
                 {totalSchoolsCount}
               </span>
-              <School className="w-5 h-5 text-[#2dd4bf] opacity-60" />
+              <School className="w-5 h-5 text-[#2dd4bf] opacity-70 group-hover:scale-110 transition-transform" />
             </div>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+            <span className="font-mono text-[10px] text-[var(--text-muted)] flex items-center gap-1.5 pt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf]" />
               Danh mục trường đại học đối tác
             </span>
           </Card>
@@ -220,9 +236,9 @@ export const AdminDashboardView: React.FC = () => {
                     const ecInfo = ev.coordinatorEmail || ev.CoordinatorEmail || "Chưa gán EC";
 
                     return (
-                      <tr key={id}>
+                      <tr key={id} className="hover:bg-[var(--color-danger)]/5 transition-colors group">
                         <td>
-                          <div className="font-mono font-bold text-sm text-[var(--text-primary)]">{name}</div>
+                          <div className="font-mono font-bold text-sm text-[var(--text-primary)] group-hover:text-[var(--color-danger)] transition-colors">{name}</div>
                           <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{id}</div>
                         </td>
                         <td>
@@ -239,7 +255,8 @@ export const AdminDashboardView: React.FC = () => {
                           </span>
                         </td>
                         <td>
-                          <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
                             ACTIVE
                           </span>
                         </td>

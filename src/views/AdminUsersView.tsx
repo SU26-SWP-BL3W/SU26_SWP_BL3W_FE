@@ -179,25 +179,35 @@ export const AdminUsersView: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
       <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-6 py-8 space-y-6">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--text-muted)] tracking-widest uppercase">
+          <Link href="/admin/dashboard" className="text-[var(--color-danger)] font-bold hover:underline">
+            ADMIN // EXECUTIVE CONTROL
+          </Link>
+          <span>&gt;</span>
+          <span className="text-[var(--text-primary)] font-bold">QUẢN LÝ TÀI KHOẢN & HỒ SƠ</span>
+        </div>
+
         {/* Admin Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
           <div>
             <HudLabel>// SYSTEM ADMIN USER MANAGEMENT</HudLabel>
-            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1">
+            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1 flex items-center gap-2.5">
+              <Users className="w-7 h-7 text-[var(--color-danger)]" />
               Quản Lý Danh Sách Tài Khoản
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-              Dành riêng cho System Admin: Quản lý phân quyền, duyệt hồ sơ thẻ sinh viên & gán Event Coordinator.
+              Trung tâm kiểm duyệt & phân quyền: Xét duyệt hồ sơ thẻ sinh viên Non-FPT, gán Event Coordinator & giám sát thành viên.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Link href="/admin/events/new">
-              <Button variant="primary" className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold">
+              <Button variant="primary" className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold shadow-lg shadow-[var(--color-danger)]/20 transition-all duration-200">
                 <Plus className="w-4 h-4" /> // TẠO EVENT MỚI &gt;
               </Button>
             </Link>
-            <Button variant="ghost" onClick={() => refetch()} className="font-mono text-xs">
+            <Button variant="ghost" onClick={() => refetch()} className="font-mono text-xs hover:bg-[var(--bg-input)]">
               <RefreshCw className="w-3.5 h-3.5" /> Làm mới
             </Button>
           </div>
@@ -457,23 +467,43 @@ export const AdminUsersView: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Physical Student Card Photo Inspection */}
+                    {/* Physical Student Card Photo Inspection with HUD Scanner Frame */}
                     <div className="space-y-2">
-                      <span className="font-mono text-xs text-[var(--accent-primary)] font-bold uppercase block">
-                        3. Ảnh Chụp Thẻ Sinh Viên Thực Tế (Physical Student Card Inspection):
-                      </span>
-                      <div className="w-full h-56 bg-black border border-[var(--border-muted)] hud-clipped flex items-center justify-center relative overflow-hidden group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs text-[var(--accent-primary)] font-bold uppercase block">
+                          3. Ảnh Chụp Thẻ Sinh Viên Thực Tế (Physical Card Inspection):
+                        </span>
+                        <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                          [ OPTICAL OCR & BIOMETRIC VERIFIER ]
+                        </span>
+                      </div>
+                      <div className="w-full h-64 bg-[#050811] border border-[var(--accent-primary)]/40 hud-clipped flex items-center justify-center relative overflow-hidden group shadow-inner">
+                        {/* HUD 4-Corner Reticles */}
+                        <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[var(--accent-primary)] pointer-events-none z-10 opacity-80" />
+                        <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[var(--accent-primary)] pointer-events-none z-10 opacity-80" />
+                        <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[var(--accent-primary)] pointer-events-none z-10 opacity-80" />
+                        <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[var(--accent-primary)] pointer-events-none z-10 opacity-80" />
+
                         {detailUserModal.photoStudentCardUrl ? (
-                          <img
-                            src={detailUserModal.photoStudentCardUrl}
-                            alt="Thẻ Sinh Viên"
-                            className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                          />
+                          <>
+                            <img
+                              src={detailUserModal.photoStudentCardUrl}
+                              alt="Thẻ Sinh Viên"
+                              className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                            />
+                            {detailUserModal.isApproved && (
+                              <div className="absolute top-4 right-4 rotate-12 bg-[rgba(16,185,129,0.2)] border-2 border-[var(--color-success)] px-3 py-1 text-[var(--color-success)] font-mono font-bold text-xs tracking-widest pointer-events-none shadow-lg backdrop-blur-xs">
+                                ✓ SEAL VERIFIED
+                              </div>
+                            )}
+                          </>
                         ) : (
-                          <div className="text-center font-mono text-xs text-[var(--text-muted)] space-y-2">
-                            <FileText className="w-10 h-10 text-[var(--accent-primary)] mx-auto opacity-50" />
-                            <p>[ Chưa Upload Ảnh Thẻ Sinh Viên HD: {detailUserModal.fullName} ]</p>
-                            <p className="text-[10px] opacity-70">Mặt trước thẻ SV có khớp với Họ tên & Mã số SV không?</p>
+                          <div className="text-center font-mono text-xs text-[var(--text-muted)] space-y-2 p-6">
+                            <FileText className="w-12 h-12 text-[var(--accent-primary)] mx-auto opacity-40 animate-pulse" />
+                            <p className="font-bold text-[var(--text-primary)]">[ Chưa Upload Ảnh Thẻ Sinh Viên ]</p>
+                            <p className="text-[10px] text-[var(--text-muted)] max-w-xs mx-auto">
+                              Sinh viên cần hoàn tất bước Upload ảnh thẻ sinh viên trên trang Onboarding để Ban Tổ Chức tiến hành phê duyệt.
+                            </p>
                           </div>
                         )}
                       </div>

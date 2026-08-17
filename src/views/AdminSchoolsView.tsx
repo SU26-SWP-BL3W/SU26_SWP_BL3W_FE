@@ -100,15 +100,25 @@ export const AdminSchoolsView: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] font-sans hud-lattice flex flex-col">
       <main className="flex-1 max-w-[var(--container-max)] w-full mx-auto px-6 py-8 space-y-6">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 font-mono text-[10px] text-[var(--text-muted)] tracking-widest uppercase">
+          <Link href="/admin/dashboard" className="text-[var(--color-danger)] font-bold hover:underline">
+            ADMIN // EXECUTIVE CONTROL
+          </Link>
+          <span>&gt;</span>
+          <span className="text-[var(--text-primary)] font-bold">DANH MỤC TRƯỜNG ĐẠI HỌC</span>
+        </div>
+
         {/* Admin Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-muted)] pb-6">
           <div>
             <HudLabel>// SYSTEM ADMIN SCHOOLS DIRECTORY</HudLabel>
-            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1">
+            <h1 className="font-display font-bold text-3xl text-[var(--color-danger)] uppercase tracking-wider mt-1 flex items-center gap-2.5">
+              <Building2 className="w-7 h-7 text-[var(--color-danger)]" />
               Danh Mục Trường Đại Học Đối Tác
             </h1>
             <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-              Quản lý danh sách các Trường Đại Học có sinh viên tham gia thi đấu SEAL Hackathon.
+              Quản lý danh sách mạng lưới trường đại học tham gia & cấp quyền đăng ký cho sinh viên.
             </p>
           </div>
 
@@ -116,11 +126,11 @@ export const AdminSchoolsView: React.FC = () => {
             <Button
               variant="primary"
               onClick={() => setShowAddModal(true)}
-              className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold"
+              className="hud-clipped flex items-center gap-2 bg-[var(--color-danger)] text-white hover:bg-white hover:text-[var(--bg-base)] font-mono text-xs font-bold shadow-lg shadow-[var(--color-danger)]/20 transition-all duration-200"
             >
               <Plus className="w-4 h-4" /> Thêm Trường Mới
             </Button>
-            <Button variant="ghost" onClick={() => refetch()} className="font-mono text-xs">
+            <Button variant="ghost" onClick={() => refetch()} className="font-mono text-xs hover:bg-[var(--bg-input)]">
               <RefreshCw className="w-3.5 h-3.5" /> Làm mới
             </Button>
           </div>

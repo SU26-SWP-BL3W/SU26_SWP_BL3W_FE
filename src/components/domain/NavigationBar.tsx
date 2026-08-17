@@ -133,8 +133,8 @@ export function NavigationBar() {
             <Link
               href="/admin/dashboard"
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
-                pathname === "/admin/dashboard"
-                  ? "bg-[var(--color-danger)] text-white shadow-sm"
+                pathname.includes("/admin/dashboard") || (pathname.includes("/admin") && !pathname.includes("/admin/users") && !pathname.includes("/admin/schools") && !pathname.includes("/admin/events"))
+                  ? "bg-[var(--color-danger)] text-white shadow-md shadow-[var(--color-danger)]/20"
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
@@ -145,7 +145,7 @@ export function NavigationBar() {
               href="/admin/users"
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
                 pathname.includes("/admin/users")
-                  ? "bg-[var(--color-danger)] text-white shadow-sm"
+                  ? "bg-[var(--color-danger)] text-white shadow-md shadow-[var(--color-danger)]/20"
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
@@ -156,7 +156,7 @@ export function NavigationBar() {
               href="/admin/schools"
               className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
                 pathname.includes("/admin/schools")
-                  ? "bg-[var(--color-danger)] text-white shadow-sm"
+                  ? "bg-[var(--color-danger)] text-white shadow-md shadow-[var(--color-danger)]/20"
                   : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
               }`}
             >
@@ -165,10 +165,10 @@ export function NavigationBar() {
 
             <Link
               href="/admin/events/new"
-              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold mt-2 border border-[var(--color-danger)]/40 ${
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold mt-2 border border-[var(--color-danger)]/50 ${
                 pathname.includes("/admin/events/new")
-                  ? "bg-[var(--color-danger)] text-white"
-                  : "text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                  ? "bg-[var(--color-danger)] text-white shadow-md shadow-[var(--color-danger)]/30"
+                  : "text-[var(--color-danger)] bg-[var(--color-danger)]/5 hover:bg-[var(--color-danger)]/15"
               }`}
             >
               <PlusCircle className="w-4 h-4 shrink-0" /> Tạo Event Mới
