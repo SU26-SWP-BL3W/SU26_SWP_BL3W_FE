@@ -81,11 +81,11 @@ export function NavigationBar() {
   const isJudgeRole = roleName === "Judge";
   const isCandidateRole = roleName === "TeamLeader" || roleName === "TeamMember";
 
-  const showCoordinatorSidebar = isCoordinatorRoute || (isEventInnerRoute && isCoordinatorRole);
+  const showCoordinatorSidebar = (isCoordinatorRoute && roleName !== "Admin") || (isEventInnerRoute && isCoordinatorRole);
   const showMentorSidebar = isMentorRoute || (isEventInnerRoute && isMentorRole);
   const showJudgeSidebar = isJudgeRoute || (isEventInnerRoute && isJudgeRole);
   const showParticipantSidebar = isEventInnerRoute && isCandidateRole;
-  const showAdminSidebar = isAdminRoute;
+  const showAdminSidebar = isAdminRoute || (roleName === "Admin" && isCoordinatorRoute);
 
   // ─────────────────────────────────────────────────────────────
   // CHẾ ĐỘ 10: NAVBAR DỌC DÀNH RIÊNG CHO SYSTEM ADMIN (ADMIN WORKSPACE)
@@ -161,6 +161,28 @@ export function NavigationBar() {
               }`}
             >
               <Building2 className="w-4 h-4 shrink-0" /> Danh Mục Trường Học
+            </Link>
+
+            <Link
+              href="/coordinator/teams"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/coordinator/teams")
+                  ? "bg-[var(--color-danger)] text-white shadow-md shadow-[var(--color-danger)]/20"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 shrink-0" /> Đội Thi &amp; Thí Sinh
+            </Link>
+
+            <Link
+              href="/coordinator/dashboard"
+              className={`flex items-center gap-2.5 px-3 py-2.5 hud-clipped transition-all font-bold ${
+                pathname.includes("/coordinator/dashboard") || pathname.includes("/coordinator/results")
+                  ? "bg-[var(--color-danger)] text-white shadow-md shadow-[var(--color-danger)]/20"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-input)]"
+              }`}
+            >
+              <FileText className="w-4 h-4 shrink-0" /> Điều Hành EC &amp; Bài Thi
             </Link>
 
             <Link

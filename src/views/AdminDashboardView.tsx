@@ -44,12 +44,15 @@ export const AdminDashboardView: React.FC = () => {
   const { data: schoolsList = [] } = useGetSchools();
   const totalSchoolsCount = schoolsList.length;
 
+  const availableCoordinators = usersList.filter((u: any) => {
+    if (u.isAdmin || u.IsAdmin) return false;
+    const em = (u.email || u.Email || "").toLowerCase();
+    const role = (u.roleName || u.RoleName || "").toLowerCase();
+    return role.includes("coordinator") || em.includes("ec_") || em.includes("ec.") || em.includes("coordinator") || em.includes("ec@");
+  });
+
   const ecCount =
-    usersList.filter((u: any) => {
-      if (u.isAdmin) return false;
-      const em = (u.email || "").toLowerCase();
-      return em.includes("ec_") || em.includes("ec.") || em.includes("coordinator") || em.includes("ec@");
-    }).length ||
+    availableCoordinators.length ||
     displayEvents.filter((e: any) => e.coordinatorEmail || e.CoordinatorEmail).length;
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -59,7 +62,7 @@ export const AdminDashboardView: React.FC = () => {
 
   const handleOpenAssignModal = (ev: EventItem) => {
     setSelectedEvent(ev);
-    setEcEmail("");
+    setEcEmail((ev as any).coordinatorEmail || (ev as any).CoordinatorEmail || "");
     setAssignSuccessMessage(null);
   };
 
@@ -215,25 +218,25 @@ export const AdminDashboardView: React.FC = () => {
             />
           ) : (
             <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
-              <table className="w-full table-fixed text-left border-collapse">
+              <table className="w-full table-fixed min-w-[950px] text-left border-collapse">
                 <thead className="bg-[var(--bg-base)] border-b border-[var(--border-muted)]">
                   <tr>
-                    <th className="w-[24%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[25%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
                       TÊN SỰ KIỆN
                     </th>
-                    <th className="w-[14%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[13%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
                       MÙA GIẢI
                     </th>
                     <th className="w-[10%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
-                      SỐ VÒNG THI
+                      SỐ VÒNG
                     </th>
-                    <th className="w-[18%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[16%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
                       EVENT COORDINATOR
                     </th>
-                    <th className="w-[12%] px-4 py-3.5 text-center font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[10%] px-2 py-3.5 text-center font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
                       TRẠNG THÁI
                     </th>
-                    <th className="w-[22%] px-4 py-3.5 text-right font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[26%] px-4 py-3.5 text-right font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
                       THAO TÁC
                     </th>
                   </tr>
@@ -269,35 +272,35 @@ export const AdminDashboardView: React.FC = () => {
                             {ecInfo}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase rounded">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
+                        <td className="px-2 py-3.5 align-middle border-t border-[var(--border-muted)]/50 text-center">
+                          <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase rounded whitespace-nowrap">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse shrink-0" />
                             ACTIVE
                           </span>
                         </td>
                         <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50 text-right">
-                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             <Link href={`/admin/events/${id}`}>
                               <Button
                                 variant="ghost"
-                                className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-1 h-auto font-bold cursor-pointer"
+                                className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-0.5 h-7 font-bold cursor-pointer inline-flex items-center gap-1"
                                 title="Chỉnh sửa thông tin & cấu hình sự kiện"
                               >
-                                <Edit className="w-3.5 h-3.5 mr-1" /> Sửa
+                                <Edit className="w-3.5 h-3.5" /> Sửa
                               </Button>
                             </Link>
                             <Button
                               variant="ghost"
                               onClick={() => handleOpenAssignModal(ev)}
-                              className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 px-2 py-1 h-auto cursor-pointer"
+                              className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 px-2.5 py-0.5 h-7 cursor-pointer inline-flex items-center gap-1"
                               title="Phân công Event Coordinator"
                             >
-                              <UserCheck className="w-3.5 h-3.5 mr-1" /> Gán EC
+                              <UserCheck className="w-3.5 h-3.5" /> Gán EC
                             </Button>
                             <Link href={`/events/${id}`}>
                               <Button
                                 variant="ghost"
-                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white hover:border-[var(--accent-primary)] px-2 py-1 h-auto cursor-pointer"
+                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white hover:border-[var(--accent-primary)] px-2 py-0.5 h-7 w-7 flex items-center justify-center cursor-pointer"
                                 title="Xem trang thể lệ công khai"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -317,11 +320,11 @@ export const AdminDashboardView: React.FC = () => {
         {/* Modal Gán Event Coordinator Dành Cho Admin */}
         {selectedEvent && (
           <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fade-in">
-            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)] space-y-4 relative hud-clipped">
+            <Card className="w-full max-w-lg p-6 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)] space-y-4 relative hud-clipped shadow-2xl">
               <button
                 type="button"
                 onClick={() => setSelectedEvent(null)}
-                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white"
+                className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -332,21 +335,59 @@ export const AdminDashboardView: React.FC = () => {
                   Phân Công Event Coordinator (EC)
                 </h3>
                 <p className="font-mono text-xs text-[var(--text-muted)]">
-                  Chỉ định tài khoản Điều Phối Viên phụ trách quản lý & cấu hình sự kiện{" "}
-                  <span className="text-[var(--accent-primary)] font-bold">"{selectedEvent.eventName}"</span>.
+                  Chỉ định Điều Phối Viên phụ trách sự kiện{" "}
+                  <span className="text-[var(--accent-primary)] font-bold">"{selectedEvent.eventName || selectedEvent.EventName}"</span>.
                 </p>
+              </div>
+
+              {/* EC hiện tại */}
+              <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1 font-mono text-xs">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">
+                  Điều Phối Viên Đang Phụ Trách Hiện Tại:
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[var(--accent-coordinator)] shrink-0" />
+                  <span className="font-bold text-[var(--accent-coordinator)] truncate">
+                    {selectedEvent.coordinatorEmail || selectedEvent.CoordinatorEmail || "Chưa phân công EC"}
+                  </span>
+                </div>
               </div>
 
               {assignSuccessMessage ? (
                 <div className="p-4 bg-[rgba(16,185,129,0.1)] border border-[var(--color-success)] text-[var(--color-success)] font-mono text-xs hud-clipped flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-[var(--color-success)]" />
+                  <CheckCircle2 className="w-4 h-4 text-[var(--color-success)] shrink-0" />
                   <span>{assignSuccessMessage}</span>
                 </div>
               ) : (
-                <form onSubmit={handleAssignEc} className="space-y-4 pt-2">
+                <form onSubmit={handleAssignEc} className="space-y-4 pt-1">
+                  {/* Chọn nhanh từ danh sách Coordinator trong hệ thống */}
+                  {availableCoordinators.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
+                        Chọn Nhanh Từ Danh Sách EC Hệ Thống
+                      </label>
+                      <select
+                        value={ecEmail}
+                        onChange={(e) => setEcEmail(e.target.value)}
+                        className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
+                      >
+                        <option value="">— Chọn tài khoản Coordinator —</option>
+                        {availableCoordinators.map((c: any) => {
+                          const email = c.email || c.Email;
+                          const name = c.fullName || c.FullName || email;
+                          return (
+                            <option key={c.id || c.Id || email} value={email}>
+                              {name} ({email})
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
                     <label className="text-xs font-mono tracking-widest text-[var(--text-muted)] uppercase">
-                      Email Tài Khoản Event Coordinator *
+                      Hoặc Nhập Email Tài Khoản Event Coordinator *
                     </label>
                     <Input
                       type="email"
@@ -358,21 +399,18 @@ export const AdminDashboardView: React.FC = () => {
                     />
                   </div>
 
-                  <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped space-y-1">
-                    <span className="font-mono text-[10px] text-[var(--accent-coordinator)] uppercase block font-bold">
-                      Ghi chú phân quyền (§7.7 / STT #8 API /EventRoles/assign):
-                    </span>
-                    <p className="font-mono text-[10px] text-[var(--text-muted)]">
-                      Admin chỉ định EC quản lý sự kiện này. Tài khoản EC được gán sẽ thấy sự kiện xuất hiện trên Bảng điều hành EC của họ để cấu hình Vòng thi (Rounds), Hạng mục (Tracks) & Tiêu chí.
-                    </p>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="ghost" type="button" onClick={() => setSelectedEvent(null)}>
+                  <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-muted)]">
+                    <Button variant="ghost" type="button" onClick={() => setSelectedEvent(null)} className="text-xs font-mono">
                       Hủy Bỏ
                     </Button>
-                    <Button variant="primary" accent="coordinator" type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Đang xử lý..." : "// XÁC NHẬN GÁN EC >"}
+                    <Button
+                      variant="primary"
+                      accent="coordinator"
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="text-xs font-mono font-bold px-4 cursor-pointer"
+                    >
+                      {isSubmitting ? "Đang xử lý..." : "PHÂN CÔNG ĐIỀU PHỐI VIÊN"}
                     </Button>
                   </div>
                 </form>
