@@ -138,7 +138,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
                 {roleName === "Admin" && (
                   <Link href={`/admin/events/${eventId}`}>
                     <button className="px-4 py-2 bg-[var(--color-danger)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-sm">
-                      CHỈNH SỬA SỰ KIỆN (ADMIN)
+                      SỬA & CẤU HÌNH SỰ KIỆN (ADMIN)
                     </button>
                   </Link>
                 )}

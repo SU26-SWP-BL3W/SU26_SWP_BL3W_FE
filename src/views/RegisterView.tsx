@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRegister, useResendVerification } from "@/repositories/authRepository";
 import { Button, Input, Card } from "@/components/ui";
 import { Link } from "@/i18n/routing";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 import { Shield, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react";
 
 type RegisterStep = "form" | "success";
 
 export function RegisterView() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<RegisterStep>("form");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +21,13 @@ export function RegisterView() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (user) {
+      if (user.isAdmin || user.IsAdmin) router.replace("/admin/dashboard");
+      else router.replace("/events");
+    }
+  }, [user, router]);
 
   const { mutateAsync: registerApi, isPending } = useRegister();
   const { mutateAsync: resendApi, isPending: isResending } = useResendVerification();
@@ -52,6 +63,25 @@ export function RegisterView() {
       });
     }
   };
+
+  if (user) {
+    return (
+      <div className="flex items-center justify-center min-h-[70vh] hud-lattice px-4">
+        <Card className="w-full max-w-md p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--color-danger)]/50 text-center space-y-4">
+          <Shield className="w-12 h-12 text-[var(--color-danger)] mx-auto" />
+          <h2 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase">
+            ĐÃ ĐĂNG NHẬP HỆ THỐNG
+          </h2>
+          <p className="font-mono text-xs text-[var(--text-muted)]">
+            Bạn đang đăng nhập dưới tài khoản <strong className="text-[var(--accent-primary)]">{user.FullName || user.email}</strong>.
+          </p>
+          <p className="font-mono text-[10px] text-[var(--text-muted)] animate-pulse">
+            Đang tự động chuyển hướng đến bảng điều hành...
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   if (step === "success") {
     return (

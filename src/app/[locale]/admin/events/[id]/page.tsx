@@ -1,10 +1,10 @@
-import { AdminEditEventView } from "@/views/AdminEditEventView";
+import { CoordinatorEventDetailView } from "@/views/CoordinatorEventDetailView";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 
-export default function AdminEditEventPage() {
+export default function AdminEventDetailPage() {
   return (
     <RoleGuard allowedRoles={["Admin"]}>
-      <AdminEditEventView />
+      <CoordinatorEventDetailView />
     </RoleGuard>
   );
 }

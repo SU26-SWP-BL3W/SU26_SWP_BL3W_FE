@@ -266,9 +266,9 @@ export const AdminDashboardView: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-1 h-auto font-bold"
-                                title="Chỉnh sửa thông tin sự kiện (Admin)"
+                                title="Chỉnh sửa thông tin, cấu hình vòng thi, bảng đấu & tiêu chí sự kiện (Admin)"
                               >
-                                <Edit className="w-3.5 h-3.5 mr-1" /> Sửa
+                                <Edit className="w-3.5 h-3.5 mr-1" /> Sửa & Cấu Hình
                               </Button>
                             </Link>
                             <Button

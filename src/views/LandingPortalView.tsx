@@ -82,34 +82,30 @@ export function LandingPortalView() {
           {/* Symmetrical Button Group */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link href="/events">
-              <button className="hud-clipped relative px-8 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] focus:outline-none min-w-[200px]">
+              <button className="hud-clipped relative px-8 py-3.5 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono font-extrabold tracking-wider uppercase text-sm transition-all duration-200 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] focus:outline-none min-w-[200px] cursor-pointer">
                 {"// "}KHÁM PHÁ SỰ KIỆN &gt;
               </button>
             </Link>
-            <Link href="/register">
-              <button className="hud-clipped px-8 py-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] text-[var(--text-primary)] hover:text-white hover:border-[var(--accent-primary)] hover:bg-[rgba(0,217,255,0.12)] font-mono text-sm tracking-wider uppercase transition-all duration-200 min-w-[200px]">
-                [ ĐĂNG KÝ THAM GIA ]
-              </button>
-            </Link>
-          </div>
 
-          {/* Symmetrical Quick Access Protocol */}
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs border-t border-[var(--border-muted)]/60 pt-4 w-full max-w-xl">
-            <span className="text-[var(--text-muted)]">TRUY CẬP NHANH:</span>
-            {isAdmin && (
-              <Link href="/admin/dashboard" className="border border-[var(--color-danger)]/50 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/20 transition-colors hud-clipped font-bold">
-                👑 [ QUẢN TRỊ ADMIN ]
+            {!user ? (
+              <Link href="/register">
+                <button className="hud-clipped px-8 py-3.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] text-[var(--text-primary)] hover:text-white hover:border-[var(--accent-primary)] hover:bg-[rgba(0,217,255,0.12)] font-mono text-sm tracking-wider uppercase transition-all duration-200 min-w-[200px] cursor-pointer">
+                  [ ĐĂNG KÝ THAM GIA ]
+                </button>
+              </Link>
+            ) : isAdmin ? (
+              <Link href="/admin/dashboard">
+                <button className="hud-clipped px-8 py-3.5 bg-[rgba(239,68,68,0.15)] border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white font-mono text-sm tracking-wider uppercase font-bold transition-all duration-200 min-w-[200px] cursor-pointer shadow-lg shadow-[var(--color-danger)]/10">
+                  🛡️ BẢNG ĐIỀU HÀNH ADMIN
+                </button>
+              </Link>
+            ) : (
+              <Link href="/my-team">
+                <button className="hud-clipped px-8 py-3.5 bg-[rgba(59,130,246,0.15)] border border-[var(--accent-team)] text-[var(--accent-team)] hover:bg-[var(--accent-team)] hover:text-white font-mono text-sm tracking-wider uppercase font-bold transition-all duration-200 min-w-[200px] cursor-pointer shadow-lg shadow-[var(--accent-team)]/10">
+                  👥 ĐỘI THI CỦA TÔI
+                </button>
               </Link>
             )}
-            <Link href="/my-team" className="border border-[var(--accent-team)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-team)] hover:bg-[var(--accent-team)]/20 transition-colors hud-clipped">
-              [ ĐỘI THI ]
-            </Link>
-            <Link href="/judge/scoring" className="border border-[var(--accent-judge)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-judge)] hover:bg-[var(--accent-judge)]/20 transition-colors hud-clipped">
-              [ GIÁM KHẢO ]
-            </Link>
-            <Link href="/coordinator/dashboard" className="border border-[var(--accent-coordinator)]/40 bg-[var(--bg-panel)] px-3.5 py-1 text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/20 transition-colors hud-clipped">
-              [ BAN TỔ CHỨC ]
-            </Link>
           </div>
         </div>
       </section>

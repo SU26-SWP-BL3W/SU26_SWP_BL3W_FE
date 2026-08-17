@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/providers/AuthProvider";
 import { Link, useRouter } from "@/i18n/routing";
-import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, GraduationCap, ArrowRight, Shield } from "lucide-react";
 import { SealShield } from "@/components/domain/SealShield";
+import { Card } from "@/components/ui";
 
 import { useSearchParams } from "next/navigation";
 
 export function LoginView() {
+  const { user, loginWithCredentials, loginWithGoogleCredential } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const isVerifiedNotice = searchParams.get("verified") === "true";
   const [email, setEmail] = useState("");
@@ -19,8 +22,12 @@ export function LoginView() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { loginWithCredentials, loginWithGoogleCredential } = useAuth();
-  const router = useRouter();
+  useEffect(() => {
+    if (user) {
+      if (user.isAdmin || user.IsAdmin) router.replace("/admin/dashboard");
+      else router.replace("/events");
+    }
+  }, [user, router]);
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -59,6 +66,25 @@ export function LoginView() {
   const handleGoogleError = () => {
     setErrorMessage("Đăng nhập với Google bị hủy hoặc gặp sự cố.");
   };
+
+  if (user) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 hud-lattice font-sans">
+        <Card className="w-full max-w-md p-6 bg-[#0f1826] border border-[#1e2e4a] hud-clipped shadow-2xl text-center space-y-4">
+          <Shield className="w-12 h-12 text-[var(--color-danger)] mx-auto" />
+          <h2 className="font-display font-bold text-lg text-white uppercase tracking-wider">
+            ĐÃ ĐĂNG NHẬP HỆ THỐNG
+          </h2>
+          <p className="font-mono text-xs text-slate-400">
+            Bạn đang đăng nhập dưới tài khoản <strong className="text-[var(--accent-primary)]">{user.FullName || user.email}</strong>.
+          </p>
+          <p className="font-mono text-[10px] text-slate-500 animate-pulse">
+            Đang tự động chuyển hướng đến bảng điều hành...
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[90vh] flex items-center justify-center py-12 px-4 hud-lattice font-sans">
