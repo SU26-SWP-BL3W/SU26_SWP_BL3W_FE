@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   useGetPendingTeams,
   useApproveTeamRegistration,
   useRejectTeamRegistration,
   useGetTeamsByEvent,
-  useDisqualifyTeam,
+  useGetTeamById,
 } from "@/repositories/teamsRepository";
-import { useEvents, useMyEvents } from "@/repositories/eventsRepository";
+import { useEvents } from "@/repositories/eventsRepository";
 import { Button, Card, Badge, Input, ApiMissingDataBadge } from "@/components/ui";
 import {
   Users,
@@ -19,15 +19,170 @@ import {
   Crown,
   Filter,
   Search,
-  UserCheck,
   Mail,
   GraduationCap,
-  Ban,
 } from "lucide-react";
 import type { TeamEntity } from "@/models/entities";
 
 function pickId(item: any): string {
-  return item?.id || item?.Id || item?.eventId || item?.EventId || item?.TeamId || "";
+  return item?.id || item?.Id || item?.eventId || item?.EventId || item?.TeamId || item?.teamId || "";
+}
+
+// Modal component that automatically fetches full member list from /api/Teams/{id}
+function TeamDetailModal({
+  team,
+  onClose,
+  onApprove,
+  onReject,
+  isApproving,
+}: {
+  team: any;
+  onClose: () => void;
+  onApprove: (teamId: string) => void;
+  onReject: (team: any) => void;
+  isApproving: boolean;
+}) {
+  const teamId = pickId(team);
+  const { data: detailData, isLoading } = useGetTeamById(teamId);
+
+  const teamDetail = detailData || team;
+  const members = teamDetail.members || teamDetail.Members || [];
+  const teamName = teamDetail.teamName || teamDetail.TeamName || teamDetail.name || teamDetail.Name || "Đội thi";
+  const desc = teamDetail.description || teamDetail.Description || "Dự án phát triển giải pháp công nghệ SEAL Hackathon.";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <Card
+        className="w-full max-w-2xl p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--accent-team)] space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
+          <div>
+            <span className="font-mono text-[10px] text-[var(--accent-team)] uppercase font-bold tracking-widest">
+              THÔNG TIN CHI TIẾT ĐỘI THI
+            </span>
+            <h3 className="font-display text-xl font-bold text-[var(--text-primary)] uppercase tracking-wider mt-0.5">
+              {teamName}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-[var(--text-muted)] hover:text-white cursor-pointer"
+          >
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Thông tin mô tả */}
+        <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped font-mono text-xs space-y-1">
+          <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">Mô tả dự án:</span>
+          <p className="text-[var(--text-primary)]">{desc}</p>
+        </div>
+
+        {/* Danh sách thành viên thí sinh */}
+        <div className="space-y-3 font-mono text-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-[var(--accent-team)]" />
+              Danh Sách Thí Sinh ({members.length} thành viên):
+            </span>
+          </div>
+
+          {isLoading ? (
+            <div className="py-8 flex items-center justify-center gap-2 text-[var(--accent-team)] font-mono text-xs">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Đang tải thông tin thành viên...</span>
+            </div>
+          ) : members.length === 0 ? (
+            <div className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-muted)] text-center">
+              Chưa có danh sách thành viên chi tiết cho đội này.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {members.map((m: any, idx: number) => {
+                const isLeader = m.roleName === "TeamLeader" || m.RoleName === "TeamLeader";
+
+                return (
+                  <div
+                    key={m.userId || m.UserId || idx}
+                    className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped flex items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {isLeader ? (
+                          <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-team)] shrink-0" />
+                        )}
+                        <span className="font-bold text-[var(--text-primary)] truncate">
+                          {m.fullName || m.FullName || m.email || "Thí sinh"}
+                        </span>
+                        {isLeader && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-300 rounded border border-amber-500/30 uppercase">
+                            ĐỘI TRƯỞNG
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-[11px] text-[var(--text-muted)] flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-[var(--accent-coordinator)]" />
+                          {m.email || m.Email}
+                        </span>
+                        {(m.studentCode || m.StudentCode) && (
+                          <span className="text-[var(--text-primary)] font-bold">
+                            MSSV: {m.studentCode || m.StudentCode}
+                          </span>
+                        )}
+                        {(m.school || m.School) && (
+                          <span className="flex items-center gap-1">
+                            <GraduationCap className="w-3 h-3 text-purple-400" />
+                            {m.school || m.School}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <Badge tone={m.isApproved !== false ? "success" : "warning"} className="text-[10px] shrink-0">
+                      {m.isApproved !== false ? "✓ THẺ SV HỢP LỆ" : "CHỜ DUYỆT THẺ"}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--border-muted)]">
+          <Button variant="ghost" onClick={onClose} className="text-xs font-mono">
+            Đóng
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => onReject(teamDetail)}
+              className="text-xs font-mono bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
+            >
+              Từ Chối Đăng Ký
+            </Button>
+
+            <Button
+              variant="primary"
+              onClick={() => onApprove(teamId)}
+              disabled={isApproving}
+              className="text-xs font-mono bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 font-bold cursor-pointer"
+            >
+              ✓ Duyệt Đội Thi
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
 }
 
 export function CoordinatorTeamsView() {
@@ -40,10 +195,6 @@ export function CoordinatorTeamsView() {
 
   const { data: allEvents = [] } = useEvents();
   const eventsList = Array.isArray(allEvents) ? allEvents : (allEvents as any)?.data ?? [];
-
-  useEffect(() => {
-    if (!eventId && eventsList.length) setEventId(pickId(eventsList[0]));
-  }, [eventsList, eventId]);
 
   const { data: rawPendingTeams = [], isLoading: isLoadingPending, refetch: refetchPending } = useGetPendingTeams();
   const pendingTeams: TeamEntity[] = Array.isArray(rawPendingTeams)
@@ -144,13 +295,14 @@ export function CoordinatorTeamsView() {
 
         {/* Filter Bar */}
         <div className="flex flex-col sm:flex-row items-center gap-3 bg-[var(--bg-panel)] p-3 border border-[var(--border-muted)] hud-clipped font-mono text-xs">
-          <div className="flex items-center gap-2 w-full sm:w-1/3">
+          <div className="flex items-center gap-2 w-full sm:w-1/2">
             <Filter className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
             <select
               value={eventId}
               onChange={(e) => setEventId(e.target.value)}
               className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] hud-clipped"
             >
+              <option value="">— Tất Cả Sự Kiện ({eventsList.length}) —</option>
               {eventsList.map((ev: any) => {
                 const id = pickId(ev);
                 return (
@@ -162,7 +314,7 @@ export function CoordinatorTeamsView() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-2/3">
+          <div className="flex items-center gap-2 w-full sm:w-1/2">
             <Search className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
             <Input
               type="text"
@@ -226,7 +378,7 @@ export function CoordinatorTeamsView() {
               <table className="w-full table-fixed min-w-[850px] text-left border-collapse font-mono text-xs">
                 <thead className="bg-[var(--bg-panel)] border-b border-[var(--border-muted)]">
                   <tr>
-                    <th className="w-[30%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[35%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider">
                       TÊN ĐỘI THI
                     </th>
                     <th className="w-[20%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider">
@@ -235,7 +387,7 @@ export function CoordinatorTeamsView() {
                     <th className="w-[20%] px-4 py-3.5 text-left text-[var(--text-muted)] uppercase tracking-wider">
                       TRẠNG THÁI DUYỆT
                     </th>
-                    <th className="w-[30%] px-4 py-3.5 text-right text-[var(--text-muted)] uppercase tracking-wider">
+                    <th className="w-[25%] px-4 py-3.5 text-right text-[var(--text-muted)] uppercase tracking-wider">
                       THAO TÁC
                     </th>
                   </tr>
@@ -256,7 +408,7 @@ export function CoordinatorTeamsView() {
                           </div>
                         </td>
                         <td className="px-4 py-3.5 align-middle text-[var(--text-muted)]">
-                          <span className="font-bold text-[var(--text-primary)]">{members.length || team.memberCount || "3-5"}</span> thành viên
+                          <span className="font-bold text-[var(--text-primary)]">{members.length || team.memberCount || "3"}</span> thành viên
                         </td>
                         <td className="px-4 py-3.5 align-middle">
                           <span
@@ -303,137 +455,18 @@ export function CoordinatorTeamsView() {
 
         {/* Modal Xem Chi Tiết Thông Tin Thí Sinh & Thành Viên Đội */}
         {detailModal && (
-          <div
-            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-fade-in"
-            onClick={() => setDetailModal(null)}
-          >
-            <Card
-              className="w-full max-w-2xl p-6 bg-[var(--bg-panel)] hud-clipped border-[var(--accent-team)] space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
-                <div>
-                  <span className="font-mono text-[10px] text-[var(--accent-team)] uppercase font-bold tracking-widest">
-                    THÔNG TIN CHI TIẾT ĐỘI THI
-                  </span>
-                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] uppercase tracking-wider mt-0.5">
-                    {detailModal.teamName || (detailModal as any).TeamName || (detailModal as any).name}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setDetailModal(null)}
-                  className="text-[var(--text-muted)] hover:text-white cursor-pointer"
-                >
-                  <XCircle className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Thông tin mô tả */}
-              <div className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped font-mono text-xs space-y-1">
-                <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">Mô tả dự án:</span>
-                <p className="text-[var(--text-primary)]">
-                  {detailModal.description || "Dự án phát triển giải pháp công nghệ SEAL Hackathon."}
-                </p>
-              </div>
-
-              {/* Danh sách thành viên thí sinh */}
-              <div className="space-y-3 font-mono text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-[var(--accent-team)]" />
-                    Danh Sách Thí Sinh ({detailModal.members?.length || 0} thành viên):
-                  </span>
-                </div>
-
-                {(!detailModal.members || detailModal.members.length === 0) ? (
-                  <div className="p-4 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-muted)] text-center">
-                    Chưa có danh sách thành viên chi tiết cho đội này.
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {detailModal.members.map((m: any, idx: number) => {
-                      const isLeader = m.roleName === "TeamLeader" || m.RoleName === "TeamLeader";
-
-                      return (
-                        <div
-                          key={m.userId || idx}
-                          className="p-3 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped flex items-center justify-between gap-3"
-                        >
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              {isLeader ? (
-                                <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                              ) : (
-                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-team)] shrink-0" />
-                              )}
-                              <span className="font-bold text-[var(--text-primary)] truncate">{m.fullName || m.FullName}</span>
-                              {isLeader && (
-                                <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-300 rounded border border-amber-500/30 uppercase">
-                                  ĐỘI TRƯỞNG
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-4 text-[11px] text-[var(--text-muted)] flex-wrap">
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3 text-[var(--accent-coordinator)]" />
-                                {m.email || m.Email}
-                              </span>
-                              {(m.studentCode || m.StudentCode) && (
-                                <span className="text-[var(--text-primary)] font-bold">
-                                  MSSV: {m.studentCode || m.StudentCode}
-                                </span>
-                              )}
-                              {(m.school || m.School) && (
-                                <span className="flex items-center gap-1">
-                                  <GraduationCap className="w-3 h-3 text-purple-400" />
-                                  {m.school || m.School}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <Badge tone={m.isApproved ? "success" : "warning"} className="text-[10px] shrink-0">
-                            {m.isApproved ? "✓ THẺ SV HỢP LỆ" : "CHỜ DUYỆT THẺ"}
-                          </Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-muted)]">
-                <Button variant="ghost" onClick={() => setDetailModal(null)} className="text-xs font-mono">
-                  Đóng
-                </Button>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => {
-                      setRejectModal({
-                        teamId: pickId(detailModal),
-                        teamName: detailModal.teamName || (detailModal as any).TeamName || "Đội thi",
-                      });
-                    }}
-                    className="text-xs font-mono bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
-                  >
-                    Từ Chối Đăng Ký
-                  </Button>
-
-                  <Button
-                    variant="primary"
-                    onClick={() => handleApprove(pickId(detailModal))}
-                    disabled={isApproving}
-                    className="text-xs font-mono bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 font-bold cursor-pointer"
-                  >
-                    ✓ Duyệt Đội Thi
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
+          <TeamDetailModal
+            team={detailModal}
+            onClose={() => setDetailModal(null)}
+            onApprove={handleApprove}
+            onReject={(t) => {
+              setRejectModal({
+                teamId: pickId(t),
+                teamName: t.teamName || t.TeamName || t.name || t.Name || "Đội thi",
+              });
+            }}
+            isApproving={isApproving}
+          />
         )}
 
         {/* Modal Từ Chối */}
