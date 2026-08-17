@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
-import { ApiMissingDataBadge } from "@/components/ui";
 import { useEvents, useEventDetail } from "@/repositories/eventsRepository";
 import { LandingLeaderboardPodium } from "@/components/domain/LandingLeaderboardPodium";
-import { Trophy, Target } from "lucide-react";
+import { Trophy, Target, Clock } from "lucide-react";
 
 interface TableTeam {
   rank: number;
@@ -79,15 +78,21 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
                     Bảng Xếp Hạng Kết Quả Thi Đấu
                   </h1>
                   <p className="font-mono text-xs text-[var(--text-muted)] mt-1">
-                    Sự kiện: <strong className="text-[var(--text-primary)]">{event.eventName}</strong> · Quỹ giải thưởng: <strong className="text-[var(--accent-judge)]">{event.totalPrizeVnd ? `${(event.totalPrizeVnd / 1_000_000).toLocaleString("vi-VN")} TRIỆU ₫` : "200.000.000 ₫"}</strong>
+                    Sự kiện: <strong className="text-[var(--text-primary)]">{event.eventName}</strong> · Quỹ giải thưởng: <strong className="text-[var(--accent-judge)]">{event.totalPrizeVnd ? `${(event.totalPrizeVnd / 1_000_000).toLocaleString("vi-VN")} TRIỆU ₫` : "Đang cập nhật"}</strong>
                   </p>
                 </div>
 
-                <Link href={`/events/${event.id}`}>
-                  <button className="hud-clipped px-5 py-2.5 border border-[var(--border-muted)] font-mono text-xs text-[var(--text-muted)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors cursor-pointer">
-                    ← XEM THỂ LỆ & SỰ KIỆN
+                {/* View Mode Segmented Tabs Switcher */}
+                <div className="flex items-center gap-1.5 p-1 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                  <Link href={`/events/${event.id}`}>
+                    <button className="px-5 py-2 font-mono text-xs font-bold hud-clipped transition-all cursor-pointer text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-panel)]">
+                      THỂ LỆ & CHI TIẾT
+                    </button>
+                  </Link>
+                  <button className="px-5 py-2 font-mono text-xs font-bold hud-clipped transition-all cursor-default bg-[var(--accent-judge)] text-[var(--bg-base)] shadow-sm">
+                    BẢNG XẾP HẠNG
                   </button>
-                </Link>
+                </div>
               </div>
             </>
           ) : (
@@ -204,13 +209,17 @@ export function LeaderboardView({ eventId }: { eventId?: string }) {
           </div>
         </div>
 
-        {/* Data Grid Table */}
+        {/* Data Grid Table Empty State */}
         {filteredResults.length === 0 ? (
-          <ApiMissingDataBadge
-            endpoint="GET /api/FinalResults/round/{roundId}"
-            title="CHƯA CÓ BẢNG XẾP HẠNG TỪ BACKEND DATABASE"
-            message="Ban Tổ Chức chưa công bố kết quả thi đấu công khai cho sự kiện / vòng thi này."
-          />
+          <div className="p-12 text-center border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped space-y-3">
+            <Trophy className="w-10 h-10 text-[var(--accent-judge)] mx-auto opacity-40 animate-pulse" />
+            <h3 className="font-display text-base md:text-lg font-bold text-[var(--text-primary)] uppercase">
+              Chưa Có Kết Quả Xếp Hạng Chính Thức
+            </h3>
+            <p className="font-mono text-xs text-[var(--text-muted)] max-w-md mx-auto leading-relaxed">
+              Ban Tổ Chức và Hội Đồng Giám Khảo đang trong quá trình chấm thi và tổng hợp bảng điểm. Danh sách xếp hạng chính thức sẽ được công bố công khai tại đây ngay khi hoàn tất.
+            </p>
+          </div>
         ) : (
           <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
             <table className="w-full text-left border-collapse">

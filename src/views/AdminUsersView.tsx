@@ -44,6 +44,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function isCoordinatorEmail(email?: string): boolean {
+  const l = (email || "").toLowerCase();
+  return l.includes("ec_") || l.includes("ec.") || l.includes("coordinator") || l.includes("ec@");
+}
+
 export const AdminUsersView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -121,11 +126,6 @@ export const AdminUsersView: React.FC = () => {
       const msg = err?.response?.data?.message || err?.message || "Không thể từ chối hồ sơ. Vui lòng kiểm tra quyền Admin.";
       alert(`Lỗi từ chối hồ sơ: ${msg}`);
     }
-  };
-
-  const isCoordinatorEmail = (email?: string) => {
-    const l = (email || "").toLowerCase();
-    return l.includes("ec_") || l.includes("ec.") || l.includes("coordinator") || l.includes("ec@");
   };
 
   return (

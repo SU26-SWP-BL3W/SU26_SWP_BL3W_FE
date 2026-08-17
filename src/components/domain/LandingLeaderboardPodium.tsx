@@ -1,6 +1,6 @@
 "use client";
 
-import { ApiMissingDataBadge } from "@/components/ui";
+import { Trophy, Clock } from "lucide-react";
 
 function formatVnd(val: number): string {
   return `${new Intl.NumberFormat("vi-VN").format(val)} ₫`;
@@ -183,11 +183,26 @@ export function LandingLeaderboardPodium({
 
         {/* ── Podium Grid: Silver | Gold | Bronze ──────────────────────────── */}
         {!gold && !silver && !bronze ? (
-          <ApiMissingDataBadge
-            endpoint="GET /api/FinalResults/podium"
-            title="CHƯA CÓ DỮ LIỆU BẢNG VÀNG TỪ BACKEND"
-            message="Chưa có kết quả vinh danh Podium Quán quân/Á quân được công bố từ Backend API."
-          />
+          <div className="flex flex-col items-center justify-center p-10 md:p-14 bg-[var(--bg-input)] border border-[var(--accent-judge)]/30 hud-clipped text-center space-y-4 shadow-lg max-w-3xl mx-auto w-full">
+            <div className="w-16 h-16 rounded-full bg-[var(--accent-judge)]/10 border border-[var(--accent-judge)]/40 flex items-center justify-center text-[var(--accent-judge)] mx-auto shadow-[0_0_20px_rgba(251,191,36,0.2)]">
+              <Trophy className="w-8 h-8 animate-pulse text-[var(--accent-judge)]" />
+            </div>
+            <div className="space-y-1">
+              <span className="font-mono text-[10px] text-[var(--accent-judge)] tracking-widest uppercase font-bold">
+                TIẾN TRÌNH HIỆU CHUẨN ĐIỂM SỐ
+              </span>
+              <h3 className="font-display text-xl md:text-2xl font-bold uppercase text-[var(--text-primary)] tracking-wide">
+                Kết Quả Thi Đấu Chưa Công Bố
+              </h3>
+            </div>
+            <p className="font-mono text-xs text-[var(--text-muted)] max-w-lg leading-relaxed mx-auto">
+              Hội đồng Giám khảo đang trong quá trình chấm điểm các bài dự thi và tiến hành đối soát hiệu chuẩn (Score Calibration). Bảng vinh danh và xếp hạng chung cuộc sẽ được Ban Tổ Chức công bố chính thức tại Lễ Trao Giải.
+            </p>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-panel)] border border-[var(--border-muted)] font-mono text-[11px] text-[var(--accent-judge)] hud-clipped mt-2">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Trạng thái: <strong>ĐANG CHẤM THI &amp; HIỆU CHUẨN</strong></span>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
             {/* #2 Silver — trái */}

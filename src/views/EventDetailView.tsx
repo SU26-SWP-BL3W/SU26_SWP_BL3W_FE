@@ -118,137 +118,55 @@ export function EventDetailView({ eventId }: { eventId: string }) {
               <span>Số hạng mục: <strong className="text-[var(--text-primary)] font-bold">{tracks.length} Tracks</strong></span>
             </div>
 
-            {/* ── Sub-Navbar Ngang Chức Năng Role ── */}
-            <div className="mt-6 pt-4 border-t border-[var(--border-muted)]">
-              <div className="font-mono text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest mb-2 flex items-center gap-2">
-                <span>⚡ VAI TRÒ {roleName === "Admin" ? "HỆ THỐNG (SYSTEM ADMIN)" : roleName === "Coordinator" ? "BAN TỔ CHỨC (COORDINATOR)" : roleName === "TeamLeader" || roleName === "TeamMember" ? (isJoinedParticipant ? roleName : "THÍ SINH TỰ DO") : roleName}:</span>
+            {/* ── View Mode Switcher: THỂ LỆ & CHI TIẾT vs BẢNG XẾP HẠNG ── */}
+            <div className="mt-6 pt-4 border-t border-[var(--border-muted)] flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-1.5 p-1 bg-[var(--bg-input)] border border-[var(--border-muted)] hud-clipped">
+                <Link href={`/events/${eventId}`}>
+                  <button className="px-5 py-2 font-mono text-xs font-bold hud-clipped transition-all cursor-pointer bg-[var(--accent-primary)] text-[var(--bg-base)] shadow-sm">
+                    THỂ LỆ & CHI TIẾT
+                  </button>
+                </Link>
+                <Link href={`/events/${eventId}/leaderboard`}>
+                  <button className="px-5 py-2 font-mono text-xs font-bold hud-clipped transition-all cursor-pointer text-[var(--text-muted)] hover:text-[var(--accent-judge)] hover:bg-[var(--bg-panel)]">
+                    BẢNG XẾP HẠNG
+                  </button>
+                </Link>
               </div>
-              <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                {/* Active tab hiện tại */}
-                <span className="px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-base)] font-bold hud-clipped flex items-center gap-1.5 shadow-sm">
-                  <span>📍</span> 1. THỂ LỆ & CHI TIẾT
-                </span>
 
-                {/* SYSTEM ADMIN: TÁCH RIÊNG VỚI NÚT VỀ BẢNG ĐIỀU HÀNH & SỬA SỰ KIỆN */}
-                {roleName === "Admin" && (
-                  <>
-                    <Link href={`/coordinator/events/${eventId}`}>
-                      <button className="px-4 py-2 bg-[var(--color-danger)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
-                        <span>✏️</span> 2. CHỈNH SỬA SỰ KIỆN (ADMIN)
-                      </button>
-                    </Link>
-                    <Link href="/admin/dashboard">
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--color-danger)]/50 text-[var(--color-danger)] font-bold hover:bg-[var(--color-danger)] hover:text-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🛡️</span> 3. BẢNG ĐIỀU HÀNH ADMIN
-                      </button>
-                    </Link>
-                    <Link href={`/events/${eventId}/leaderboard`}>
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 4. XEM BẢNG XẾP HẠNG
-                      </button>
-                    </Link>
-                  </>
+              {/* Contextual Action Button */}
+              <div className="flex items-center gap-2 font-mono text-xs">
+                {(roleName === "Admin" || roleName === "Coordinator") && (
+                  <Link href={`/coordinator/events/${eventId}`}>
+                    <button className="px-4 py-2 bg-[var(--accent-coordinator)] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer shadow-sm">
+                      CHỈNH SỬA / CẤU HÌNH SỰ KIỆN
+                    </button>
+                  </Link>
                 )}
-
-                {/* THI ĐẤU: CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG KÝ SỰ KIỆN NÀY */}
                 {(roleName === "TeamLeader" || roleName === "TeamMember") && isJoinedParticipant && (
-                  <>
-                    <Link href="/my-team">
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-team)]/50 text-[var(--accent-team)] font-bold hover:bg-[var(--accent-team)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>👥</span> {roleName === "TeamLeader" ? "2. QUẢN LÝ ĐỘI THI" : "2. XEM ĐỘI THI CỦA TÔI"}
-                      </button>
-                    </Link>
-
-                    <Link href="/my-submissions">
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-team)]/50 text-[var(--accent-team)] font-bold hover:bg-[var(--accent-team)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>📤</span> {roleName === "TeamLeader" ? "3. NỘP BÀI THI CỦA ĐỘI" : "3. XEM BÀI NỘP CỦA ĐỘI"}
-                      </button>
-                    </Link>
-
-                    <Link href={`/events/${eventId}/leaderboard`}>
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 4. BẢNG XẾP HẠNG KẾT QUẢ
-                      </button>
-                    </Link>
-
-                    <Link href="/appeals">
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-coordinator)]/50 text-[var(--accent-coordinator)] font-bold hover:bg-[var(--accent-coordinator)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>⚖</span> 5. PHÚC KHẢO & KHIẾU NẠI
-                      </button>
-                    </Link>
-                  </>
+                  <Link href="/my-submissions">
+                    <button className="px-4 py-2 bg-[var(--accent-team)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer shadow-sm">
+                      NỘP BÀI THI CỦA ĐỘI
+                    </button>
+                  </Link>
                 )}
-
-                {/* THÍ SINH CHƯA ĐĂNG KÝ SỰ KIỆN NÀY */}
-                {(roleName === "TeamLeader" || roleName === "TeamMember") && !isJoinedParticipant && (
-                  <>
-                    <Link href="/register">
-                      <button className="px-5 py-2 bg-[var(--accent-team)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
-                        <span>🚀</span> 2. ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
-                      </button>
-                    </Link>
-                    <Link href={`/events/${eventId}/leaderboard`}>
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 3. XEM BẢNG XẾP HẠNG
-                      </button>
-                    </Link>
-                  </>
-                )}
-
-                {roleName === "Coordinator" && (
-                  <>
-                    <Link href={`/coordinator/events/${eventId}`}>
-                      <button className="px-4 py-2 bg-[#a855f7] text-white font-bold hover:bg-white hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5 shadow-sm">
-                        <span>✏️</span> 2. QUẢN LÝ / CHỈNH SỬA SỰ KIỆN (BTC)
-                      </button>
-                    </Link>
-                    <Link href="/coordinator/dashboard">
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[#a855f7]/50 text-[#a855f7] font-bold hover:bg-[#a855f7] hover:text-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🎯</span> 3. CONTROL CENTER BTC
-                      </button>
-                    </Link>
-                    <Link href={`/events/${eventId}/leaderboard`}>
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 4. XEM BẢNG XẾP HẠNG
-                      </button>
-                    </Link>
-                  </>
-                )}
-
-                {roleName === "Mentor" && (
-                  <>
-                    <Link href="/mentor/tracks">
-                      <button className="px-4 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>💼</span> 2. BÀN LÀM VIỆC CỐ VẤN
-                      </button>
-                    </Link>
-                    <Link href="/mentor/submissions">
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[#2dd4bf]/50 text-[#2dd4bf] font-bold hover:bg-[#2dd4bf] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>📂</span> 3. BÀI NỘP CẦN REVIEW
-                      </button>
-                    </Link>
-                  </>
-                )}
-
-                {roleName === "Judge" && (
-                  <>
-                    <Link href="/judge/scoring">
-                      <button className="px-4 py-2 bg-[var(--accent-judge)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>⚖</span> 2. BÀN CHẤM ĐIỂM GIÁM KHẢO
-                      </button>
-                    </Link>
-                    <Link href={`/events/${eventId}/leaderboard`}>
-                      <button className="px-4 py-2 bg-[var(--bg-panel)] border border-[var(--accent-judge)]/50 text-[var(--accent-judge)] font-bold hover:bg-[var(--accent-judge)] hover:text-black transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                        <span>🏆</span> 3. BẢNG XẾP HẠNG
-                      </button>
-                    </Link>
-                  </>
-                )}
-
-                {roleName === "Guest" && (
+                {(!isJoinedParticipant || roleName === "Guest") && roleName !== "Admin" && roleName !== "Coordinator" && roleName !== "Judge" && roleName !== "Mentor" && (
                   <Link href="/register">
-                    <button className="px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer flex items-center gap-1.5">
-                      <span>🚀</span> ĐĂNG KÝ THAM GIA SỰ KIỆN NÀY
+                    <button className="px-4 py-2 bg-[var(--accent-team)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer shadow-sm">
+                      ĐĂNG KÝ THAM GIA
+                    </button>
+                  </Link>
+                )}
+                {roleName === "Judge" && (
+                  <Link href="/judge/scoring">
+                    <button className="px-4 py-2 bg-[var(--accent-judge)] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer shadow-sm">
+                      BÀN CHẤM ĐIỂM GIÁM KHẢO
+                    </button>
+                  </Link>
+                )}
+                {roleName === "Mentor" && (
+                  <Link href="/mentor/tracks">
+                    <button className="px-4 py-2 bg-[#2dd4bf] text-[var(--bg-base)] font-bold hover:bg-white transition-all hud-clipped cursor-pointer shadow-sm">
+                      BÀN LÀM VIỆC CỐ VẤN
                     </button>
                   </Link>
                 )}
