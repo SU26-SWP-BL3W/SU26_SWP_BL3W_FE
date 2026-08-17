@@ -214,16 +214,28 @@ export const AdminDashboardView: React.FC = () => {
               message="Chưa có bản ghi sự kiện nào được trả về từ Backend API. Vui lòng bấm 'Khởi Tạo Sự Kiện Mới' để tạo sự kiện."
             />
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <thead>
+            <div className="w-full overflow-x-auto border border-[var(--border-muted)] bg-[var(--bg-panel)] hud-clipped">
+              <table className="w-full table-fixed text-left border-collapse">
+                <thead className="bg-[var(--bg-base)] border-b border-[var(--border-muted)]">
                   <tr>
-                    <th className="min-w-[200px]">TÊN SỰ KIỆN</th>
-                    <th className="w-36">MÙA GIẢI</th>
-                    <th className="w-28">SỐ VÒNG THI</th>
-                    <th className="min-w-[200px]">EVENT COORDINATOR</th>
-                    <th className="w-28">TRẠNG THÁI</th>
-                    <th className="text-center w-48">THAO TÁC</th>
+                    <th className="w-[28%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                      TÊN SỰ KIỆN
+                    </th>
+                    <th className="w-[16%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                      MÙA GIẢI
+                    </th>
+                    <th className="w-[12%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                      SỐ VÒNG THI
+                    </th>
+                    <th className="w-[20%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                      EVENT COORDINATOR
+                    </th>
+                    <th className="w-[10%] px-4 py-3.5 text-left font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                      TRẠNG THÁI
+                    </th>
+                    <th className="w-[14%] px-4 py-3.5 text-right font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                      THAO TÁC
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -237,43 +249,47 @@ export const AdminDashboardView: React.FC = () => {
 
                     return (
                       <tr key={id} className="hover:bg-[var(--color-danger)]/5 transition-colors group">
-                        <td>
-                          <div className="font-mono font-bold text-sm text-[var(--text-primary)] group-hover:text-[var(--color-danger)] transition-colors">{name}</div>
+                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50">
+                          <div className="font-mono font-bold text-sm text-[var(--text-primary)] group-hover:text-[var(--color-danger)] transition-colors truncate" title={name}>
+                            {name}
+                          </div>
                         </td>
-                        <td>
-                          <Badge tone="team">{season} {year}</Badge>
+                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50">
+                          <span className="inline-block max-w-full truncate px-2.5 py-1 text-xs font-mono font-bold bg-[var(--accent-team)]/10 text-[var(--accent-team)] border border-[var(--accent-team)]/30 rounded" title={`${season} ${year}`}>
+                            {season} {year}
+                          </span>
                         </td>
-                        <td>
+                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50">
                           <span className="font-mono text-xs text-[var(--text-primary)]">
                             {roundsCount} Vòng Thi
                           </span>
                         </td>
-                        <td>
-                          <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold">
-                            EC. {ecInfo}
+                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50">
+                          <span className="font-mono text-xs text-[var(--accent-coordinator)] font-bold truncate block" title={ecInfo}>
+                            {ecInfo}
                           </span>
                         </td>
-                        <td>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase">
+                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-[rgba(16,185,129,0.1)] text-[var(--color-success)] border border-[var(--color-success)]/20 uppercase rounded">
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
                             ACTIVE
                           </span>
                         </td>
-                        <td className="text-center">
-                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        <td className="px-4 py-3.5 align-middle border-t border-[var(--border-muted)]/50 text-right">
+                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             <Link href={`/admin/events/${id}`}>
                               <Button
                                 variant="ghost"
-                                className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-1 h-auto font-bold"
-                                title="Chỉnh sửa thông tin, cấu hình vòng thi, bảng đấu & tiêu chí sự kiện (Admin)"
+                                className="text-xs font-mono border-[var(--color-danger)]/60 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 px-2.5 py-1 h-auto font-bold cursor-pointer"
+                                title="Chỉnh sửa thông tin & cấu hình sự kiện"
                               >
-                                <Edit className="w-3.5 h-3.5 mr-1" /> Sửa & Cấu Hình
+                                <Edit className="w-3.5 h-3.5 mr-1" /> Sửa
                               </Button>
                             </Link>
                             <Button
                               variant="ghost"
                               onClick={() => handleOpenAssignModal(ev)}
-                              className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 px-2.5 py-1 h-auto"
+                              className="text-xs font-mono border-[var(--accent-coordinator)] text-[var(--accent-coordinator)] hover:bg-[var(--accent-coordinator)]/10 px-2 py-1 h-auto cursor-pointer"
                               title="Phân công Event Coordinator"
                             >
                               <UserCheck className="w-3.5 h-3.5 mr-1" /> Gán EC
@@ -281,7 +297,7 @@ export const AdminDashboardView: React.FC = () => {
                             <Link href={`/events/${id}`}>
                               <Button
                                 variant="ghost"
-                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white hover:border-[var(--accent-primary)] px-2 py-1 h-auto"
+                                className="text-xs font-mono border-[var(--border-muted)] text-[var(--text-muted)] hover:text-white hover:border-[var(--accent-primary)] px-2 py-1 h-auto cursor-pointer"
                                 title="Xem trang thể lệ công khai"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -293,7 +309,7 @@ export const AdminDashboardView: React.FC = () => {
                     );
                   })}
                 </tbody>
-              </Table>
+              </table>
             </div>
           )}
         </Card>

@@ -8,7 +8,28 @@ import { Footer } from "./Footer";
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
   const { user, activeRole } = useAuth();
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  
+  const rawRole = activeRole?.roleName || activeRole?.RoleName;
+  const userEmail = (user?.email || user?.Email || "").toLowerCase();
+  
+  let roleName = "";
+  if (user?.isAdmin || user?.IsAdmin) {
+    roleName = "Admin";
+  } else {
+    roleName = rawRole || "";
+    if (roleName === "EventCoordinator") roleName = "Coordinator";
+    if (!roleName) {
+      if (userEmail.includes("ec_") || userEmail.includes("ec.") || userEmail.includes("coordinator")) {
+        roleName = "Coordinator";
+      } else if (userEmail.includes("judge")) {
+        roleName = "Judge";
+      } else if (userEmail.includes("mentor")) {
+        roleName = "Mentor";
+      } else {
+        roleName = "Guest";
+      }
+    }
+  }
 
   const isCoordinatorRoute = pathname.includes("/coordinator");
   const isMentorRoute = pathname.includes("/mentor");
@@ -22,12 +43,21 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
     pathname.includes("/appeals") ||
     pathname.includes("/leaderboard");
 
+  const isCoordinatorRole = roleName === "Coordinator" || roleName === "EventCoordinator";
+  const isMentorRole = roleName === "Mentor";
+  const isJudgeRole = roleName === "Judge";
+  const isCandidateRole = roleName === "TeamLeader" || roleName === "TeamMember";
+
+  // Sidebar dọc CHỈ xuất hiện khi các route sau được kích hoạt (khớp 100% với NavigationBar.tsx)
   const hasVerticalSidebar =
-    isCoordinatorRoute ||
-    isMentorRoute ||
-    isJudgeRoute ||
     isAdminRoute ||
-    (isEventInnerRoute && roleName !== "Guest");
+    isCoordinatorRoute ||
+    (isEventInnerRoute && isCoordinatorRole) ||
+    isMentorRoute ||
+    (isEventInnerRoute && isMentorRole) ||
+    isJudgeRoute ||
+    (isEventInnerRoute && isJudgeRole) ||
+    (isEventInnerRoute && isCandidateRole);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-base)] text-[var(--text-primary)] relative">
@@ -37,7 +67,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
         <main className="flex-1 flex flex-col w-full min-h-0">
           {children}
         </main>
-          <Footer />
+        <Footer />
       </div>
     </div>
   );
