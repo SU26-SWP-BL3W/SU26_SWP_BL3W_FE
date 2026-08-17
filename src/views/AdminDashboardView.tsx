@@ -218,12 +218,12 @@ export const AdminDashboardView: React.FC = () => {
               <Table>
                 <thead>
                   <tr>
-                    <th>MÃ EVENT / TÊN SỰ KIỆN</th>
-                    <th>MÙA GIẢI</th>
-                    <th>SỐ VÒNG THI</th>
-                    <th>EVENT COORDINATOR PHỤ TRÁCH</th>
-                    <th>TRẠNG THÁI</th>
-                    <th className="text-center">THAO TÁC ADMIN</th>
+                    <th className="min-w-[200px]">TÊN SỰ KIỆN</th>
+                    <th className="w-36">MÙA GIẢI</th>
+                    <th className="w-28">SỐ VÒNG THI</th>
+                    <th className="min-w-[200px]">EVENT COORDINATOR</th>
+                    <th className="w-28">TRẠNG THÁI</th>
+                    <th className="text-center w-48">THAO TÁC</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -239,7 +239,6 @@ export const AdminDashboardView: React.FC = () => {
                       <tr key={id} className="hover:bg-[var(--color-danger)]/5 transition-colors group">
                         <td>
                           <div className="font-mono font-bold text-sm text-[var(--text-primary)] group-hover:text-[var(--color-danger)] transition-colors">{name}</div>
-                          <div className="font-mono text-[10px] text-[var(--color-danger)] font-bold">ID: #{id}</div>
                         </td>
                         <td>
                           <Badge tone="team">{season} {year}</Badge>
