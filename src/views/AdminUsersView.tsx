@@ -81,11 +81,16 @@ export const AdminUsersView: React.FC = () => {
     // Role filter
     let matchesRole = true;
     const emailLower = (u.email || "").toLowerCase();
-    if (roleFilter === "admin") matchesRole = !!u.isAdmin || emailLower.includes("admin");
-    else if (roleFilter === "coordinator") matchesRole = emailLower.includes("ec.coordinator");
-    else if (roleFilter === "judge") matchesRole = emailLower.includes("judge");
-    else if (roleFilter === "mentor") matchesRole = emailLower.includes("mentor");
-    else if (roleFilter === "student") matchesRole = !u.isAdmin && !emailLower.includes("admin") && !emailLower.includes("ec.coordinator") && !emailLower.includes("judge") && !emailLower.includes("mentor");
+    const isEc = emailLower.includes("ec_") || emailLower.includes("ec.") || emailLower.includes("coordinator") || emailLower.includes("ec@");
+    const isJg = emailLower.includes("judge");
+    const isMt = emailLower.includes("mentor");
+    const isAdm = !!u.isAdmin || emailLower.includes("admin");
+
+    if (roleFilter === "admin") matchesRole = isAdm;
+    else if (roleFilter === "coordinator") matchesRole = isEc;
+    else if (roleFilter === "judge") matchesRole = isJg;
+    else if (roleFilter === "mentor") matchesRole = isMt;
+    else if (roleFilter === "student") matchesRole = !isAdm && !isEc && !isJg && !isMt;
 
     // Status filter
     let matchesStatus = true;

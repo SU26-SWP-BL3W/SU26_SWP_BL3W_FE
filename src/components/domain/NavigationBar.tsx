@@ -76,7 +76,7 @@ export function NavigationBar() {
     pathname.includes("/appeals") ||
     pathname.includes("/leaderboard");
 
-  const isCoordinatorRole = roleName === "Coordinator" || roleName === "EventCoordinator" || user?.IsAdmin;
+  const isCoordinatorRole = roleName === "Coordinator" || roleName === "EventCoordinator";
   const isMentorRole = roleName === "Mentor";
   const isJudgeRole = roleName === "Judge";
   const isCandidateRole = roleName === "TeamLeader" || roleName === "TeamMember";

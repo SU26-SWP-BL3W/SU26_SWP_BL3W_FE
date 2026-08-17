@@ -150,7 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const rows: unknown[] = rolesRes.data?.data ?? rolesRes.data ?? [];
       primaryRole = pickPrimaryRole(rows, userId);
-      if (primaryRole) {
+
+      if (isAdmin) {
+        targetPath = "/admin/dashboard";
+      } else if (primaryRole) {
         targetPath = REDIRECT_BY_ROLE[primaryRole.roleName || ""] ?? "/events";
       } else if (normalizedEmail.includes("ec_") || normalizedEmail.includes("ec.") || normalizedEmail.includes("coordinator")) {
         targetPath = "/coordinator/dashboard";
@@ -158,18 +161,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         targetPath = "/judge/tracks";
       } else if (normalizedEmail.includes("mentor")) {
         targetPath = "/mentor/tracks";
-      } else if (isAdmin) {
-        targetPath = "/admin/dashboard";
       }
     } catch {
-      if (normalizedEmail.includes("ec_") || normalizedEmail.includes("ec.") || normalizedEmail.includes("coordinator")) {
+      if (isAdmin) {
+        targetPath = "/admin/dashboard";
+      } else if (normalizedEmail.includes("ec_") || normalizedEmail.includes("ec.") || normalizedEmail.includes("coordinator")) {
         targetPath = "/coordinator/dashboard";
       } else if (normalizedEmail.includes("judge")) {
         targetPath = "/judge/tracks";
       } else if (normalizedEmail.includes("mentor")) {
         targetPath = "/mentor/tracks";
-      } else if (isAdmin) {
-        targetPath = "/admin/dashboard";
       }
     }
 
@@ -227,11 +228,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const rows: unknown[] = rolesRes.data?.data ?? rolesRes.data ?? [];
       primaryRole = pickPrimaryRole(rows, userId);
-      if (primaryRole) {
+      if (isAdmin) {
+        targetPath = "/admin/dashboard";
+      } else if (primaryRole) {
         targetPath = REDIRECT_BY_ROLE[primaryRole.roleName || ""] ?? "/events";
       }
     } catch {
-      // fallback targetPath
+      if (isAdmin) {
+        targetPath = "/admin/dashboard";
+      }
     }
 
     setUser(authUser);

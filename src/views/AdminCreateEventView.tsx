@@ -44,18 +44,44 @@ export const AdminCreateEventView: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      const startIso = new Date(form.startDate).toISOString();
+      const endIso = new Date(form.endDate).toISOString();
+      const regStartIso = form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : startIso;
+      const regEndIso = form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : endIso;
+
       const payload = {
         eventName: form.eventName,
         season: form.season,
         year: Number(form.year),
-        startDate: new Date(form.startDate).toISOString(),
-        endDate: new Date(form.endDate).toISOString(),
-        registrationStartDate: form.registrationStartDate ? new Date(form.registrationStartDate).toISOString() : new Date(form.startDate).toISOString(),
-        registrationEndDate: form.registrationEndDate ? new Date(form.registrationEndDate).toISOString() : new Date(form.endDate).toISOString(),
+        startDate: startIso,
+        endDate: endIso,
+        registrationStartDate: regStartIso,
+        registrationEndDate: regEndIso,
         description: form.description,
         maxTeams: Number(form.maxTeams),
         status: true,
-        rounds: [],
+        rounds: [
+          {
+            roundName: "Vòng Bán Kết (Sơ Loại)",
+            roundNumber: 1,
+            startDate: startIso,
+            endDate: endIso,
+            scoringStartDate: endIso,
+            scoringEndDate: endIso,
+            advancementRule: "top:10",
+            tracks: [
+              {
+                trackName: "Bảng Đấu Công Nghệ Toàn Diện",
+                description: "Hạng mục thi đấu chính thức dành cho tất cả các đội thi.",
+                submissionRuleDescription: "Nộp mã nguồn qua link GitHub và báo cáo kỹ thuật PDF.",
+                startDate: startIso,
+                endDate: endIso,
+                scoringStartDate: endIso,
+                scoringEndDate: endIso,
+              },
+            ],
+          },
+        ],
       };
 
       const res = await eventsRepository.createEvent(payload);
