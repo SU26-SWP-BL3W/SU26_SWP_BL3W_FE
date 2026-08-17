@@ -9,6 +9,7 @@ import {
 } from "./eventsMetadata";
 
 import { usePublicEvents } from "@/repositories/eventsRepository";
+import { useAuth } from "@/providers/AuthProvider";
 
 export type { EventDisplayStatus, EventCardData };
 
@@ -22,6 +23,14 @@ export interface TrackSummary {
 }
 
 export function useEventsDiscoveryViewModel() {
+  const { activeRole } = useAuth();
+  const myEventIds = useMemo(() => {
+    const ids = [
+      ...(activeRole?.assignedEventIds ?? activeRole?.AssignedEventIds ?? []),
+      activeRole?.eventId || activeRole?.EventId || "",
+    ].filter(Boolean);
+    return [...new Set(ids)];
+  }, [activeRole]);
   const { data: realPublicEvents = [] } = usePublicEvents();
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState("");
@@ -98,7 +107,7 @@ export function useEventsDiscoveryViewModel() {
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "my_event"
-          ? ev.id === "event-seal-2026" || ev.id.includes("seal-2026")
+          ? myEventIds.includes(ev.id)
           : ev.status === statusFilter);
       const matchesTrack = !trackFilter || ev.tracks.includes(trackFilter);
       return matchesSearch && matchesStatus && matchesTrack;
@@ -121,7 +130,7 @@ export function useEventsDiscoveryViewModel() {
         sorted.sort((a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]);
     }
     return sorted;
-  }, [allEvents, search, statusFilter, sort, trackFilter]);
+  }, [allEvents, search, statusFilter, sort, trackFilter, myEventIds]);
 
   // Hạng mục + số sự kiện/tổng giải thưởng thuộc từng hạng mục — gộp trên
   // TOÀN BỘ sự kiện (không theo bộ lọc hiện tại), dùng cho dải pill lọc nhanh.

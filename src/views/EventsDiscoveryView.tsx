@@ -5,10 +5,12 @@ import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMyTeam } from "@/repositories/teamsRepository";
+import { useEventDetail } from "@/repositories/eventsRepository";
 import {
   STATUS_LABEL,
   STATUS_DOT_VAR,
   STATUS_TONE,
+  computeEventStatus,
   type EventCardData,
 } from "@/viewModels/eventsMetadata";
 import {
@@ -254,11 +256,17 @@ const SORT_OPTIONS: { value: EventSortOption; label: string }[] = [
 // ─── Main View ─────────────────────────────────────────────────────────────────
 export function EventsDiscoveryView() {
   const { user, activeRole } = useAuth();
-  const roleName = activeRole?.RoleName || (user?.IsAdmin ? "Admin" : "Guest");
+  const roleName = activeRole?.roleName || activeRole?.RoleName || (user?.isAdmin || user?.IsAdmin ? "Admin" : "Guest");
 
   const { data: teamResponse } = useMyTeam();
   const team = (teamResponse as any)?.team ?? teamResponse;
-  const myEventId = team?.EventId || (team as any)?.eventId || "";
+  const myEventId =
+    activeRole?.eventId ||
+    activeRole?.EventId ||
+    team?.EventId ||
+    (team as { eventId?: string })?.eventId ||
+    "";
+  const { data: assignedEvent } = useEventDetail(myEventId);
 
   const {
     events, totalCount, topTracks,
@@ -274,6 +282,45 @@ export function EventsDiscoveryView() {
     setStatusFilter("all");
     setTrackFilter(null);
   };
+
+  const listedMine = events.find((e) => e.id === myEventId);
+  const bannerName =
+    listedMine?.eventName ||
+    assignedEvent?.eventName ||
+    assignedEvent?.EventName ||
+    assignedEvent?.name ||
+    (team as { eventName?: string; EventName?: string })?.eventName ||
+    (team as { EventName?: string })?.EventName ||
+    "";
+  const bannerStatus = listedMine
+    ? listedMine.status
+    : assignedEvent?.startDate && assignedEvent?.endDate
+      ? computeEventStatus(
+          {
+            id: myEventId,
+            eventName: bannerName || "Sự kiện",
+            season: String(assignedEvent.season || assignedEvent.Season || ""),
+            year: Number(assignedEvent.year || assignedEvent.Year || 0),
+            tagline: "",
+            description: "",
+            startDate: assignedEvent.startDate,
+            endDate: assignedEvent.endDate,
+            registrationStartDate: assignedEvent.registrationStartDate || assignedEvent.startDate,
+            registrationEndDate: assignedEvent.registrationEndDate || assignedEvent.endDate,
+            maxTeams: 0,
+            teamCount: 0,
+            tracks: [],
+            rounds: [],
+            totalPrizeVnd: 0,
+          },
+          Date.now(),
+        )
+      : null;
+  const bannerSeason = listedMine
+    ? [listedMine.season, listedMine.year].filter(Boolean).join(" ")
+    : [assignedEvent?.season || assignedEvent?.Season, assignedEvent?.year || assignedEvent?.Year]
+        .filter(Boolean)
+        .join(" ");
 
   return (
     <main className="hud-lattice flex flex-1 flex-col">
@@ -346,14 +393,22 @@ export function EventsDiscoveryView() {
                   ⭐ SỰ KIỆN CỦA TÔI {roleName === "Mentor" ? "(VAI TRÒ: CỐ VẤN TRACK)" : roleName === "Coordinator" ? "(VAI TRÒ: BAN TỔ CHỨC)" : roleName === "Judge" ? "(VAI TRÒ: GIÁM KHẢO)" : team ? `(ĐỘI: ${team.TeamName || (team as any).teamName})` : ""}
                 </div>
                 <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">
-                  {team ? (team as any).eventName || team.TeamName || (team as any).teamName : "SEAL Hackathon 2026 — Đang Hoạt Động"}
+                  {bannerName || "Sự kiện được phân công"}
                 </h2>
                 <div className="flex items-center gap-3 font-mono text-xs text-[var(--text-muted)] mt-0.5">
                   <span>Vai trò hiện tại: <strong className="text-[var(--accent-primary)]">{roleName}</strong></span>
-                  <span>·</span>
-                  <span>Trạng thái: <strong className="text-[var(--color-success)]">ĐANG DIỄN RA</strong></span>
-                  <span>·</span>
-                  <span>Mùa Hè 2026</span>
+                  {bannerStatus && (
+                    <>
+                      <span>·</span>
+                      <span>Trạng thái: <strong className="text-[var(--color-success)]">{STATUS_LABEL[bannerStatus]}</strong></span>
+                    </>
+                  )}
+                  {bannerSeason && (
+                    <>
+                      <span>·</span>
+                      <span>{bannerSeason}</span>
+                    </>
+                  )}
                 </div>
               </div>
 

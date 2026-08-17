@@ -72,9 +72,9 @@ export const AdminSchoolsView: React.FC = () => {
         setShowAddModal(false);
         setSuccessMsg(null);
       }, 1800);
-    } catch {
-      alert("Đã thêm trường học thành công!");
-      setShowAddModal(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Không thể tạo trường học. Vui lòng kiểm tra quyền Admin.";
+      alert(`Lỗi tạo trường học: ${msg}`);
     }
   };
 

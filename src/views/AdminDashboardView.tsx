@@ -8,7 +8,8 @@ import { ShieldAlert, Plus, Users, School, Activity, ArrowRight, Shield, UserChe
 import Link from "next/link";
 
 import { useEvents } from "@/repositories/eventsRepository";
-import { usersRepository } from "@/repositories/usersRepository";
+import { usersRepository, useGetUsers } from "@/repositories/usersRepository";
+import { useGetSchools } from "@/repositories/schoolsRepository";
 
 import { ApiMissingDataBadge } from "@/components/ui";
 
@@ -34,8 +35,23 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export const AdminDashboardView: React.FC = () => {
   const { data: rawEvents = [] } = useEvents();
   const realEvents = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data ?? [];
-
   const displayEvents = realEvents;
+
+  const { data: rawUsersData } = useGetUsers({ pageSize: 100 });
+  const usersList = rawUsersData?.data ?? [];
+  const totalUsersCount = rawUsersData?.totalItems ?? usersList.length;
+
+  const { data: schoolsList = [] } = useGetSchools();
+  const totalSchoolsCount = schoolsList.length;
+
+  const ecCount =
+    usersList.filter(
+      (u: any) =>
+        !u.isAdmin &&
+        ((u.email || "").toLowerCase().includes("ec.") ||
+          (u.email || "").toLowerCase().includes("coordinator"))
+    ).length ||
+    displayEvents.filter((e: any) => e.coordinatorEmail || e.CoordinatorEmail).length;
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [ecEmail, setEcEmail] = useState("");
@@ -132,12 +148,12 @@ export const AdminDashboardView: React.FC = () => {
             </span>
             <div className="flex items-baseline justify-between">
               <span className="font-mono font-bold text-2xl text-[var(--accent-coordinator)]">
-                12
+                {ecCount}
               </span>
               <Users className="w-5 h-5 text-[var(--accent-coordinator)] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--text-muted)] block">
-              Đã được gán phụ trách các mùa giải
+              Tài khoản điều phối sự kiện
             </span>
           </Card>
 
@@ -147,7 +163,7 @@ export const AdminDashboardView: React.FC = () => {
             </span>
             <div className="flex items-baseline justify-between">
               <span className="font-mono font-bold text-2xl text-[var(--accent-judge)]">
-                1,450
+                {totalUsersCount}
               </span>
               <Activity className="w-5 h-5 text-[var(--accent-judge)] opacity-60" />
             </div>
@@ -158,16 +174,16 @@ export const AdminDashboardView: React.FC = () => {
 
           <Card className="p-5 space-y-2 border-l-4 border-l-[#2dd4bf] bg-[var(--bg-panel)] hud-clipped">
             <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">
-              Trường Đại Học Đăng Ký
+              Trường Đại Học Đối Tác
             </span>
             <div className="flex items-baseline justify-between">
               <span className="font-mono font-bold text-2xl text-[#2dd4bf]">
-                18
+                {totalSchoolsCount}
               </span>
               <School className="w-5 h-5 text-[#2dd4bf] opacity-60" />
             </div>
             <span className="font-mono text-[10px] text-[var(--text-muted)] block">
-              FPTU, HUST, VNU, UIT, HCMUT...
+              Danh mục trường đại học đối tác
             </span>
           </Card>
         </div>

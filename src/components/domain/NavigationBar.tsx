@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 import { SealShield } from "./SealShield";
 import { NotificationBell } from "./NotificationBell";
 import { hasEventPermission } from "@/lib/permissions";
+import { useEventDetail } from "@/repositories/eventsRepository";
 import {
   Globe,
   Users,
@@ -53,7 +54,14 @@ export function NavigationBar() {
     }
   }
 
-  const currentEventId = "event-seal-2026";
+  const urlEventId = pathname.includes("/events/")
+    ? (pathname.split("/events/")[1]?.split("/")[0] || "")
+    : "";
+  const roleEventId = activeRole?.eventId || activeRole?.EventId || "";
+  const currentEventId = urlEventId || roleEventId;
+  const { data: currentEvent } = useEventDetail(currentEventId);
+  const currentEventName =
+    currentEvent?.eventName || currentEvent?.EventName || currentEvent?.name || "";
 
   // XÁC ĐỊNH NGHIỆP VỤ RENDER THANH NAVBAR DỌC HOẶC NGANG
   const isCoordinatorRoute = pathname.includes("/coordinator");
@@ -323,10 +331,7 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1B: NAVBAR DỌC DÀNH RIÊNG CHO MENTOR CỐ VẤN
   // ─────────────────────────────────────────────────────────────
   if (showMentorSidebar) {
-    const urlEventId = pathname.includes("/events/")
-      ? pathname.split("/events/")[1]?.split("/")[0]
-      : null;
-    const activeViewEventId = urlEventId || currentEventId;
+    const activeViewEventId = currentEventId;
     const isAuthorizedMentor = hasEventPermission(user, activeRole, activeViewEventId);
 
     return (
@@ -450,10 +455,7 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1C: NAVBAR DỌC DÀNH RIÊNG CHO GIÁM KHẢO (JUDGE)
   // ─────────────────────────────────────────────────────────────
   if (showJudgeSidebar) {
-    const urlEventId = pathname.includes("/events/")
-      ? pathname.split("/events/")[1]?.split("/")[0]
-      : null;
-    const activeViewEventId = urlEventId || currentEventId;
+    const activeViewEventId = currentEventId;
     const isAuthorizedJudge = hasEventPermission(user, activeRole, activeViewEventId);
 
     return (
@@ -577,13 +579,8 @@ export function NavigationBar() {
   // CHẾ ĐỘ 1C: NAVBAR DỌC KHI THÍ SINH VÀO DÀNH RIÊNG CHO WORKSPACE ĐỘI THI
   // ─────────────────────────────────────────────────────────────
   if (showParticipantSidebar) {
-    // Xác định eventId đang xem trên URL
-    const urlEventId = pathname.includes("/events/")
-      ? pathname.split("/events/")[1]?.split("/")[0]
-      : null;
-
-    const activeViewEventId = urlEventId || currentEventId;
-    const isJoinedThisEvent = false;
+    const activeViewEventId = currentEventId;
+    const isJoinedThisEvent = hasEventPermission(user, activeRole, activeViewEventId);
 
     return (
       <aside className="w-full md:w-64 bg-[var(--bg-panel)] border-b md:border-b-0 md:border-r border-[var(--border-muted)] flex flex-col justify-between p-5 shrink-0 z-50 md:fixed md:left-0 md:top-0 md:bottom-0">
@@ -615,7 +612,7 @@ export function NavigationBar() {
               {isJoinedThisEvent ? "ĐANG THI ĐẤU" : "SỰ KIỆN CHƯA THAM GIA"}
             </span>
             <span className="font-display text-xs font-bold text-[var(--text-primary)] truncate">
-              {isJoinedThisEvent ? "SEAL Hackathon 2026" : (activeViewEventId === "event-seal-mini" ? "SEAL Mini Hack 2026" : "SEAL AI Sprint 2026")}
+              {currentEventName || (isJoinedThisEvent ? "Sự kiện đang tham gia" : "Chưa chọn sự kiện")}
             </span>
             <span className="font-mono text-[10px] font-bold text-[var(--accent-team)]">
               {isJoinedThisEvent ? "Đội thi" : "Trạng thái: Thí sinh tự do"}

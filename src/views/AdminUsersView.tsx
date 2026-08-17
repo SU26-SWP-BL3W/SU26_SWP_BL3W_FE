@@ -101,8 +101,10 @@ export const AdminUsersView: React.FC = () => {
       await approveUser(userId);
       setDetailUserModal(null);
       refetch();
-    } catch {
-      alert("Đã phê duyệt hồ sơ người dùng!");
+      alert("Đã phê duyệt hồ sơ người dùng thành công!");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Không thể phê duyệt. Vui lòng kiểm tra quyền Admin.";
+      alert(`Lỗi phê duyệt hồ sơ: ${msg}`);
     }
   };
 
@@ -116,8 +118,10 @@ export const AdminUsersView: React.FC = () => {
       setDetailUserModal(null);
       setRejectReason("");
       refetch();
-    } catch {
-      alert("Đã ghi nhận từ chối hồ sơ kèm lý do.");
+      alert("Đã ghi nhận từ chối hồ sơ kèm lý do thành công.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Không thể từ chối hồ sơ. Vui lòng kiểm tra quyền Admin.";
+      alert(`Lỗi từ chối hồ sơ: ${msg}`);
     }
   };
 
@@ -126,21 +130,27 @@ export const AdminUsersView: React.FC = () => {
     if (!selectedUserForEc) return;
 
     setIsSubmitting(true);
-    const res = await staffRepository.assignRoleDirectly({
-      userId: selectedUserForEc.id || selectedUserForEc.userId || "",
-      eventId: selectedEventId,
-      roleName: "EventCoordinator",
-    });
-    setIsSubmitting(false);
+    try {
+      const res = await staffRepository.assignRoleDirectly({
+        userId: selectedUserForEc.id || selectedUserForEc.userId || "",
+        eventId: selectedEventId,
+        roleName: "EventCoordinator",
+      });
+      setIsSubmitting(false);
 
-    if (res.success) {
-      setSuccessMessage(
-        `Đã phân công ${selectedUserForEc.fullName} (${selectedUserForEc.email}) làm Event Coordinator thành công!`
-      );
-      setTimeout(() => {
-        setSelectedUserForEc(null);
-        setSuccessMessage(null);
-      }, 2000);
+      if (res && res.success !== false) {
+        setSuccessMessage(
+          `Đã phân công ${selectedUserForEc.fullName} (${selectedUserForEc.email}) làm Event Coordinator thành công!`
+        );
+        setTimeout(() => {
+          setSelectedUserForEc(null);
+          setSuccessMessage(null);
+        }, 2000);
+      }
+    } catch (err: any) {
+      setIsSubmitting(false);
+      const msg = err?.response?.data?.message || err?.message || "Phân công vai trò thất bại. Vui lòng kiểm tra quyền Admin.";
+      alert(`Lỗi phân công EC: ${msg}`);
     }
   };
 

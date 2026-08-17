@@ -64,8 +64,7 @@ export function UserProfileView() {
     Boolean(user?.isAdmin || user?.IsAdmin);
 
   // Staff Form states
-  const [staffPhone, setStaffPhone] = useState("0912 345 678");
-  const [staffOrg, setStaffOrg] = useState("FPT University - Khoa CNTT");
+  const [staffOrg, setStaffOrg] = useState("");
   const [staffBio, setStaffBio] = useState(
     roleName === "Coordinator"
       ? "Trưởng ban tổ chức phụ trách điều phối các giải đấu Hackathon & quản trị tiêu chí chuyên môn."
@@ -345,17 +344,17 @@ export function UserProfileView() {
                       ? "Bạn đã được cấp đầy đủ quyền tham gia các giải đấu Hackathon & tạo Đội thi."
                       : user?.isRejected
                       ? `Lý do từ chối: "${lastRejection?.reason || "Ảnh thẻ không rõ nét hoặc MSSV không khớp"}". Vui lòng bấm Cập nhật hồ sơ bên dưới.`
-                      : "BTC và System Admin sẽ đối chiếu ảnh thẻ SV / hệ thống FPT để duyệt tài khoản trong 24h."}
+                      : "Hồ sơ đang trong hàng đợi đối chiếu thông tin và phê duyệt bởi BTC & System Admin trong vòng 24h."}
                   </p>
                 </div>
               </div>
 
-              {!user?.isApproved && !isBlocked && (
+              {!user?.isApproved && !isBlocked && !isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-base)] font-mono text-xs font-bold uppercase hover:bg-white transition-all hud-clipped cursor-pointer shrink-0"
                 >
-                  {user?.isRejected ? "CẬP NHẬT LẠI ➔" : "CẬP NHẬT ẢNH THẺ ➔"}
+                  {user?.isRejected ? "CẬP NHẬT LẠI ➔" : "CHỈNH SỬA HỒ SƠ ➔"}
                 </button>
               )}
             </div>
@@ -426,7 +425,7 @@ export function UserProfileView() {
                       <Building2 className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> Đơn Vị Công Tác:
                     </span>
                     <span className="font-bold text-[var(--text-primary)] truncate max-w-[160px]">
-                      {staffOrg}
+                      {staffOrg || "Chưa cập nhật"}
                     </span>
                   </div>
 
@@ -484,7 +483,7 @@ export function UserProfileView() {
               {!isStaff && (
                 <div className="pt-2">
                   <span className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-wider block font-bold mb-2">
-                    ẢNH THẺ SINH VIÊN ĐÃ NỘP:
+                    ẢNH THẺ SINH VIÊN:
                   </span>
                   {photoPreview ? (
                     <div className="relative border border-[var(--border-muted)] bg-[var(--bg-base)] p-1 hud-clipped">
@@ -499,8 +498,10 @@ export function UserProfileView() {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-6 border border-dashed border-[var(--border-muted)] bg-[var(--bg-input)]/50 text-center font-mono text-xs text-[var(--text-muted)] hud-clipped">
-                      Chưa có ảnh thẻ sinh viên.
+                    <div className="p-4 border border-dashed border-[var(--border-muted)] bg-[var(--bg-input)]/50 text-center font-mono text-xs text-[var(--text-muted)] hud-clipped">
+                      {schoolChoice === "FPT"
+                        ? "Sinh viên FPT xác thực tự động qua MSSV (không bắt buộc ảnh thẻ)."
+                        : "Chưa có ảnh thẻ sinh viên (bắt buộc cho trường ngoài)."}
                     </div>
                   )}
                 </div>
@@ -559,31 +560,16 @@ export function UserProfileView() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block font-bold">
-                        Email Công Tác
-                      </label>
-                      <Input
-                        type="email"
-                        value={user?.email || ""}
-                        disabled
-                        className="opacity-70 cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block font-bold">
-                        Số Điện Thoại Liên Hệ
-                      </label>
-                      <Input
-                        type="text"
-                        value={staffPhone}
-                        onChange={(e) => setStaffPhone(e.target.value)}
-                        disabled={!isEditing}
-                        placeholder="0912 345 678"
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block font-bold">
+                      Email Công Tác
+                    </label>
+                    <Input
+                      type="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="opacity-70 cursor-not-allowed"
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -750,7 +736,9 @@ export function UserProfileView() {
                   {/* Photo Upload Area */}
                   <div className="space-y-1.5">
                     <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold block">
-                      Tải Lên Ảnh Thẻ Sinh Viên HD (Mặt Trước) *
+                      {schoolChoice === "OTHER"
+                        ? "Tải Lên Ảnh Thẻ Sinh Viên HD (Mặt Trước) *"
+                        : "Ảnh Thẻ Sinh Viên (Tùy chọn cho SV FPT)"}
                     </label>
                     
                     {photoPreview ? (

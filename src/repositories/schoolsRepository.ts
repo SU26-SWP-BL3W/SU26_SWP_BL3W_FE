@@ -76,18 +76,8 @@ export function useCreateSchool() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { schoolName: string; code?: string; address?: string }) => {
-      try {
-        const res = await apiClient.post("/Schools", data);
-        return res.data;
-      } catch {
-        return {
-          id: `sch-${Date.now()}`,
-          schoolId: `sch-${Date.now()}`,
-          schoolName: data.schoolName,
-          code: data.code || data.schoolName.substring(0, 4).toUpperCase(),
-          address: data.address || "Việt Nam",
-        };
-      }
+      const res = await apiClient.post("/Schools", data);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schools"] });
