@@ -30,6 +30,11 @@ interface Step6EventConfirmationProps {
   canPublishEvent?: boolean;
   validationMissingItems?: string[];
   onPrev: () => void;
+  onPublish?: () => Promise<void> | void;
+  onSaveDraft?: () => Promise<void> | void;
+  isSubmitting?: boolean;
+  currentStatus?: boolean;
+  redirectUrl?: string;
 }
 
 export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
@@ -42,6 +47,11 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
   canPublishEvent = false,
   validationMissingItems = [],
   onPrev,
+  onPublish,
+  onSaveDraft,
+  isSubmitting = false,
+  currentStatus = false,
+  redirectUrl,
 }) => {
   const router = useRouter();
   const [isPublishing, setIsPublishing] = useState(false);
@@ -51,20 +61,27 @@ export const Step6EventConfirmation: React.FC<Step6EventConfirmationProps> = ({
     if (isPublic && !canPublishEvent) return;
     setIsPublishing(true);
     try {
-      if (eventId) {
-        await eventsRepository.updateEvent(eventId, {
-          status: isPublic,
-        });
+      if (isPublic) {
+        if (onPublish) await onPublish();
+        else if (eventId) await eventsRepository.updateEvent(eventId, { status: true } as any);
+      } else {
+        if (onSaveDraft) await onSaveDraft();
+        else if (eventId) await eventsRepository.updateEvent(eventId, { status: false } as any);
       }
+
       setIsPublishing(false);
       setPublishSuccess(true);
-      setTimeout(() => {
-        router.push("/coordinator/dashboard");
-      }, 1500);
+
+      if (redirectUrl) {
+        setTimeout(() => {
+          router.push(redirectUrl);
+        }, 1200);
+      }
     } catch (err: any) {
       setIsPublishing(false);
-      // Fallback redirection to dashboard even if status update has permission warn
-      router.push("/coordinator/dashboard");
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      }
     }
   };
 

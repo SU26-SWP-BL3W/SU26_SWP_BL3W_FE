@@ -8,7 +8,7 @@ import { Users, Mail, UserPlus, Trash2, ArrowLeft, CheckCircle2, ShieldCheck, Cl
 interface Step5StaffAssignmentProps {
   tracks: TrackFormState[];
   staffInvites: StaffInviteFormState[];
-  onAddStaffInvite: (email: string, roleName: "Judge" | "Mentor", trackId?: string) => void;
+  onAddStaffInvite: (email: string, roleName: "Judge" | "Mentor" | "EventCoordinator", trackId?: string) => void;
   onRemoveStaffInvite: (id: string) => void;
   onFinish: () => void;
   onPrev: () => void;
@@ -29,7 +29,7 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
   isReadOnly = false,
 }) => {
   const [emailInput, setEmailInput] = useState<string>("");
-  const [roleInput, setRoleInput] = useState<"Judge" | "Mentor">("Judge");
+  const [roleInput, setRoleInput] = useState<"Judge" | "Mentor" | "EventCoordinator">("Judge");
   const [trackInput, setTrackInput] = useState<string>(tracks[0]?.id || "");
 
   const handleAdd = (e: React.FormEvent) => {
@@ -40,21 +40,33 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
     setEmailInput("");
   };
 
+  const ecCount = staffInvites.filter((s) => s.roleName === "EventCoordinator").length;
+  const judgeCount = staffInvites.filter((s) => s.roleName === "Judge").length;
+  const mentorCount = staffInvites.filter((s) => s.roleName === "Mentor").length;
+
   return (
     <Card className="hud-glow-mentor p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-[var(--border-muted)] pb-4">
         <div>
           <h3 className="font-display font-bold text-lg text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
             <Users className="w-5 h-5 text-[var(--accent-mentor)]" />
-            Bước 5: Phân Công Giám Khảo & Cố Vấn
+            Bước 5: Phân Công Nhân Sự (Hội Đồng Chuyên Môn)
           </h3>
           <p className="text-xs font-mono text-[var(--text-muted)] mt-1">
-            Gửi email mời Giám khảo &amp; Cố vấn tham gia Hội đồng chuyên môn của Sự kiện.
+            Gửi email mời Điều Phối Viên, Giám Khảo &amp; Cố Vấn tham gia quản trị và chấm điểm sự kiện.
           </p>
         </div>
-        <span className="px-3 py-1 font-mono text-xs bg-[var(--bg-input)] text-[var(--accent-mentor)] border border-[var(--accent-mentor)]/30 hud-clipped">
-          Giao diện phân công Hạng mục
-        </span>
+        <div className="flex items-center gap-2 font-mono text-[11px]">
+          <span className="px-2 py-0.5 bg-[var(--accent-coordinator)]/10 text-[var(--accent-coordinator)] border border-[var(--accent-coordinator)]/30 rounded">
+            {ecCount} Điều Phối Viên
+          </span>
+          <span className="px-2 py-0.5 bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/30 rounded">
+            {judgeCount} Giám Khảo
+          </span>
+          <span className="px-2 py-0.5 bg-[var(--accent-mentor)]/10 text-[var(--accent-mentor)] border border-[var(--accent-mentor)]/30 rounded">
+            {mentorCount} Cố Vấn
+          </span>
+        </div>
       </div>
 
       {isReadOnly && (
@@ -86,11 +98,12 @@ export const Step5StaffAssignment: React.FC<Step5StaffAssignmentProps> = ({
             <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">Vai Trò Phân Công</label>
             <select
               value={roleInput}
-              onChange={(e) => setRoleInput(e.target.value as "Judge" | "Mentor")}
+              onChange={(e) => setRoleInput(e.target.value as "Judge" | "Mentor" | "EventCoordinator")}
               className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-muted)] text-[var(--text-primary)] font-mono text-xs hud-clipped"
             >
               <option value="Judge">Giám Khảo (Judge)</option>
               <option value="Mentor">Cố Vấn (Mentor)</option>
+              <option value="EventCoordinator">Điều Phối Viên (Event Coordinator)</option>
             </select>
           </div>
 

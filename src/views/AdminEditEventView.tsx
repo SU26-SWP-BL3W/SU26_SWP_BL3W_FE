@@ -56,6 +56,7 @@ export const AdminEditEventView: React.FC = () => {
 
   // Form State Tab 1
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -344,14 +345,17 @@ export const AdminEditEventView: React.FC = () => {
   const judgeCount = staffInvites.filter((s) => s.roleName === "Judge").length;
   const canPublish = isStep2Done && isStep3Done && isStep4Done && judgeCount > 0;
 
-  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
-
   const handleQuickToggleStatus = async () => {
+    const nextStatus = !status;
+    if (nextStatus === true && !canPublish) {
+      setErrorMessage("Chưa đủ điều kiện công bố sự kiện! Vui lòng hoàn tất các bước còn thiếu (Vòng thi, Hạng mục, Tiêu chí 100%, Giám khảo).");
+      return;
+    }
+
     setIsTogglingStatus(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    const nextStatus = !status;
     try {
       await eventsRepository.updateEvent(eventId, {
         eventName: form.eventName,
@@ -413,12 +417,15 @@ export const AdminEditEventView: React.FC = () => {
           <div className="flex items-center gap-3">
             <Button
               type="button"
-              disabled={isTogglingStatus}
+              disabled={isTogglingStatus || (!status && !canPublish)}
               onClick={handleQuickToggleStatus}
+              title={!status && !canPublish ? "Chưa hoàn tất các bước bắt buộc để công bố sự kiện" : undefined}
               className={`font-mono text-xs font-bold py-2 px-4 shrink-0 flex items-center gap-2 border cursor-pointer ${
                 status
                   ? "border-amber-500/60 text-amber-300 hover:bg-amber-500/20 bg-amber-500/10"
-                  : "border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/20 bg-emerald-500/10"
+                  : canPublish
+                  ? "border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/20 bg-emerald-500/10"
+                  : "border-slate-700 text-slate-500 bg-slate-800/40 opacity-50 cursor-not-allowed"
               }`}
             >
               {isTogglingStatus ? (
@@ -611,17 +618,49 @@ export const AdminEditEventView: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono tracking-widest text-[var(--accent-coordinator)] uppercase font-bold">
-                    Email Event Coordinator Phụ Trách
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="ec.coordinator@seal.edu.vn"
-                    value={form.coordinatorEmail}
-                    onChange={(e) => setForm({ ...form, coordinatorEmail: e.target.value })}
-                    className="w-full text-xs font-mono"
-                  />
+                <div className="space-y-3 p-4 bg-[var(--bg-input)] border border-[var(--accent-coordinator)]/40 hud-clipped">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-[var(--accent-coordinator)] uppercase font-bold">
+                      Hội Đồng Event Coordinators ({serverStaff.filter((s: any) => (s.roleName || s.RoleName) === "EventCoordinator").length} EC)
+                    </span>
+                    <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                      {serverStaff.filter((s: any) => (s.roleName || s.RoleName) === "EventCoordinator").length > 0 ? "Đã có Điều Phối Viên" : "Chưa gán EC"}
+                    </span>
+                  </div>
+
+                  {serverStaff.filter((s: any) => (s.roleName || s.RoleName) === "EventCoordinator").length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {serverStaff
+                        .filter((s: any) => (s.roleName || s.RoleName) === "EventCoordinator")
+                        .map((c: any, idx: number) => {
+                          const email = c.userEmail || c.UserEmail || c.email || "ec@seal.edu.vn";
+                          const name = c.fullName || c.FullName || email;
+                          return (
+                            <span
+                              key={c.id || idx}
+                              className="px-2.5 py-1 bg-[var(--accent-coordinator)]/10 text-[var(--accent-coordinator)] border border-[var(--accent-coordinator)]/30 font-mono text-xs rounded flex items-center gap-1.5"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-coordinator)]" />
+                              <span>{name}</span>
+                              <span className="text-[10px] opacity-75">({email})</span>
+                            </span>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  <div className="space-y-1 pt-2 border-t border-[var(--border-muted)]">
+                    <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">
+                      Gán Thêm Email Event Coordinator Mới
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="e.g. ec.coordinator@seal.edu.vn"
+                      value={form.coordinatorEmail}
+                      onChange={(e) => setForm({ ...form, coordinatorEmail: e.target.value })}
+                      className="w-full text-xs font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
